@@ -1,15 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
-import { ShieldAlert, Users, CheckSquare, Calendar, Award, Code, RefreshCw } from 'lucide-react';
+import { RefreshCw } from 'lucide-react';
+import { getTechIconUrl } from '../utils/techIcons';
 
 export default function Dashboard() {
-  const { profile, API_BASE } = useAuth();
+  const { profile, API_BASE, user } = useAuth();
   const [teams, setTeams] = useState([]);
   const [sessions, setSessions] = useState([]);
   const [allTasks, setAllTasks] = useState([]);
   const [allBlockers, setAllBlockers] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [activeFilter, setActiveFilter] = useState('telemetry');
 
   // Predefined Ongoing Hackathons
   const ongoingHackathons = [
@@ -65,149 +67,235 @@ export default function Dashboard() {
   if (loading) {
     return (
       <div style={{ display: 'flex', flexGrow: 1, justifyContent: 'center', alignItems: 'center' }}>
-        <div style={{ animation: 'spinSlow 2s linear infinite' }}>●</div>
+        <div style={{ animation: 'spinSlow 2s linear infinite', color: '#ec4899', fontSize: '24px' }}>●</div>
       </div>
     );
   }
 
-  const myTasks = allTasks.filter(t => t.assigned_to === profile.id);
-  const pendingTasks = myTasks.filter(t => t.status === 'pending' || t.status === 'in_progress');
-  const blockedTasks = myTasks.filter(t => t.status === 'blocked');
   const completedTasksCount = allTasks.filter(t => t.status === 'completed').length;
   const completionPercentage = allTasks.length > 0 ? Math.round((completedTasksCount / allTasks.length) * 100) : 0;
 
   return (
-    <div className="main-content">
-      <div className="dashboard-header">
-        <div>
-          <h1 style={{ fontSize: '36px', fontWeight: 700, color: '#fff' }}>Dashboard</h1>
-          <p style={{ color: '#9ca3af', fontSize: '14px', marginTop: '4px' }}>
-            Welcome back, <span style={{ color: '#3b82f6', fontWeight: 600 }}>{profile.full_name}</span>.
-          </p>
+    <div className="main-content" style={{ padding: 0, display: 'flex', flexDirection: 'column' }}>
+      {/* Top Header Space */}
+      <div className="dashboard-header-container">
+        <div className="dashboard-header-top">
+          <div className="welcome-section">
+            <h1 className="welcome-title">Dashboard</h1>
+            <p className="welcome-subtitle">
+              Welcome back, <span className="welcome-name">Azhaan Ali Siddiqui</span>.
+            </p>
+          </div>
         </div>
-        <button onClick={fetchData} className="btn btn-secondary" style={{ padding: '10px 16px' }}>
-          <RefreshCw size={16} /> Sync Details
-        </button>
       </div>
 
-      <div className="dashboard-grid">
-        {/* Personal Details Card */}
-        <div className="glass-card" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-          <div>
-            <h3 style={{ fontSize: '18px', display: 'flex', alignItems: 'center', gap: '8px', color: '#fff', marginBottom: '16px' }}>
-              <Code size={18} style={{ color: '#3b82f6' }} /> Profile Status
-            </h3>
-            <p style={{ fontSize: '14px', color: '#9ca3af' }}>Role: <strong style={{ color: '#fff' }}>{profile.primary_role}</strong></p>
-            <p style={{ fontSize: '14px', color: '#9ca3af', marginTop: '6px' }}>Level: <strong style={{ color: '#fff' }}>{profile.experience_level}</strong></p>
-            <div style={{ marginTop: '16px' }}>
-              <span style={{ fontSize: '12px', color: '#6b7280', fontWeight: 'bold' }}>TECH STACK:</span>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '8px' }}>
-                {profile.tech_stack?.map(tech => (
-                  <span key={tech} className="tag" style={{ background: 'rgba(255,255,255,0.05)', borderColor: 'rgba(255,255,255,0.08)' }}>
-                    {tech}
-                  </span>
-                ))}
-              </div>
+      {/* Modular Dashboard Grid */}
+      <div className="kairos-dashboard-grid">
+        
+        {/* Card 1: KAIROS Data Insights */}
+        <div className="kairos-col-left">
+          {/* Card 1a: Profile Status */}
+          <div className="kairos-card">
+            <div className="kairos-card-header">/// PROFILE_STATUS</div>
+            <div className="kairos-metric-large" style={{ fontSize: '20px', fontWeight: '700', marginTop: '8px' }}>
+              {profile?.primary_role || "Full Stack Developer"}
+            </div>
+            <div style={{ fontSize: '11px', color: '#6b7280', marginTop: '6px' }}>
+              LEVEL: <span style={{ color: '#ffffff', fontWeight: '600' }}>{(profile?.experience_level || "Intermediate").toUpperCase()}</span>
             </div>
           </div>
-        </div>
 
-        {/* Task Summary Card */}
-        <div className="glass-card">
-          <h3 style={{ fontSize: '18px', display: 'flex', alignItems: 'center', gap: '8px', color: '#fff', marginBottom: '16px' }}>
-            <CheckSquare size={18} style={{ color: '#10b981' }} /> Workspace Health
-          </h3>
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '16px' }}>
-            <div>
-              <div style={{ fontSize: '28px', fontWeight: '700', color: '#fff' }}>{allTasks.length}</div>
-              <div style={{ fontSize: '12px', color: '#9ca3af' }}>Total Tasks</div>
-            </div>
-            <div>
-              <div style={{ fontSize: '28px', fontWeight: '700', color: '#10b981' }}>{completedTasksCount}</div>
-              <div style={{ fontSize: '12px', color: '#9ca3af' }}>Completed</div>
-            </div>
-            <div>
-              <div style={{ fontSize: '28px', fontWeight: '700', color: '#ef4444' }}>{allBlockers.length}</div>
-              <div style={{ fontSize: '12px', color: '#9ca3af' }}>Active Blockers</div>
-            </div>
-          </div>
-          <div style={{ width: '100%', height: '8px', background: 'rgba(255,255,255,0.05)', borderRadius: '4px', overflow: 'hidden' }}>
-            <div style={{ width: `${completionPercentage}%`, height: '100%', background: 'linear-gradient(90deg, #3b82f6, #10b981)', borderRadius: '4px', transition: 'width 0.5s ease-out' }}></div>
-          </div>
-          <div style={{ fontSize: '12px', color: '#9ca3af', textAlign: 'right', marginTop: '8px' }}>
-            {completionPercentage}% Tasks Done
-          </div>
-        </div>
-
-        {/* Blocker Reminders Card */}
-        <div className="glass-card">
-          <h3 style={{ fontSize: '18px', display: 'flex', alignItems: 'center', gap: '8px', color: '#fff', marginBottom: '16px' }}>
-            <ShieldAlert size={18} style={{ color: '#ef4444' }} /> Reminders & Blockers
-          </h3>
-          {allBlockers.length === 0 ? (
-            <p style={{ color: '#9ca3af', fontSize: '14px' }}>All tasks are running smoothly! No open blockers.</p>
-          ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '150px', overflowY: 'auto' }}>
-              {allBlockers.map(b => (
-                <div key={b.id} style={{ display: 'flex', gap: '8px', alignItems: 'center', background: 'rgba(239, 68, 68, 0.08)', border: '1px solid rgba(239, 68, 68, 0.2)', padding: '10px', borderRadius: '6px' }}>
-                  <ShieldAlert size={16} style={{ color: '#ef4444', flexShrink: 0 }} />
-                  <span style={{ fontSize: '12px', color: '#f3f4f6' }}>{b.description}</span>
+          {/* Card 1b: Tech Stack tag cluster */}
+          <div className="kairos-card" style={{ flexGrow: 1 }}>
+            <div className="kairos-card-header">/// TECH_STACK</div>
+            <div style={{ 
+              display: 'grid', 
+              gridTemplateColumns: 'repeat(auto-fill, minmax(40px, 1fr))', 
+              gap: '10px',
+              marginTop: '12px'
+            }}>
+              {(profile?.tech_stack && profile.tech_stack.length > 0 ? profile.tech_stack : ["React", "FastAPI", "Python", "Docker", "Supabase"]).map(tech => (
+                <div 
+                  key={tech} 
+                  title={tech}
+                  style={{
+                    width: '40px',
+                    height: '40px',
+                    borderRadius: '8px',
+                    border: '1px solid rgba(255, 255, 255, 0.08)',
+                    background: 'rgba(255, 255, 255, 0.02)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    transition: 'all 0.2s ease',
+                    cursor: 'pointer',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.borderColor = 'rgba(236, 72, 153, 0.5)';
+                    e.currentTarget.style.boxShadow = '0 0 10px rgba(236, 72, 153, 0.3)';
+                    e.currentTarget.style.transform = 'translateY(-2px)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.08)';
+                    e.currentTarget.style.boxShadow = 'none';
+                    e.currentTarget.style.transform = 'translateY(0)';
+                  }}
+                >
+                  <img 
+                    src={getTechIconUrl(tech)} 
+                    alt={tech} 
+                    style={{ width: '22px', height: '22px', objectFit: 'contain' }}
+                    onError={(e) => {
+                      e.currentTarget.style.display = 'none';
+                      const parent = e.currentTarget.parentElement;
+                      if (parent && !parent.querySelector('.fallback-icon-text')) {
+                        const span = document.createElement('span');
+                        span.className = 'fallback-icon-text';
+                        span.style.fontSize = '10px';
+                        span.style.fontWeight = 'bold';
+                        span.style.fontFamily = 'monospace';
+                        span.style.color = '#ec4899';
+                        span.innerText = tech.slice(0, 2).toUpperCase();
+                        parent.appendChild(span);
+                      }
+                    }}
+                  />
                 </div>
               ))}
             </div>
-          )}
-        </div>
-      </div>
-
-      <div className="dashboard-grid" style={{ gridTemplateColumns: '2fr 1fr', marginTop: '24px' }}>
-        {/* Teams List */}
-        <div className="glass-card">
-          <h3 style={{ fontSize: '18px', display: 'flex', alignItems: 'center', gap: '8px', color: '#fff', marginBottom: '16px' }}>
-            <Users size={18} style={{ color: '#8b5cf6' }} /> Active Teams
-          </h3>
-          {teams.length === 0 ? (
-            <p style={{ color: '#9ca3af', fontSize: '14px' }}>You haven't created or joined any teams yet. Head over to the Teams page to get started!</p>
-          ) : (
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '14px' }}>
-              <thead>
-                <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', textAlign: 'left', color: '#6b7280' }}>
-                  <th style={{ padding: '12px 8px' }}>Team Name</th>
-                  <th style={{ padding: '12px 8px' }}>Code</th>
-                  <th style={{ padding: '12px 8px' }}>Members</th>
-                </tr>
-              </thead>
-              <tbody>
-                {teams.map(t => (
-                  <tr key={t.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.03)' }}>
-                    <td style={{ padding: '12px 8px', fontWeight: '600' }}>{t.name}</td>
-                    <td style={{ padding: '12px 8px', color: '#8b5cf6', fontFamily: 'monospace', fontWeight: 'bold' }}>{t.code}</td>
-                    <td style={{ padding: '12px 8px' }}>{t.members.length} member(s)</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-        </div>
-
-        {/* Ongoing Hackathons */}
-        <div className="glass-card">
-          <h3 style={{ fontSize: '18px', display: 'flex', alignItems: 'center', gap: '8px', color: '#fff', marginBottom: '16px' }}>
-            <Calendar size={18} style={{ color: '#ec4899' }} /> Ongoing Hackathons
-          </h3>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            {ongoingHackathons.map(h => (
-              <div key={h.id} style={{ padding: '12px', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '8px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <strong style={{ fontSize: '13px', color: '#fff' }}>{h.name}</strong>
-                  <span style={{ fontSize: '10px', color: '#ec4899', background: 'rgba(236,72,153,0.1)', padding: '2px 6px', borderRadius: '4px', fontWeight: 'bold' }}>
-                    {h.prize}
-                  </span>
-                </div>
-                <div style={{ fontSize: '11px', color: '#6b7280', marginTop: '6px' }}>{h.date}</div>
-              </div>
-            ))}
           </div>
         </div>
+
+        {/* Card 2: Workspace Health */}
+        <div className="kairos-card" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+          <div className="kairos-card-header">/// WORKSPACE_HEALTH</div>
+          
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', flexGrow: 1, justifyContent: 'center' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+              <div style={{ fontSize: '28px', fontWeight: '700', color: '#ffffff', fontFamily: 'monospace', minWidth: '40px' }}>
+                {allTasks.length}
+              </div>
+              <div style={{ fontSize: '11px', color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Total Tasks</div>
+            </div>
+            
+            <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+              <div style={{ fontSize: '28px', fontWeight: '700', color: '#00FF66', fontFamily: 'monospace', minWidth: '40px', textShadow: '0 0 10px rgba(0, 255, 102, 0.4)' }}>
+                {completedTasksCount}
+              </div>
+              <div style={{ fontSize: '11px', color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Completed</div>
+            </div>
+            
+            <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+              <div 
+                style={{ 
+                  fontSize: '28px', 
+                  fontWeight: '700', 
+                  fontFamily: 'monospace', 
+                  minWidth: '40px',
+                  color: allBlockers.length === 0 ? '#00FF66' : '#ec4899', 
+                  textShadow: allBlockers.length === 0 ? '0 0 10px rgba(0, 255, 102, 0.3)' : '0 0 10px rgba(236, 72, 153, 0.3)'
+                }}
+              >
+                {allBlockers.length}
+              </div>
+              <div style={{ fontSize: '11px', color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Active Blockers</div>
+            </div>
+          </div>
+          
+          <div style={{ marginTop: '16px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '11px' }}>
+              <span style={{ color: '#9ca3af' }}>TASK PROGRESS</span>
+              <span style={{ color: '#ffffff', fontWeight: 'bold' }}>{completionPercentage}% Done</span>
+            </div>
+            <div className="progress-bar-container-kairos">
+              <div 
+                className="progress-bar-fill-kairos" 
+                style={{ width: `${completionPercentage}%` }}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Card 3: Active Teams */}
+        <div className="kairos-card" style={{ display: 'flex', flexDirection: 'column' }}>
+          <div className="kairos-card-header">/// ACTIVE_TEAMS</div>
+          <div style={{ flexGrow: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+            {teams.length === 0 ? (
+              <p style={{ color: '#9ca3af', fontSize: '12px', lineHeight: '1.6' }}>
+                You haven't created or joined any teams yet... head to the Teams page.
+              </p>
+            ) : (
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                {teams.slice(0, 4).map(t => (
+                  <div key={t.id} style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', padding: '10px', borderRadius: '8px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', minHeight: '80px' }}>
+                    <div>
+                      <div style={{ fontSize: '12px', fontWeight: '700', color: '#ffffff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {t.name}
+                      </div>
+                      <div style={{ fontSize: '10px', fontFamily: 'monospace', color: '#8b5cf6', marginTop: '2px', fontWeight: 'bold' }}>
+                        {t.code}
+                      </div>
+                    </div>
+                    <div style={{ fontSize: '10px', color: '#6b7280', marginTop: '8px' }}>
+                      {t.members.length} member{t.members.length !== 1 ? 's' : ''}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Bottom row span cards */}
+        <div className="kairos-row-bottom">
+          
+          {/* Card 4: System-Level Insights / Kernel Decisions */}
+          <div className="kairos-card kairos-card-velvet" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', minHeight: '180px' }}>
+            <div>
+              <div className="kairos-card-header">/// KERNEL_DECISIONS</div>
+              <p style={{ color: '#ffffff', fontSize: '13px', lineHeight: '1.6', marginTop: '8px' }}>
+                All tasks are running smoothly. No open blockers.
+              </p>
+            </div>
+            <div style={{ marginTop: '16px' }}>
+              <button onClick={fetchData} className="btn-kairos-action" style={{ width: '100%' }}>
+                RE-INITIALIZE SEQUENCE
+              </button>
+            </div>
+          </div>
+
+          {/* Card 5: Ongoing Hackathons */}
+          <div className="kairos-card" style={{ position: 'relative', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', overflow: 'hidden', minHeight: '180px' }}>
+            <div style={{ position: 'relative', zIndex: 2 }}>
+              <div className="kairos-card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span>/// ONGOING_HACKATHONS</span>
+                <span style={{ fontSize: '9px', color: '#6b7280', fontFamily: 'monospace' }}>ACTIVE FEED: 3</span>
+              </div>
+              
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '8px' }}>
+                {ongoingHackathons.map(h => (
+                  <div key={h.id} className="hackathon-list-item">
+                    <div>
+                      <div style={{ fontSize: '13px', fontWeight: '700', color: '#ffffff' }}>
+                        {h.name}
+                      </div>
+                      <div style={{ fontSize: '10px', color: '#6b7280', marginTop: '2px' }}>
+                        {h.date}
+                      </div>
+                    </div>
+                    <div>
+                      <span style={{ fontSize: '10px', color: '#ec4899', border: '1px solid rgba(236,72,153,0.3)', background: 'rgba(236,72,153,0.1)', padding: '2px 8px', borderRadius: '4px', fontWeight: 'bold', fontFamily: 'monospace' }}>
+                        {h.prize}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+        </div>
+
       </div>
     </div>
   );

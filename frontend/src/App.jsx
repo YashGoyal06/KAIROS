@@ -36,9 +36,9 @@ const ProtectedRouteOnboarding = ({ children }) => {
 };
 
 const MainLayout = ({ children }) => (
-  <div className="app-container">
+  <div className="app-container-full">
     <Sidebar />
-    <div style={{ flexGrow: 1, height: '100%', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+    <div className="app-content-wrapper-full">
       {children}
     </div>
   </div>
