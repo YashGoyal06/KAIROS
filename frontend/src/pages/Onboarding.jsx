@@ -77,7 +77,7 @@ export default function Onboarding() {
         <h2 style={{ fontFamily: 'Outfit', fontSize: '32px', marginBottom: '8px', color: '#fff' }}>
           Create Your Profile
         </h2>
-        <p style={{ color: var => 'var(--text-secondary)', marginBottom: '32px', fontSize: '14px' }}>
+        <p style={{ color: 'var(--text-secondary)', marginBottom: '32px', fontSize: '14px' }}>
           Setup your profile details so KAIROS can align roadmaps, coordinate teams, and delegate tasks to your skills.
         </p>
 

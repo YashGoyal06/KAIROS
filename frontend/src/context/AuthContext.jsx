@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import axios from 'axios';
-import { supabase } from '../api/supabase';
+import { supabase, supabaseConfigured } from '../api/supabase';
 
 const AuthContext = createContext({});
 
@@ -12,11 +12,15 @@ export const AuthProvider = ({ children }) => {
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Read backend base URL from env
   const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:8000/api/v1';
 
   useEffect(() => {
-    // Get current session
+    // If Supabase is not configured, skip auth setup and just mark loading done
+    if (!supabaseConfigured || !supabase) {
+      setLoading(false);
+      return;
+    }
+
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
@@ -27,7 +31,6 @@ export const AuthProvider = ({ children }) => {
       }
     });
 
-    // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
       setUser(session?.user ?? null);
@@ -48,7 +51,6 @@ export const AuthProvider = ({ children }) => {
       setProfile(res.data);
     } catch (err) {
       if (err.response && err.response.status === 404) {
-        // No profile exists yet
         setProfile(null);
       } else {
         console.error('Error fetching profile:', err);
@@ -59,29 +61,34 @@ export const AuthProvider = ({ children }) => {
   };
 
   const loginWithGoogle = async () => {
+    if (!supabase) {
+      alert('Supabase is not configured yet. Please add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY to your frontend/.env file.');
+      return;
+    }
     await supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: {
-        redirectTo: window.location.origin
-      }
+      options: { redirectTo: window.location.origin }
     });
   };
 
   const logout = async () => {
-    await supabase.auth.signOut();
+    if (supabase) await supabase.auth.signOut();
     setProfile(null);
     setUser(null);
     setSession(null);
   };
 
   const refreshProfile = async () => {
-    if (user) {
-      await fetchProfile(user.id);
-    }
+    if (user) await fetchProfile(user.id);
   };
 
   return (
-    <AuthContext.Provider value={{ user, session, profile, loading, loginWithGoogle, logout, refreshProfile, API_BASE }}>
+    <AuthContext.Provider value={{
+      user, session, profile, loading,
+      loginWithGoogle, logout, refreshProfile,
+      API_BASE,
+      supabaseConfigured
+    }}>
       {children}
     </AuthContext.Provider>
   );

@@ -1,10 +1,10 @@
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Play } from 'lucide-react';
+import { Play, AlertTriangle } from 'lucide-react';
 
 export default function Landing() {
-  const { user, profile, loginWithGoogle, loading } = useAuth();
+  const { user, profile, loginWithGoogle, loading, supabaseConfigured } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -85,6 +85,36 @@ export default function Landing() {
         >
           <Play size={18} /> Sign In with Google
         </button>
+
+        {!supabaseConfigured && (
+          <div style={{
+            marginTop: '24px',
+            padding: '14px 20px',
+            background: 'rgba(245, 158, 11, 0.08)',
+            border: '1px solid rgba(245, 158, 11, 0.35)',
+            borderRadius: '10px',
+            display: 'flex',
+            alignItems: 'flex-start',
+            gap: '10px',
+            maxWidth: '520px',
+            marginLeft: 'auto',
+            marginRight: 'auto',
+            textAlign: 'left'
+          }}>
+            <AlertTriangle size={18} style={{ color: '#f59e0b', flexShrink: 0, marginTop: '2px' }} />
+            <div>
+              <div style={{ color: '#fbbf24', fontWeight: '600', fontSize: '13px', marginBottom: '4px' }}>
+                Supabase not configured
+              </div>
+              <div style={{ color: '#9ca3af', fontSize: '12px', lineHeight: '1.6' }}>
+                Add your credentials to <code style={{ color: '#f59e0b', background: 'rgba(0,0,0,0.3)', padding: '1px 5px', borderRadius: '3px' }}>frontend/.env</code>:
+                <br />
+                <code style={{ color: '#34d399', fontSize: '11px' }}>VITE_SUPABASE_URL</code> and <code style={{ color: '#34d399', fontSize: '11px' }}>VITE_SUPABASE_ANON_KEY</code>
+              </div>
+            </div>
+          </div>
+        )}
+
       </div>
     </div>
   );
