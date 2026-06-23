@@ -11,120 +11,70 @@ import Tasks from './pages/Tasks';
 import Pitch from './pages/Pitch';
 import Profile from './pages/Profile';
 
-// Route guards
+const Loader = () => (
+  <div style={{ display: 'flex', height: '100vh', width: '100vw', justifyContent: 'center', alignItems: 'center', backgroundColor: '#08090c' }}>
+    <div style={{ fontFamily: 'Outfit', fontSize: '24px', color: '#8b5cf6' }}>●</div>
+  </div>
+);
+
+// Route guard for authenticated + profiled users
 const ProtectedRoute = ({ children }) => {
   const { user, profile, loading } = useAuth();
-
-  if (loading) {
-    return (
-      <div style={{ display: 'flex', height: '100vh', width: '100vw', justifyContent: 'center', alignItems: 'center', backgroundColor: '#08090c' }}>
-        <div style={{ fontFamily: 'Outfit', fontSize: '24px', letterSpacing: '0.1em', animation: 'spinSlow 2s linear infinite' }}>●</div>
-      </div>
-    );
-  }
-
-  if (!user) {
-    return <Navigate to="/" replace />;
-  }
-
-  if (!profile) {
-    return <Navigate to="/onboarding" replace />;
-  }
-
+  if (loading) return <Loader />;
+  if (!user) return <Navigate to="/" replace />;
+  if (!profile) return <Navigate to="/onboarding" replace />;
   return children;
 };
 
-const MainLayout = ({ children }) => {
-  return (
-    <div className="app-container">
-      <Sidebar />
-      <div style={{ flexGrow: 1, height: '100%', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-        {children}
-      </div>
-    </div>
-  );
+// Route guard for onboarding (authenticated but no profile yet)
+const ProtectedRouteOnboarding = ({ children }) => {
+  const { user, profile, loading } = useAuth();
+  if (loading) return <Loader />;
+  if (!user) return <Navigate to="/" replace />;
+  if (profile) return <Navigate to="/dashboard" replace />;
+  return children;
 };
+
+const MainLayout = ({ children }) => (
+  <div className="app-container">
+    <Sidebar />
+    <div style={{ flexGrow: 1, height: '100%', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+      {children}
+    </div>
+  </div>
+);
 
 function AppContent() {
   return (
     <Router>
       <Routes>
-        {/* Public Landing Page */}
         <Route path="/" element={<Landing />} />
-        
-        {/* Onboarding Page (Required for new authenticated users) */}
         <Route path="/onboarding" element={
-          <ProtectedRouteOnboarding>
-            <Onboarding />
-          </ProtectedRouteOnboarding>
+          <ProtectedRouteOnboarding><Onboarding /></ProtectedRouteOnboarding>
         } />
-
-        {/* Protected Dashboard Workspace */}
         <Route path="/dashboard" element={
-          <ProtectedRoute>
-            <MainLayout><Dashboard /></MainLayout>
-          </ProtectedRoute>
+          <ProtectedRoute><MainLayout><Dashboard /></MainLayout></ProtectedRoute>
         } />
-
         <Route path="/teams" element={
-          <ProtectedRoute>
-            <MainLayout><Teams /></MainLayout>
-          </ProtectedRoute>
+          <ProtectedRoute><MainLayout><Teams /></MainLayout></ProtectedRoute>
         } />
-
         <Route path="/coach" element={
-          <ProtectedRoute>
-            <MainLayout><Coach /></MainLayout>
-          </ProtectedRoute>
+          <ProtectedRoute><MainLayout><Coach /></MainLayout></ProtectedRoute>
         } />
-
         <Route path="/tasks" element={
-          <ProtectedRoute>
-            <MainLayout><Tasks /></MainLayout>
-          </ProtectedRoute>
+          <ProtectedRoute><MainLayout><Tasks /></MainLayout></ProtectedRoute>
         } />
-
         <Route path="/pitch" element={
-          <ProtectedRoute>
-            <MainLayout><Pitch /></MainLayout>
-          </ProtectedRoute>
+          <ProtectedRoute><MainLayout><Pitch /></MainLayout></ProtectedRoute>
         } />
-
         <Route path="/profile" element={
-          <ProtectedRoute>
-            <MainLayout><Profile /></MainLayout>
-          </ProtectedRoute>
+          <ProtectedRoute><MainLayout><Profile /></MainLayout></ProtectedRoute>
         } />
-
-        {/* Catch-all fallback */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Router>
   );
 }
-
-// Special guard for onboarding
-const ProtectedRouteOnboarding = ({ children }) => {
-  const { user, profile, loading } = useAuth();
-
-  if (loading) {
-    return (
-      <div style={{ display: 'flex', height: '100vh', width: '100vw', justifyContent: 'center', alignItems: 'center', backgroundColor: '#08090c' }}>
-        <div style={{ fontFamily: 'Outfit', fontSize: '24px', letterSpacing: '0.1em', animation: 'spinSlow 2s linear infinite' }}>●</div>
-      </div>
-    );
-  }
-
-  if (!user) {
-    return <Navigate to="/" replace />;
-  }
-
-  if (profile) {
-    return <Navigate to="/dashboard" replace />;
-  }
-
-  return children;
-};
 
 export default function App() {
   return (

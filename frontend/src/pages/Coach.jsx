@@ -340,7 +340,7 @@ export default function Coach() {
               </div>
             ) : (
               sessions.map(s => (
-                <div key={s.id} className="glass-card" style={{ display: 'flex', flexDirection: 'column', justifyBetween: 'space-between', minHeight: '180px' }}>
+                <div key={s.id} className="glass-card" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', minHeight: '180px' }}>
                   <div>
                     <h3 style={{ color: '#fff', fontSize: '18px', marginBottom: '8px' }}>{s.name}</h3>
                     <p style={{ fontSize: '12px', color: '#6b7280', textTransform: 'uppercase', fontWeight: 'bold' }}>

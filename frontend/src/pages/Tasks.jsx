@@ -204,7 +204,7 @@ export default function Tasks() {
 
             {/* Manual Task Injection */}
             {activeSession && activeSession.creator_id === profile.id && (
-              <div className="glass-card" style={{ display: 'flex', flexDirection: 'column', justifyBetween: 'space-between' }}>
+              <div className="glass-card" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
                 {!showAddForm ? (
                   <button onClick={() => setShowAddForm(true)} className="btn btn-secondary" style={{ width: '100%' }}>
                     + Create Custom Task

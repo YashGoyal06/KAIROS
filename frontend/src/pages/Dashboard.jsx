@@ -92,7 +92,7 @@ export default function Dashboard() {
 
       <div className="dashboard-grid">
         {/* Personal Details Card */}
-        <div className="glass-card" style={{ display: 'flex', flexDirection: 'column', justifyBetween: 'space-between' }}>
+        <div className="glass-card" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
           <div>
             <h3 style={{ fontSize: '18px', display: 'flex', alignItems: 'center', gap: '8px', color: '#fff', marginBottom: '16px' }}>
               <Code size={18} style={{ color: '#3b82f6' }} /> Profile Status
