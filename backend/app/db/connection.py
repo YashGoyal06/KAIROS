@@ -17,6 +17,8 @@ engine = create_async_engine(
     DATABASE_URL,
     echo=False,
     future=True,
+    # Disable statement caching for pgBouncer / transaction poolers compatibility
+    connect_args={"statement_cache_size": 0} if "sqlite" not in DATABASE_URL else {},
     # Sqlite does not support pool_size, check if postgres
     **({"pool_size": 20, "max_overflow": 10} if "sqlite" not in DATABASE_URL else {})
 )

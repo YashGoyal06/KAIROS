@@ -29,16 +29,17 @@ export default function Pitch() {
     }
   };
 
-  const fetchSessionDetails = async () => {
+  const fetchSessionDetails = async (forceOverwrite = false) => {
     if (!activeSessionId) return;
     try {
       const res = await axios.get(`${API_BASE}/sessions/${activeSessionId}`);
       setActiveSession(res.data);
       if (res.data.pitch_outline && res.data.pitch_outline.full_raw) {
         setPitchText(res.data.pitch_outline.full_raw);
-      } else {
+      } else if (forceOverwrite) {
         setPitchText('');
       }
+      // If not forceOverwrite, keep existing pitchText intact
     } catch (e) {
       console.error("Error loading pitch outline details:", e);
     }
@@ -49,7 +50,7 @@ export default function Pitch() {
   }, [profile]);
 
   useEffect(() => {
-    fetchSessionDetails();
+    fetchSessionDetails(true);
   }, [activeSessionId]);
 
   const handleGeneratePitch = async (customInstruction = '') => {
@@ -58,7 +59,7 @@ export default function Pitch() {
     setPitchText('');
     
     try {
-      const response = await fetch(`${API_BASE}/sessions/${activeSessionId}/pitch?model_preference=claude`, {
+      const response = await fetch(`${API_BASE}/sessions/${activeSessionId}/pitch?model_preference=gemini`, {
         method: 'POST'
       });
 
@@ -91,11 +92,15 @@ export default function Pitch() {
       }
 
       // Save generated pitch outline to database
-      await axios.put(`${API_BASE}/sessions/${activeSessionId}/pitch`, {
-        pitch_outline: { full_raw: rawText }
-      });
+      try {
+        await axios.put(`${API_BASE}/sessions/${activeSessionId}/pitch`, {
+          pitch_outline: { full_raw: rawText }
+        });
+      } catch (saveErr) {
+        console.error('Error saving pitch to DB:', saveErr);
+      }
       setIsGenerating(false);
-      fetchSessionDetails();
+      // Don't call fetchSessionDetails - keep the streamed text as-is
 
     } catch (err) {
       console.error("Error generating pitch:", err);
@@ -146,11 +151,15 @@ export default function Pitch() {
       }
 
       // Save back to DB
-      await axios.put(`${API_BASE}/sessions/${activeSessionId}/pitch`, {
-        pitch_outline: { full_raw: rawText }
-      });
+      try {
+        await axios.put(`${API_BASE}/sessions/${activeSessionId}/pitch`, {
+          pitch_outline: { full_raw: rawText }
+        });
+      } catch (saveErr) {
+        console.error('Error saving pitch to DB:', saveErr);
+      }
       setIsGenerating(false);
-      fetchSessionDetails();
+      // Don't call fetchSessionDetails - keep the streamed text as-is
 
     } catch (err) {
       console.error("Error updating pitch:", err);

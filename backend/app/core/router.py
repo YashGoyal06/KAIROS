@@ -93,7 +93,7 @@ class MultiModelRouter:
             
         # Combine system prompt with prompt for Gemini
         full_prompt = f"{system_prompt}\n\nUser Request:\n{prompt}"
-        model = genai.GenerativeModel("gemini-1.5-flash")
+        model = genai.GenerativeModel("gemini-2.5-flash")
         
         # Execute run in threadpool/async wrapper for streaming
         response = await model.generate_content_async(full_prompt, stream=True)
@@ -105,15 +105,20 @@ class MultiModelRouter:
         # Fallback to a solid open-source instruction model
         model_name = "Qwen/Qwen2.5-72B-Instruct"
         
-        full_prompt = f"<|im_start|>system\n{system_prompt}<|im_end|>\n<|im_start|>user\n{prompt}<|im_end|>\n<|im_start|>assistant\n"
+        messages = [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": prompt}
+        ]
         
-        # AsyncInferenceClient text_generation in streaming mode
-        stream = await self.hf_client.text_generation(
-            prompt=full_prompt,
+        # AsyncInferenceClient chat_completion in streaming mode
+        stream = await self.hf_client.chat_completion(
             model=model_name,
-            max_new_tokens=2048,
+            messages=messages,
+            max_tokens=2048,
             stream=True
         )
         
-        async for token in stream:
-            yield f"data: {json.dumps({'type': 'text_delta', 'content': token})}\n\n"
+        async for chunk in stream:
+            token = chunk.choices[0].delta.content
+            if token:
+                yield f"data: {json.dumps({'type': 'text_delta', 'content': token})}\n\n"
