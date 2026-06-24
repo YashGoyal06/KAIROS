@@ -1,119 +1,100 @@
-import React, { useEffect } from 'react';
+import React, { useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Play, AlertTriangle } from 'lucide-react';
+import InfiniteArchitecture from '../components/InfiniteArchitecture';
 
 export default function Landing() {
-  const { user, profile, loginWithGoogle, loading, supabaseConfigured } = useAuth();
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const btnRef = useRef(null);
 
-  useEffect(() => {
-    if (!loading && user) {
-      if (profile) {
-        navigate('/dashboard');
-      } else {
-        navigate('/onboarding');
-      }
+  // Spotlight button logic
+  const handleMouseMove = (e) => {
+    if (btnRef.current) {
+      const rect = btnRef.current.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      btnRef.current.style.setProperty('--x', `${x}px`);
+      btnRef.current.style.setProperty('--y', `${y}px`);
     }
-  }, [user, profile, loading, navigate]);
-
-  if (loading) {
-    return (
-      <div style={{ display: 'flex', height: '100vh', justifyContent: 'center', alignItems: 'center', backgroundColor: '#08090c' }}>
-        <div style={{ fontFamily: 'Outfit', fontSize: '24px', letterSpacing: '0.1em', animation: 'spinSlow 2s linear infinite' }}>●</div>
-      </div>
-    );
-  }
+  };
 
   return (
-    <div style={{
-      display: 'flex',
-      flexDirection: 'column',
-      minHeight: '100vh',
-      width: '100vw',
-      justifyContent: 'center',
-      alignItems: 'center',
-      padding: '40px 20px',
-      background: 'radial-gradient(circle at 50% 30%, rgba(139, 92, 246, 0.15) 0%, rgba(8, 9, 12, 1) 70%)',
-      textAlign: 'center'
-    }}>
+    <div style={{ position: 'relative', width: '100%', height: '100vh', overflow: 'hidden', background: '#050505' }}>
+
+      {/* ══════════════════════════════════════════════════════════════
+          THE INFINITE CORRIDOR BACKGROUND (Z: 0)
+          ══════════════════════════════════════════════════════════════ */}
+      <InfiniteArchitecture />
+
+      {/* ══════════════════════════════════════════════════════════════
+          CINEMATIC OVERLAYS (Z: 5)
+          ══════════════════════════════════════════════════════════════ */}
+      <div className="film-grain" style={{ opacity: 0.1, zIndex: 5 }} />
+
+      {/* Removed the vignette overlay entirely so it doesn't cover the fluid on the edges */}
       <div style={{
-        maxWidth: '800px',
-        animation: 'fadeIn 0.8s ease-out'
+        position: 'absolute', top: 0, left: 0, width: '100%', height: '100%',
+        zIndex: 5,
+        pointerEvents: 'none'
+      }} />
+
+      {/* ══════════════════════════════════════════════════════════════
+          FOREGROUND UI (Z: 10) - PERFECTLY CENTERED VANISHING POINT
+          ══════════════════════════════════════════════════════════════ */}
+      <div style={{
+        position: 'relative',
+        zIndex: 10,
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center', // Perfect center to align with the 3D corridor
+        pointerEvents: 'none' // Extremely important: lets mouse events pass through to the 3D Canvas!
       }}>
-        <div style={{
-          fontFamily: 'Outfit',
-          fontSize: '64px',
-          fontWeight: 800,
-          background: 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 50%, #ec4899 100%)',
-          WebkitBackgroundClip: 'text',
-          WebkitTextFillColor: 'transparent',
-          marginBottom: '16px',
-          letterSpacing: '-0.03em'
-        }}>
-          KAIROS
-        </div>
-        <p style={{
-          fontFamily: 'Outfit',
-          fontSize: '24px',
-          color: '#f3f4f6',
-          marginBottom: '24px',
-          fontWeight: 400
-        }}>
-          Your Intelligent Hackathon Co-Founder & Execution Engine
-        </p>
-        <p style={{
-          fontFamily: 'Plus Jakarta Sans',
-          fontSize: '16px',
-          color: '#9ca3af',
-          lineHeight: '1.7',
-          marginBottom: '40px',
-          maxWidth: '600px',
-          marginRight: 'auto',
-          marginLeft: 'auto'
-        }}>
-          Translate raw ideas into scoped roadmaps, synchronize member profiles, track dependency blockers in real-time, and auto-generate pitch decks configured to win.
-        </p>
-        <button
-          onClick={loginWithGoogle}
-          className="btn btn-primary"
+
+        {/* Extreme Contrast Micro-label */}
+        <div
+          className="geist-micro"
           style={{
-            fontSize: '16px',
-            padding: '16px 36px',
-            borderRadius: '30px'
+            marginBottom: '40px',
+            background: 'rgba(2,2,2,0.8)',
+            padding: '8px 24px',
+            backdropFilter: 'blur(12px)',
+            border: '1px solid rgba(255,255,255,0.05)',
+            textShadow: '0 2px 10px rgba(0,0,0,0.5)',
+            letterSpacing: '0.2em'
           }}
         >
-          <Play size={18} /> Sign In with Google
-        </button>
+          ORCHESTRATION_KERNEL_ONLINE // V2.0
+        </div>
 
-        {!supabaseConfigured && (
-          <div style={{
-            marginTop: '24px',
-            padding: '14px 20px',
-            background: 'rgba(245, 158, 11, 0.08)',
-            border: '1px solid rgba(245, 158, 11, 0.35)',
-            borderRadius: '10px',
-            display: 'flex',
-            alignItems: 'flex-start',
-            gap: '10px',
-            maxWidth: '520px',
-            marginLeft: 'auto',
-            marginRight: 'auto',
-            textAlign: 'left'
-          }}>
-            <AlertTriangle size={18} style={{ color: '#f59e0b', flexShrink: 0, marginTop: '2px' }} />
-            <div>
-              <div style={{ color: '#fbbf24', fontWeight: '600', fontSize: '13px', marginBottom: '4px' }}>
-                Supabase not configured
-              </div>
-              <div style={{ color: '#9ca3af', fontSize: '12px', lineHeight: '1.6' }}>
-                Add your credentials to <code style={{ color: '#f59e0b', background: 'rgba(0,0,0,0.3)', padding: '1px 5px', borderRadius: '3px' }}>frontend/.env</code>:
-                <br />
-                <code style={{ color: '#34d399', fontSize: '11px' }}>VITE_SUPABASE_URL</code> and <code style={{ color: '#34d399', fontSize: '11px' }}>VITE_SUPABASE_ANON_KEY</code>
-              </div>
-            </div>
-          </div>
-        )}
+        {/* Massive Brand Typograhpy */}
+        <h1
+          className="geist-heading"
+          style={{
+            color: '#ffffff',
+            fontSize: '8rem', // Massive, but slightly scaled down from the monolith to fit the tunnel
+            textShadow: '0 40px 80px rgba(0,0,0,1)',
+            marginBottom: '40px',
+            lineHeight: 0.8,
+            letterSpacing: '-0.04em'
+          }}
+        >
+          KAIROS
+        </h1>
+
+        {/* Cursor-Tracked Spotlight CTA */}
+        <button
+          ref={btnRef}
+          className="btn-spotlight"
+          onMouseMove={handleMouseMove}
+          onClick={() => navigate(user ? '/dashboard' : '/onboarding')}
+          style={{ pointerEvents: 'auto' }} // Re-enable pointer events just for the button
+        >
+          {user ? 'A c c e s s' : 'I n i t i a t e'}
+          <div className="btn-spotlight-glow" />
+        </button>
 
       </div>
     </div>
