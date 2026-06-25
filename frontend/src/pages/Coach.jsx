@@ -32,8 +32,11 @@ export default function Coach() {
   const chatEndRef = useRef(null);
 
   const fetchSessions = async () => {
+    if (!profile) return;
     try {
-      const res = await axios.get(`${API_BASE}/sessions`);
+      const res = await axios.get(`${API_BASE}/sessions`, {
+        params: { profile_id: profile.id }
+      });
       setSessions(res.data);
     } catch (e) {
       console.error("Error loading sessions:", e);

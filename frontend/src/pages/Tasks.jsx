@@ -25,8 +25,11 @@ export default function Tasks() {
   const [newMilestoneId, setNewMilestoneId] = useState('phase_1');
 
   const fetchSessions = async () => {
+    if (!profile) return;
     try {
-      const res = await axios.get(`${API_BASE}/sessions`);
+      const res = await axios.get(`${API_BASE}/sessions`, {
+        params: { profile_id: profile.id }
+      });
       // Only show sessions that are in execution or completed phase
       const execSessions = res.data.filter(s => s.status === 'execution' || s.status === 'completed');
       setSessions(execSessions);

@@ -9,7 +9,7 @@ from sqlalchemy.orm import selectinload
 from pydantic import BaseModel
 from typing import List, Optional
 from backend.app.db.connection import get_db
-from backend.app.db.models import Session, Profile, Team, Task, Blocker
+from backend.app.db.models import Session, Profile, Team, Task, Blocker, TeamMember
 from backend.app.core.parser import parse_document
 from backend.app.agents.coach import CoachAgent
 
@@ -76,8 +76,24 @@ async def create_session(data: SessionCreateSchema, db: AsyncSession = Depends(g
     )
 
 @router.get("", response_model=List[SessionResponseSchema])
-async def list_sessions(db: AsyncSession = Depends(get_db)):
-    result = await db.execute(select(Session).order_by(Session.created_at.desc()))
+async def list_sessions(profile_id: Optional[uuid.UUID] = None, db: AsyncSession = Depends(get_db)):
+    if profile_id:
+        # Fetch team memberships for this profile
+        team_memberships_res = await db.execute(
+            select(TeamMember.team_id).where(TeamMember.profile_id == profile_id)
+        )
+        team_ids = team_memberships_res.scalars().all()
+        
+        from sqlalchemy import or_
+        conditions = [Session.creator_id == profile_id]
+        if team_ids:
+            conditions.append(Session.team_id.in_(team_ids))
+        
+        query = select(Session).where(or_(*conditions)).order_by(Session.created_at.desc())
+        result = await db.execute(query)
+    else:
+        result = await db.execute(select(Session).order_by(Session.created_at.desc()))
+        
     sessions = result.scalars().all()
     return [
         SessionResponseSchema(

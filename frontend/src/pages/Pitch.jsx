@@ -16,8 +16,11 @@ export default function Pitch() {
   const [inputText, setInputText] = useState('');
 
   const fetchSessions = async () => {
+    if (!profile) return;
     try {
-      const res = await axios.get(`${API_BASE}/sessions`);
+      const res = await axios.get(`${API_BASE}/sessions`, {
+        params: { profile_id: profile.id }
+      });
       // Only sessions in execution or completed can generate pitch
       const planSessions = res.data.filter(s => s.status === 'execution' || s.status === 'completed');
       setSessions(planSessions);
