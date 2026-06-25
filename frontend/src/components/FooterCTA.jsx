@@ -1,8 +1,10 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
 export default function FooterCTA() {
   const navigate = useNavigate();
+  const { user, loginWithGoogle } = useAuth();
 
   return (
     <footer style={{
@@ -25,7 +27,7 @@ export default function FooterCTA() {
           Initialize your architecture with the KAIROS kernel today.
         </p>
         <button
-          onClick={() => navigate('/onboarding')}
+          onClick={() => user ? navigate('/dashboard') : loginWithGoogle()}
           style={{
             background: 'transparent',
             color: '#C679A8',
