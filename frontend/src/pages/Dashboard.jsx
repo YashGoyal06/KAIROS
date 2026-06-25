@@ -13,12 +13,7 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [activeFilter, setActiveFilter] = useState('telemetry');
 
-  // Predefined Ongoing Hackathons
-  const ongoingHackathons = [
-    { id: 1, name: "Google GSOC Hackathon 2026", date: "June 20 - July 18, 2026", prize: "$50,000 Pool" },
-    { id: 2, name: "Supabase open source Challenge", date: "July 01 - July 15, 2026", prize: "Developer Grants" },
-    { id: 3, name: "Global Gemini GenAI hackathon", date: "August 10 - August 25, 2026", prize: "Cloud Credits" }
-  ];
+
 
   const fetchData = async () => {
     if (!profile) return;
@@ -266,32 +261,58 @@ export default function Dashboard() {
             </div>
           </div>
 
-          {/* Card 5: Ongoing Hackathons */}
+          {/* Card 5: Active Hackathons */}
           <div className="kairos-card" style={{ position: 'relative', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', overflow: 'hidden', minHeight: '180px' }}>
             <div style={{ position: 'relative', zIndex: 2 }}>
               <div className="kairos-card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span>/// ONGOING_HACKATHONS</span>
-                <span style={{ fontSize: '9px', color: '#6b7280', fontFamily: 'monospace' }}>ACTIVE FEED: 3</span>
+                <span>/// ACTIVE_HACKATHONS</span>
+                <span style={{ fontSize: '9px', color: '#6b7280', fontFamily: 'monospace' }}>ACTIVE FEED: {sessions.length}</span>
               </div>
               
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '8px' }}>
-                {ongoingHackathons.map(h => (
-                  <div key={h.id} className="hackathon-list-item">
-                    <div>
-                      <div style={{ fontSize: '13px', fontWeight: '700', color: '#ffffff' }}>
-                        {h.name}
+                {sessions.length === 0 ? (
+                  <p style={{ color: '#9ca3af', fontSize: '12px', marginTop: '8px' }}>No active hackathons / sessions found.</p>
+                ) : (
+                  sessions.map(s => {
+                    let dateStr = "Started recently";
+                    try {
+                      if (s.created_at) {
+                        const date = new Date(s.created_at);
+                        if (!isNaN(date)) {
+                          dateStr = date.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+                        }
+                      }
+                    } catch (e) {}
+
+                    return (
+                      <div key={s.id} className="hackathon-list-item" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div>
+                          <div style={{ fontSize: '13px', fontWeight: '700', color: '#ffffff' }}>
+                            {s.name}
+                          </div>
+                          <div style={{ fontSize: '10px', color: '#6b7280', marginTop: '2px' }}>
+                            Created: {dateStr}
+                          </div>
+                        </div>
+                        <div>
+                          <span style={{ 
+                            fontSize: '10px', 
+                            color: s.status === 'planning' ? '#f59e0b' : '#10b981', 
+                            border: `1px solid ${s.status === 'planning' ? 'rgba(245,158,11,0.3)' : 'rgba(16,185,129,0.3)'}`, 
+                            background: s.status === 'planning' ? 'rgba(245,158,11,0.1)' : 'rgba(16,185,129,0.1)', 
+                            padding: '2px 8px', 
+                            borderRadius: '4px', 
+                            fontWeight: 'bold', 
+                            fontFamily: 'monospace',
+                            textTransform: 'uppercase'
+                          }}>
+                            {s.status}
+                          </span>
+                        </div>
                       </div>
-                      <div style={{ fontSize: '10px', color: '#6b7280', marginTop: '2px' }}>
-                        {h.date}
-                      </div>
-                    </div>
-                    <div>
-                      <span style={{ fontSize: '10px', color: '#ec4899', border: '1px solid rgba(236,72,153,0.3)', background: 'rgba(236,72,153,0.1)', padding: '2px 8px', borderRadius: '4px', fontWeight: 'bold', fontFamily: 'monospace' }}>
-                        {h.prize}
-                      </span>
-                    </div>
-                  </div>
-                ))}
+                    );
+                  })
+                )}
               </div>
             </div>
           </div>
