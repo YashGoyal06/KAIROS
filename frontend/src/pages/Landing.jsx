@@ -10,7 +10,7 @@ import FooterCTA from '../components/FooterCTA';
 
 export default function Landing() {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, loginWithGoogle } = useAuth();
   const btnRef = useRef(null);
 
   // Spotlight button logic
@@ -96,7 +96,7 @@ export default function Landing() {
           ref={btnRef}
           className="btn-spotlight"
           onMouseMove={handleMouseMove}
-          onClick={() => navigate(user ? '/dashboard' : '/onboarding')}
+          onClick={() => user ? navigate('/dashboard') : loginWithGoogle()}
           style={{ pointerEvents: 'auto' }} // Re-enable pointer events just for the button
         >
           {user ? 'A c c e s s' : 'I n i t i a t e'}
