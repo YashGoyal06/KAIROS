@@ -2,6 +2,11 @@ import React, { useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import InfiniteArchitecture from '../components/InfiniteArchitecture';
+import Manifesto from '../components/Manifesto';
+import HowItWorks from '../components/HowItWorks';
+import Demo from '../components/Demo';
+import Walkthrough from '../components/Walkthrough';
+import FooterCTA from '../components/FooterCTA';
 
 export default function Landing() {
   const navigate = useNavigate();
@@ -20,12 +25,14 @@ export default function Landing() {
   };
 
   return (
-    <div style={{ position: 'relative', width: '100%', height: '100vh', overflow: 'hidden', background: '#050505' }}>
+    <div style={{ position: 'relative', width: '100%', minHeight: '100vh', background: '#050505' }}>
 
       {/* ══════════════════════════════════════════════════════════════
-          THE INFINITE CORRIDOR BACKGROUND (Z: 0)
+          THE INFINITE CORRIDOR BACKGROUND (FIXED)
           ══════════════════════════════════════════════════════════════ */}
-      <InfiniteArchitecture />
+      <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100vh', zIndex: 0 }}>
+        <InfiniteArchitecture />
+      </div>
 
       {/* ══════════════════════════════════════════════════════════════
           CINEMATIC OVERLAYS (Z: 5)
@@ -40,12 +47,12 @@ export default function Landing() {
       }} />
 
       {/* ══════════════════════════════════════════════════════════════
-          FOREGROUND UI (Z: 10) - PERFECTLY CENTERED VANISHING POINT
+          FOREGROUND UI (HERO SECTION)
           ══════════════════════════════════════════════════════════════ */}
       <div style={{
         position: 'relative',
         zIndex: 10,
-        height: '100%',
+        height: '100vh',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
@@ -95,8 +102,17 @@ export default function Landing() {
           {user ? 'A c c e s s' : 'I n i t i a t e'}
           <div className="btn-spotlight-glow" />
         </button>
-
       </div>
+
+      {/* ══════════════════════════════════════════════════════════════
+          NEW SECTIONS
+          ══════════════════════════════════════════════════════════════ */}
+      <Manifesto />
+      <HowItWorks />
+      <Demo />
+      <Walkthrough />
+      <FooterCTA />
+
     </div>
   );
 }
