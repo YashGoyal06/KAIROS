@@ -29,7 +29,9 @@ export default function Dashboard() {
       setTeams(teamsRes.data);
 
       // 2. Fetch all sessions
-      const sessionsRes = await axios.get(`${API_BASE}/sessions`);
+      const sessionsRes = await axios.get(`${API_BASE}/sessions`, {
+        params: { profile_id: profile.id }
+      });
       const userSessions = sessionsRes.data.filter(s => 
         s.creator_id === profile.id || teamsRes.data.some(t => t.id === s.team_id)
       );
