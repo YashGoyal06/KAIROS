@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import { MessageSquare, Plus, Send, Check, Trash2, Calendar, FileText, Download, User, ArrowLeft, Loader } from 'lucide-react';
+import RoadmapFlowchart from '../components/RoadmapFlowchart';
 
 export default function Coach() {
   const { profile, API_BASE } = useAuth();
@@ -28,6 +29,26 @@ export default function Coach() {
   const [inputText, setInputText] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [generationStep, setGenerationStep] = useState('');
+  const [tasks, setTasks] = useState([]);
+  const [blockers, setBlockers] = useState([]);
+
+  const fetchSessionTasksAndBlockers = async (sessionId) => {
+    if (!sessionId) return;
+    try {
+      const tasksRes = await axios.get(`${API_BASE}/sessions/${sessionId}/tasks`);
+      setTasks(tasksRes.data);
+      const blockersRes = await axios.get(`${API_BASE}/sessions/${sessionId}/blockers`);
+      setBlockers(blockersRes.data);
+    } catch (e) {
+      console.error("Error fetching tasks and blockers for flowchart:", e);
+    }
+  };
+
+  useEffect(() => {
+    if (activeSession) {
+      fetchSessionTasksAndBlockers(activeSession.id);
+    }
+  }, [activeSession?.id]);
 
   const chatEndRef = useRef(null);
 
@@ -475,113 +496,64 @@ export default function Coach() {
             )}
           </div>
 
-          {/* Progress Animation Overlay during generation */}
-          {isGenerating && roadmap.length === 0 && (
-            <div style={{ display: 'flex', flexDirection: 'column', flexGrow: 1, justifyContent: 'center', alignItems: 'center', background: 'rgba(8,9,12,0.85)', gap: '16px' }}>
-              <Loader className="spin" size={48} style={{ color: '#8b5cf6', animation: 'spinSlow 2s linear infinite' }} />
-              <div style={{ fontSize: '18px', color: '#fff', fontWeight: 'bold' }}>{generationStep}</div>
-              <p style={{ color: '#6b7280', fontSize: '12px' }}>KAIROS agents are assessing scope constraints...</p>
-            </div>
-          )}
+          {/* Left-Right Split Layout: Timeline on Left, Critique & Chat stacked on Right */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1.3fr 1fr', gap: '24px', flexGrow: 1, minHeight: 'calc(100vh - 180px)', height: 'calc(100vh - 180px)' }}>
+            
+            {/* Left Column: Vertical Timeline / Loader */}
+            <div className="glass-card" style={{ display: 'flex', flexDirection: 'column', padding: '20px', height: '100%', overflow: 'hidden' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                <h3 style={{ fontSize: '18px', color: '#fff', margin: 0 }}>Interactive Roadmap Flowchart</h3>
+                {activeSession.creator_id === profile.id && activeSession.status === 'planning' && roadmap.length > 0 && (
+                  <button onClick={handleAddMilestone} className="btn btn-secondary" style={{ padding: '6px 12px', fontSize: '12px' }}>
+                    + Add Phase
+                  </button>
+                )}
+              </div>
 
-          {/* Split Pane: Timeline left, Critique/Chat right */}
-          {(!isGenerating || roadmap.length > 0) && (
-            <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '24px', flexGrow: 1, minHeight: '0' }}>
-              {/* Left timeline */}
-              <div className="glass-card" style={{ display: 'flex', flexDirection: 'column', minHeight: '0', overflowY: 'auto' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-                  <h3 style={{ fontSize: '18px', color: '#fff' }}>Milestones Roadmap</h3>
-                  {activeSession.creator_id === profile.id && activeSession.status === 'planning' && (
-                    <button onClick={handleAddMilestone} className="btn btn-secondary" style={{ padding: '6px 12px', fontSize: '12px' }}>
-                      + Add Phase
-                    </button>
-                  )}
-                </div>
-
-                {roadmap.length === 0 ? (
-                  <div style={{ display: 'flex', flexGrow: 1, justifyContent: 'center', alignItems: 'center', color: '#6b7280' }}>
+              <div style={{ flexGrow: 1, position: 'relative', height: 'calc(100% - 45px)' }}>
+                {isGenerating && roadmap.length === 0 ? (
+                  <div style={{ display: 'flex', flexDirection: 'column', height: '100%', justifyContent: 'center', alignItems: 'center', gap: '16px', background: 'rgba(8,9,12,0.4)' }}>
+                    <Loader className="spin" size={36} style={{ color: '#8b5cf6', animation: 'spinSlow 2s linear infinite' }} />
+                    <div style={{ fontSize: '15px', color: '#fff', fontWeight: 'bold' }}>{generationStep}</div>
+                    <p style={{ color: '#6b7280', fontSize: '11px', margin: 0 }}>KAIROS agents are assessing scope constraints...</p>
+                  </div>
+                ) : roadmap.length === 0 ? (
+                  <div style={{ display: 'flex', height: '100%', justifyContent: 'center', alignItems: 'center', color: '#6b7280' }}>
                     Roadmap milestones will render here.
                   </div>
                 ) : (
-                  <div className="timeline">
-                    {roadmap.map((m, idx) => (
-                      <div key={idx} className="timeline-item">
-                        <div className="timeline-dot" style={{ background: m.risk_level === 'high' ? '#ef4444' : m.risk_level === 'medium' ? '#f59e0b' : '#10b981' }}></div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                          <input
-                            type="text"
-                            value={m.phase}
-                            onChange={(e) => handleMilestoneEdit(idx, 'phase', e.target.value)}
-                            disabled={activeSession.creator_id !== profile.id}
-                            style={{ background: 'transparent', border: 'none', color: '#8b5cf6', fontWeight: 'bold', fontSize: '12px', width: '80%' }}
-                          />
-                          {activeSession.creator_id === profile.id && activeSession.status === 'planning' && (
-                            <button onClick={() => handleDeleteMilestone(idx)} style={{ background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer' }}>
-                              <Trash2 size={14} />
-                            </button>
-                          )}
-                        </div>
-                        <input
-                          type="text"
-                          value={m.title}
-                          onChange={(e) => handleMilestoneEdit(idx, 'title', e.target.value)}
-                          disabled={activeSession.creator_id !== profile.id}
-                          style={{ background: 'transparent', border: 'none', color: '#fff', fontWeight: '600', fontSize: '15px', marginTop: '6px', width: '100%' }}
-                        />
-                        <div style={{ marginTop: '10px' }}>
-                          <span style={{ fontSize: '10px', color: '#6b7280', fontWeight: 'bold' }}>DELIVERABLE:</span>
-                          <input
-                            type="text"
-                            value={m.deliverable}
-                            onChange={(e) => handleMilestoneEdit(idx, 'deliverable', e.target.value)}
-                            disabled={activeSession.creator_id !== profile.id}
-                            style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', padding: '6px', borderRadius: '4px', color: '#9ca3af', fontSize: '12px', width: '100%', marginTop: '4px' }}
-                          />
-                        </div>
-                        <div style={{ display: 'flex', gap: '16px', marginTop: '12px' }}>
-                          <div>
-                            <span style={{ fontSize: '9px', color: '#6b7280' }}>ESTIMATE:</span>
-                            <input
-                              type="text"
-                              value={m.duration_estimate}
-                              onChange={(e) => handleMilestoneEdit(idx, 'duration_estimate', e.target.value)}
-                              disabled={activeSession.creator_id !== profile.id}
-                              style={{ background: 'transparent', border: 'none', color: '#fff', fontSize: '11px', width: '70px', display: 'block' }}
-                            />
-                          </div>
-                          <div>
-                            <span style={{ fontSize: '9px', color: '#6b7280' }}>RISK:</span>
-                            <select
-                              value={m.risk_level}
-                              onChange={(e) => handleMilestoneEdit(idx, 'risk_level', e.target.value)}
-                              disabled={activeSession.creator_id !== profile.id}
-                              style={{ background: 'transparent', border: 'none', color: m.risk_level === 'high' ? '#ef4444' : '#10b981', fontSize: '11px', display: 'block' }}
-                            >
-                              <option value="low">Low</option>
-                              <option value="medium">Medium</option>
-                              <option value="high">High</option>
-                            </select>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
+                  <RoadmapFlowchart 
+                    roadmap={roadmap} 
+                    tasks={tasks}
+                    blockers={blockers}
+                    onNodeClick={(node) => console.log("Clicked Node:", node)}
+                  />
+                )}
+              </div>
+            </div>
+
+            {/* Right Column: Critique & Chat Stacked */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', height: '100%', minHeight: '0' }}>
+              
+              {/* Critique panel (Top) */}
+              <div className="glass-card" style={{ display: 'flex', flexDirection: 'column', height: '45%', minHeight: '0' }}>
+                <div className="kairos-card-header" style={{ marginBottom: '12px' }}>/// SCOPE_CRITIQUE</div>
+                {critique ? (
+                  <div style={{ padding: '16px', background: 'rgba(59,130,246,0.05)', border: '1px solid rgba(59,130,246,0.15)', borderRadius: '10px', flexGrow: 1, overflowY: 'auto' }}>
+                    <pre style={{ whiteSpace: 'pre-wrap', fontFamily: 'inherit', fontSize: '13px', color: '#d1d5db', lineHeight: '1.5', margin: 0 }}>
+                      {critique}
+                    </pre>
+                  </div>
+                ) : (
+                  <div style={{ display: 'flex', flexGrow: 1, justifyContent: 'center', alignItems: 'center', color: '#6b7280', fontSize: '13px' }}>
+                    {isGenerating ? "Analyzing project idea and streaming critique..." : "Critique assessment will stream here..."}
                   </div>
                 )}
               </div>
 
-              {/* Right critique/chat pane */}
-              <div style={{ display: 'flex', flexDirection: 'column', minHeight: '0' }}>
-                {/* Scrollable conversation */}
-                <div className="glass-card" style={{ flexGrow: 1, minHeight: '0', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '16px', paddingBottom: '24px' }}>
-                  {critique && (
-                    <div style={{ padding: '16px', background: 'rgba(59,130,246,0.05)', border: '1px solid rgba(59,130,246,0.15)', borderRadius: '10px' }}>
-                      <h4 style={{ color: '#3b82f6', fontSize: '14px', marginBottom: '8px', fontWeight: 'bold' }}>KAIROS Scope Critique</h4>
-                      <pre style={{ whiteSpace: 'pre-wrap', fontFamily: 'inherit', fontSize: '13px', color: '#d1d5db', lineHeight: '1.5' }}>
-                        {critique}
-                      </pre>
-                    </div>
-                  )}
-                  
+              {/* Chat panel (Bottom) */}
+              <div style={{ display: 'flex', flexDirection: 'column', height: '55%', minHeight: '0' }}>
+                <div className="glass-card" style={{ flexGrow: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '16px', paddingBottom: '16px', height: 'calc(100% - 60px)' }}>
                   {messages.map((m, idx) => (
                     <div key={idx} style={{
                       alignSelf: m.role === 'user' ? 'flex-end' : 'flex-start',
@@ -618,8 +590,9 @@ export default function Coach() {
                   </button>
                 </form>
               </div>
+
             </div>
-          )}
+          </div>
         </div>
       )}
     </div>

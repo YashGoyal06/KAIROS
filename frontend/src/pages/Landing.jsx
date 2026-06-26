@@ -10,8 +10,14 @@ import FooterCTA from '../components/FooterCTA';
 
 export default function Landing() {
   const navigate = useNavigate();
-  const { user, loginWithGoogle } = useAuth();
+  const { user, profile, loading, loginWithGoogle } = useAuth();
   const btnRef = useRef(null);
+
+  React.useEffect(() => {
+    if (!loading && user && profile) {
+      navigate('/dashboard');
+    }
+  }, [user, profile, loading, navigate]);
 
   // Spotlight button logic
   const handleMouseMove = (e) => {
