@@ -3,6 +3,7 @@ import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import { MessageSquare, Plus, Send, Check, Trash2, Calendar, FileText, Download, User, ArrowLeft, Loader } from 'lucide-react';
 import RoadmapFlowchart from '../components/RoadmapFlowchart';
+import MarkdownRenderer from '../components/MarkdownRenderer';
 
 export default function Coach() {
   const { profile, API_BASE } = useAuth();
@@ -20,7 +21,7 @@ export default function Coach() {
   const [probText, setProbText] = useState('');
   const [probFile, setProbFile] = useState(null);
   const [userIdea, setUserIdea] = useState('');
-  const [modelPref, setModelPref] = useState('claude');
+  const [modelPref, setModelPref] = useState('deepseek');
 
   // Interactive Workspace State
   const [critique, setCritique] = useState('');
@@ -181,28 +182,82 @@ export default function Coach() {
 
       // Finish up, parse out JSON if outputted
       setIsGenerating(false);
-      
-      // Look for the roadmap markers in the text
-      const markerStart = rawText.indexOf('[ROADMAP_JSON_START]');
-      const markerEnd = rawText.indexOf('[ROADMAP_JSON_END]');
 
-      if (markerStart !== -1 && markerEnd !== -1) {
-        const critiqueClean = rawText.substring(0, markerStart).trim();
-        const jsonBlock = rawText.substring(markerStart + 20, markerEnd).trim();
-        
-        setCritique(critiqueClean);
-        
+      // Extract JSON using a robust multi-fallback mechanism
+      const extractRoadmapJSON = (text) => {
+        const lowerText = text.toLowerCase();
+        let startIdx = lowerText.indexOf('roadmap_json_start');
+        let endIdx = lowerText.indexOf('roadmap_json_end');
+
+        let jsonStr = '';
+        let critiqueText = text;
+
+        if (startIdx !== -1) {
+          const actualStart = text.indexOf(']', startIdx) + 1;
+          const actualEnd = endIdx !== -1 ? text.lastIndexOf('[', endIdx) : text.length;
+          jsonStr = text.substring(actualStart, actualEnd).trim();
+          critiqueText = text.substring(0, startIdx).trim();
+        } else {
+          // Fallback 1: Try to find ```json ... ``` block
+          const matchBlock = text.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
+          if (matchBlock) {
+            jsonStr = matchBlock[1].trim();
+            critiqueText = text.split(/```/)[0].trim();
+          } else {
+            // Fallback 2: Look for the first '[' and last ']'
+            const firstBracket = text.indexOf('[');
+            const lastBracket = text.lastIndexOf(']');
+            if (firstBracket !== -1 && lastBracket !== -1 && lastBracket > firstBracket) {
+              jsonStr = text.substring(firstBracket, lastBracket + 1).trim();
+              critiqueText = text.substring(0, firstBracket).trim();
+            }
+          }
+        }
+
+        // Clean any residual markdown ticks in the JSON string
+        jsonStr = jsonStr.replace(/^```json\s*/i, '').replace(/```$/, '').trim();
+
+        // If the json string has a think block, strip it
+        if (jsonStr.includes('</think>')) {
+          jsonStr = jsonStr.split('</think>').pop().trim();
+        }
+
         try {
-          const parsedRoadmap = JSON.parse(jsonBlock);
-          setRoadmap(parsedRoadmap);
+          return {
+            roadmap: JSON.parse(jsonStr),
+            critique: critiqueText
+          };
+        } catch (jsonErr) {
+          // Attempt trailing comma cleanup
+          try {
+            const cleanedJson = jsonStr.replace(/,\s*([\]}])/g, '$1').trim();
+            return {
+              roadmap: JSON.parse(cleanedJson),
+              critique: critiqueText
+            };
+          } catch (jsonErr2) {
+            console.error("All roadmap JSON extraction methods failed. Raw JSON string was:", jsonStr);
+            return null;
+          }
+        }
+      };
+
+      const extracted = extractRoadmapJSON(rawText);
+      if (extracted && Array.isArray(extracted.roadmap)) {
+        setCritique(extracted.critique);
+        setRoadmap(extracted.roadmap);
+        try {
           // Auto-save milestones to backend DB
           const updateRes = await axios.put(`${API_BASE}/sessions/${session.id}/roadmap`, {
-            milestones: parsedRoadmap
+            milestones: extracted.roadmap
           });
           setActiveSession(updateRes.data);
-        } catch (jsonErr) {
-          console.error("Roadmap parsing error:", jsonErr);
+        } catch (dbErr) {
+          console.error("Error auto-saving roadmap to DB:", dbErr);
         }
+      } else {
+        // Fallback: If JSON parsing completely failed, display everything as critique
+        setCritique(rawText);
       }
 
       // Refresh list of sessions in background
@@ -431,8 +486,7 @@ export default function Coach() {
               <div className="form-group">
                 <label className="form-label">Preferred LLM Router Model</label>
                 <select className="form-select" value={modelPref} onChange={(e) => setModelPref(e.target.value)}>
-                  <option value="claude">Claude 3.5 Sonnet (Primary)</option>
-                  <option value="gemini">Gemini 1.5 Flash (First Fallback)</option>
+                  <option value="deepseek">DeepSeek R1 (Ollama - Primary)</option>
                   <option value="huggingface">Qwen 72B / Llama 3 (Free Hugging Face Fallback)</option>
                 </select>
               </div>
@@ -540,9 +594,7 @@ export default function Coach() {
                 <div className="kairos-card-header" style={{ marginBottom: '12px' }}>/// SCOPE_CRITIQUE</div>
                 {critique ? (
                   <div style={{ padding: '16px', background: 'rgba(59,130,246,0.05)', border: '1px solid rgba(59,130,246,0.15)', borderRadius: '10px', flexGrow: 1, overflowY: 'auto' }}>
-                    <pre style={{ whiteSpace: 'pre-wrap', fontFamily: 'inherit', fontSize: '13px', color: '#d1d5db', lineHeight: '1.5', margin: 0 }}>
-                      {critique}
-                    </pre>
+                    <MarkdownRenderer content={critique} />
                   </div>
                 ) : (
                   <div style={{ display: 'flex', flexGrow: 1, justifyContent: 'center', alignItems: 'center', color: '#6b7280', fontSize: '13px' }}>
@@ -568,7 +620,7 @@ export default function Coach() {
                       <div style={{ fontSize: '10px', color: '#6b7280', fontWeight: 'bold', marginBottom: '4px' }}>
                         {m.role === 'user' ? 'YOU' : 'KAIROS COACH'}
                       </div>
-                      <span style={{ color: '#e5e7eb' }}>{m.content}</span>
+                      <MarkdownRenderer content={m.content} />
                     </div>
                   ))}
                   <div ref={chatEndRef} />

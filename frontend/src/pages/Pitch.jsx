@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import { Presentation, Loader, Play, Send, RefreshCw, Layers } from 'lucide-react';
+import MarkdownRenderer from '../components/MarkdownRenderer';
 
 export default function Pitch() {
   const { profile, API_BASE } = useAuth();
@@ -62,7 +63,7 @@ export default function Pitch() {
     setPitchText('');
     
     try {
-      const response = await fetch(`${API_BASE}/sessions/${activeSessionId}/pitch?model_preference=gemini`, {
+      const response = await fetch(`${API_BASE}/sessions/${activeSessionId}/pitch?model_preference=deepseek`, {
         method: 'POST'
       });
 
@@ -121,7 +122,7 @@ export default function Pitch() {
     setInputText('');
 
     try {
-      const response = await fetch(`${API_BASE}/sessions/${activeSessionId}/pitch?model_preference=claude`, {
+      const response = await fetch(`${API_BASE}/sessions/${activeSessionId}/pitch?model_preference=deepseek`, {
         method: 'POST'
       });
 
@@ -289,9 +290,7 @@ export default function Pitch() {
                   </div>
                 ) : (
                   <div style={{ flexGrow: 1, overflowY: 'auto', background: 'rgba(0,0,0,0.15)', border: '1px solid rgba(255,255,255,0.03)', padding: '24px', borderRadius: '8px', maxHeight: '550px' }}>
-                    <pre style={{ whiteSpace: 'pre-wrap', fontFamily: 'inherit', color: '#e5e7eb', fontSize: '13px', lineHeight: '1.7' }}>
-                      {activeContent}
-                    </pre>
+                    <MarkdownRenderer content={activeContent} />
                   </div>
                 )}
               </div>
