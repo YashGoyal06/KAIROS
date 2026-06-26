@@ -35,10 +35,20 @@ const ProtectedRouteOnboarding = ({ children }) => {
   return children;
 };
 
+import Aurora from './components/Aurora';
+
 const MainLayout = ({ children }) => (
-  <div className="app-container-full">
+  <div className="app-container-full" style={{ position: 'relative', overflow: 'hidden', minHeight: '100vh', display: 'flex' }}>
+    <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 0, opacity: 0.8 }}>
+      <Aurora
+        colorStops={["#6a00f4", "#8900f2", "#a100f2"]}
+        blend={0.5}
+        amplitude={1.0}
+        speed={1}
+      />
+    </div>
     <Sidebar />
-    <div className="app-content-wrapper-full">
+    <div className="app-content-wrapper-full" style={{ position: 'relative', zIndex: 1, flex: 1, display: 'flex', flexDirection: 'column' }}>
       {children}
     </div>
   </div>
