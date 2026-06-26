@@ -1,15 +1,16 @@
 import React, { useState, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { 
-  CheckCircle2, Play, Circle, AlertTriangle, Clock, 
-  Minimize2, Maximize2, Download, ChevronDown
+  Clock, AlertTriangle, CheckCircle2, Play, Circle, 
+  Minimize2, Maximize2, Download, ChevronDown, Edit3, X,
+  Globe, Cpu, Database, Share2, MessageSquare, Terminal, Plus
 } from 'lucide-react';
 import { toPng, toJpeg, toSvg } from 'html-to-image';
 
 export default function RoadmapFlowchart({ roadmap = [], tasks = [], blockers = [], onNodeClick }) {
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [expandedPhases, setExpandedPhases] = useState({});
   const [showDropdown, setShowDropdown] = useState(false);
+  const [selectedNode, setSelectedNode] = useState(null);
   
   const downloadRef = useRef(null);
 
@@ -17,25 +18,12 @@ export default function RoadmapFlowchart({ roadmap = [], tasks = [], blockers = 
   const safeTasks = Array.isArray(tasks) ? tasks : [];
   const safeBlockers = Array.isArray(blockers) ? blockers : [];
 
-  const toggleExpand = (idx) => {
-    setExpandedPhases(prev => ({
-      ...prev,
-      [idx]: !prev[idx]
-    }));
-  };
-
-  const getPhaseColor = (idx) => {
-    const colors = ['#06b6d4', '#3b82f6', '#a855f7', '#ec4899', '#10b981'];
-    return colors[idx % colors.length] || '#f59e0b';
-  };
-
   const handleDownload = (format) => {
     if (!downloadRef.current) return;
     setShowDropdown(false);
 
-    // Options to optimize quality and background
     const options = {
-      backgroundColor: '#0a0b10',
+      backgroundColor: '#0f0d14',
       style: {
         transform: 'scale(1)',
         maxHeight: 'none',
@@ -70,6 +58,32 @@ export default function RoadmapFlowchart({ roadmap = [], tasks = [], blockers = 
       });
   };
 
+  // Pre-defined node design settings styled with pastel brand colors
+  const nodeStyles = [
+    { bg: 'rgba(244, 63, 94, 0.06)', border: 'rgba(244, 63, 94, 0.3)', color: '#f43f5e', icon: Globe, name: 'Webhooks' },
+    { bg: 'rgba(56, 189, 248, 0.06)', border: 'rgba(56, 189, 248, 0.3)', color: '#38bdf8', icon: Share2, name: 'Slack Link' },
+    { bg: 'rgba(251, 146, 60, 0.06)', border: 'rgba(251, 146, 60, 0.3)', color: '#fb923c', icon: Cpu, name: 'AI Core' },
+    { bg: 'rgba(52, 211, 153, 0.06)', border: 'rgba(52, 211, 153, 0.3)', color: '#34d399', icon: Database, name: 'Google Drive' },
+    { bg: 'rgba(167, 139, 250, 0.06)', border: 'rgba(167, 139, 250, 0.3)', color: '#a78bfa', icon: Terminal, name: 'Automation' },
+    { bg: 'rgba(244, 114, 182, 0.06)', border: 'rgba(244, 114, 182, 0.3)', color: '#f472b6', icon: MessageSquare, name: 'Discord Bot' }
+  ];
+
+  const getNodeLayout = (index) => {
+    // Lay out in a winding flow:
+    // Node 0: Top-Left, Node 1: Top-Right
+    // Node 2: Middle-Right, Node 3: Middle-Left
+    // Node 4: Bottom-Left, Node 5: Bottom-Right
+    const layout = [
+      { x: 22, y: 15 }, // Node 0
+      { x: 70, y: 15 }, // Node 1
+      { x: 70, y: 50 }, // Node 2
+      { x: 22, y: 50 }, // Node 3
+      { x: 22, y: 85 }, // Node 4
+      { x: 70, y: 85 }  // Node 5
+    ];
+    return layout[index % layout.length];
+  };
+
   const renderContent = () => {
     return (
       <div 
@@ -81,19 +95,15 @@ export default function RoadmapFlowchart({ roadmap = [], tasks = [], blockers = 
           left: isFullscreen ? 0 : 'auto',
           width: '100%',
           height: isFullscreen ? '100vh' : '100%',
-          maxHeight: isFullscreen ? '100vh' : '100%',
-          backgroundColor: '#0a0b10',
-          backgroundImage: 'radial-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px)',
+          backgroundColor: '#0f0d14',
+          backgroundImage: 'radial-gradient(rgba(191, 133, 255, 0.04) 1.5px, transparent 1.5px)',
           backgroundSize: '24px 24px',
           color: '#ffffff',
-          fontFamily: '"Inter", system-ui, sans-serif',
-          overflowY: 'auto',
-          overflowX: 'hidden',
-          border: isFullscreen ? 'none' : '1px solid rgba(255, 255, 255, 0.08)',
-          borderRadius: isFullscreen ? '0' : '12px',
+          fontFamily: '"Outfit", sans-serif',
+          overflow: 'hidden',
+          border: isFullscreen ? 'none' : '1px solid rgba(255, 255, 255, 0.04)',
+          borderRadius: isFullscreen ? '0' : '20px',
           boxShadow: isFullscreen ? 'none' : '0 12px 40px rgba(0, 0, 0, 0.4)',
-          transition: 'all 0.25s ease',
-          padding: isFullscreen ? '60px 40px' : '20px 12px',
           boxSizing: 'border-box',
           zIndex: isFullscreen ? 9999999 : 1
         }}
@@ -101,13 +111,12 @@ export default function RoadmapFlowchart({ roadmap = [], tasks = [], blockers = 
         {/* Controls Bar */}
         <div style={{
           position: 'absolute',
-          top: '16px',
-          right: '16px',
+          top: '20px',
+          right: '20px',
           display: 'flex',
           gap: '8px',
-          zIndex: 10000000
+          zIndex: 100000
         }}>
-          
           {/* Download Dropdown Container */}
           <div style={{ position: 'relative' }}>
             <button 
@@ -124,15 +133,15 @@ export default function RoadmapFlowchart({ roadmap = [], tasks = [], blockers = 
                 position: 'absolute',
                 top: '36px',
                 right: 0,
-                background: 'rgba(15, 17, 26, 0.95)',
+                background: 'rgba(22, 19, 28, 0.95)',
                 backdropFilter: 'blur(12px)',
                 border: '1px solid rgba(255, 255, 255, 0.08)',
-                borderRadius: '6px',
+                borderRadius: '8px',
                 boxShadow: '0 10px 25px rgba(0,0,0,0.5)',
                 display: 'flex',
                 flexDirection: 'column',
                 width: '120px',
-                zIndex: 10000001
+                zIndex: 100001
               }}>
                 <button className="dropdown-item" onClick={() => handleDownload('png')}>PNG Image</button>
                 <button className="dropdown-item" onClick={() => handleDownload('jpg')}>JPG Image</button>
@@ -147,341 +156,314 @@ export default function RoadmapFlowchart({ roadmap = [], tasks = [], blockers = 
             className="ctrl-btn-action"
           >
             {isFullscreen ? <Minimize2 size={13} /> : <Maximize2 size={13} />}
-            {isFullscreen ? 'Exit Fullscreen' : 'Fullscreen'}
+            {isFullscreen ? 'Exit' : 'Fullscreen'}
           </button>
         </div>
 
-        {/* Main timeline wrapper */}
-        <div style={{ maxWidth: '900px', margin: '0 auto', position: 'relative', minHeight: '100%', paddingTop: '20px' }}>
-          
-          {/* Central Spine / Left Spine */}
-          {safeRoadmap.length > 0 && (
-            <div 
-              className="timeline-spine"
-              style={{
-                position: 'absolute',
-                left: isFullscreen ? '50%' : '30px',
-                top: '20px',
-                bottom: '20px',
-                width: '4px',
-                backgroundColor: 'rgba(255, 255, 255, 0.08)',
-                transform: 'translateX(-50%)',
-                zIndex: 1
-              }}
-            />
-          )}
+        {/* Graph Canvas */}
+        <div style={{
+          width: '100%',
+          height: '100%',
+          position: 'relative',
+          padding: '40px',
+          boxSizing: 'border-box'
+        }}>
+          {/* SVG Background Connections */}
+          <svg style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            pointerEvents: 'none',
+            zIndex: 1
+          }}>
+            <defs>
+              <marker
+                id="arrow"
+                viewBox="0 0 10 10"
+                refX="6"
+                refY="5"
+                markerWidth="6"
+                markerHeight="6"
+                orient="auto-start-reverse"
+              >
+                <path d="M 0 2 L 8 5 L 0 8 z" fill="#bf85ff" />
+              </marker>
+            </defs>
 
-          {/* Steps */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '32px', position: 'relative', zIndex: 2 }}>
-            {safeRoadmap.map((milestone, mIdx) => {
-              const phaseName = milestone?.phase || `Phase ${mIdx + 1}`;
-              const phaseKey = String(phaseName).toLowerCase().replace(' ', '_');
-              const phaseColor = getPhaseColor(mIdx);
+            {safeRoadmap.map((_, idx) => {
+              if (idx === safeRoadmap.length - 1) return null;
               
-              const milestoneTasks = safeTasks.filter(t => 
-                t.milestone_id?.toLowerCase() === phaseKey || 
-                t.milestone_id?.toLowerCase() === `phase_${mIdx + 1}`
-              );
-              const milestoneBlockers = safeBlockers.filter(b => 
-                milestoneTasks.some(t => t.id === b.task_id)
-              );
+              const startPos = getNodeLayout(idx);
+              const endPos = getNodeLayout(idx + 1);
+              
+              // Map coordinates to approximate pixels based on percentage
+              const x1 = `${startPos.x}%`;
+              const y1 = `${startPos.y}%`;
+              const x2 = `${endPos.x}%`;
+              const y2 = `${endPos.y}%`;
 
-              const isLeft = mIdx % 2 === 0;
-              const isExpanded = expandedPhases[mIdx];
-              const tasksToShow = isExpanded ? milestoneTasks : milestoneTasks.slice(0, 3);
+              // Generate bezier control points for curved paths matching reference style
+              // If col is same, curve it right/left
+              // If row is same, draw direct line
+              return (
+                <path
+                  key={`path-${idx}`}
+                  d={`M ${startPos.x} ${startPos.y} C ${startPos.x} ${(startPos.y + endPos.y) / 2}, ${endPos.x} ${(startPos.y + endPos.y) / 2}, ${endPos.x} ${endPos.y}`}
+                  pathLength="100"
+                  style={{
+                    fill: 'none',
+                    stroke: 'rgba(191, 133, 255, 0.4)',
+                    strokeWidth: 3,
+                    strokeDasharray: '4 4',
+                    transform: 'scale(1)',
+                    markerEnd: 'url(#arrow)'
+                  }}
+                />
+              );
+            })}
+          </svg>
 
-              if (!isFullscreen) {
-                return (
-                  <div 
-                    key={`milestone-${mIdx}`} 
-                    style={{ 
-                      display: 'flex', 
-                      alignItems: 'flex-start',
-                      gap: '16px',
-                      width: '100%',
-                      paddingLeft: '15px'
-                    }}
-                  >
-                    <div style={{ display: 'flex', justifyContent: 'center', width: '30px', marginTop: '14px', flexShrink: 0, zIndex: 3 }}>
-                      <div 
-                        onClick={() => onNodeClick && onNodeClick({ type: 'milestone', data: milestone, index: mIdx })}
-                        className="spine-dot-node"
-                        style={{
-                          borderColor: phaseColor,
-                          boxShadow: `0 0 10px ${phaseColor}40`,
-                        }}
-                      >
-                        {mIdx + 1}
-                      </div>
+          {/* Render Nodes */}
+          {safeRoadmap.map((milestone, idx) => {
+            const pos = getNodeLayout(idx);
+            const style = nodeStyles[idx % nodeStyles.length];
+            const Icon = style.icon;
+            
+            const phaseName = milestone?.phase || `Phase ${idx + 1}`;
+            const phaseKey = String(phaseName).toLowerCase().replace(' ', '_');
+            
+            const milestoneTasks = safeTasks.filter(t => 
+              t.milestone_id?.toLowerCase() === phaseKey || 
+              t.milestone_id?.toLowerCase() === `phase_${idx + 1}`
+            );
+            const milestoneBlockers = safeBlockers.filter(b => 
+              milestoneTasks.some(t => t.id === b.task_id)
+            );
+
+            return (
+              <React.Fragment key={`node-container-${idx}`}>
+                {/* Midpoint edit circular badge */}
+                {idx < safeRoadmap.length - 1 && (() => {
+                  const startPos = getNodeLayout(idx);
+                  const endPos = getNodeLayout(idx + 1);
+                  const midX = (startPos.x + endPos.x) / 2;
+                  const midY = (startPos.y + endPos.y) / 2;
+                  return (
+                    <div
+                      style={{
+                        position: 'absolute',
+                        left: `${midX}%`,
+                        top: `${midY}%`,
+                        transform: 'translate(-50%, -50%)',
+                        width: '24px',
+                        height: '24px',
+                        borderRadius: '50%',
+                        backgroundColor: '#1a1722',
+                        border: '1.5px solid rgba(191, 133, 255, 0.4)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: '#bf85ff',
+                        zIndex: 3,
+                        cursor: 'pointer',
+                        boxShadow: '0 4px 10px rgba(0,0,0,0.3)'
+                      }}
+                      title="Edit Connection"
+                    >
+                      <Edit3 size={11} />
                     </div>
+                  );
+                })()}
 
-                    <div style={{ width: '12px', borderTop: `3px dashed ${phaseColor}`, marginTop: '24px', opacity: 0.6, flexShrink: 0 }} />
+                {/* Node Box */}
+                <div
+                  onClick={() => setSelectedNode({ milestone, index: idx, tasks: milestoneTasks, blockers: milestoneBlockers })}
+                  style={{
+                    position: 'absolute',
+                    left: `${pos.x}%`,
+                    top: `${pos.y}%`,
+                    transform: 'translate(-50%, -50%)',
+                    width: '180px',
+                    padding: '20px 16px',
+                    borderRadius: '28px',
+                    backgroundColor: '#14111a',
+                    border: `1.5px solid ${style.border}`,
+                    boxShadow: '0 10px 30px rgba(0,0,0,0.5)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: 'pointer',
+                    zIndex: 2,
+                    transition: 'all 0.25s ease'
+                  }}
+                  className="flow-node-box"
+                >
+                  {/* Top Connector Plus */}
+                  <div className="conn-plus" style={{ top: '-8px' }}><Plus size={8} /></div>
 
-                    <div className="roadmap-sh-card interactive-hover" style={{ flexGrow: 1, maxWidth: 'calc(100% - 70px)', border: `1px solid ${phaseColor}40` }}>
-                      <div className="card-title" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: `1px solid ${phaseColor}20` }}>
-                        <span style={{ color: phaseColor }}>{milestone.phase} : {milestone.title}</span>
-                        <span className={`metadata-tag risk-${milestone.risk_level}`} style={{ fontSize: '8px' }}>
-                          {milestone.risk_level}
+                  {/* Icon Panel */}
+                  <div style={{
+                    width: '42px',
+                    height: '42px',
+                    borderRadius: '16px',
+                    backgroundColor: style.bg,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: style.color,
+                    marginBottom: '10px',
+                    boxShadow: `0 0 15px ${style.bg}`
+                  }}>
+                    <Icon size={20} />
+                  </div>
+
+                  {/* Title / Subtitle */}
+                  <div style={{ textAlign: 'center' }}>
+                    <div style={{ fontWeight: '700', fontSize: '13px', color: '#fff', marginBottom: '2px' }}>
+                      {style.name}
+                    </div>
+                    <div style={{ fontSize: '10.5px', color: '#a1a1aa' }}>
+                      {milestone.title || 'Execute phase'}
+                    </div>
+                  </div>
+
+                  {/* Bottom Connector Plus */}
+                  <div className="conn-plus" style={{ bottom: '-8px' }}><Plus size={8} /></div>
+                </div>
+              </React.Fragment>
+            );
+          })}
+        </div>
+
+        {/* Side Details Drawer */}
+        {selectedNode && (
+          <div style={{
+            position: 'absolute',
+            top: 0,
+            right: 0,
+            width: '320px',
+            height: '100%',
+            backgroundColor: '#14111a',
+            borderLeft: '1.5px solid rgba(191, 133, 255, 0.2)',
+            boxShadow: '-10px 0 30px rgba(0,0,0,0.5)',
+            zIndex: 1000,
+            padding: '24px',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '20px',
+            animation: 'slideIn 0.25s ease-out'
+          }}>
+            {/* Drawer Header */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(255,255,255,0.06)', paddingBottom: '14px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                <span style={{ fontSize: '10.5px', fontWeight: 'bold', color: '#bf85ff', textTransform: 'uppercase' }}>
+                  {selectedNode.milestone.phase}
+                </span>
+                <h3 style={{ fontSize: '16px', color: '#fff', margin: 0 }}>
+                  {selectedNode.milestone.title}
+                </h3>
+              </div>
+              <button 
+                onClick={() => setSelectedNode(null)}
+                style={{ background: 'none', border: 'none', color: '#6b7280', cursor: 'pointer', outline: 'none' }}
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* Drawer Scrollable Content */}
+            <div style={{ flexGrow: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '16px', paddingRight: '4px' }}>
+              {/* Deliverables */}
+              <div>
+                <span style={{ fontSize: '10px', color: '#71717a', textTransform: 'uppercase', fontWeight: 'bold', display: 'block', marginBottom: '6px' }}>
+                  Primary Deliverable
+                </span>
+                <p style={{ margin: 0, fontSize: '12px', lineHeight: '1.5', color: '#d1d5db' }}>
+                  {selectedNode.milestone.deliverable}
+                </p>
+              </div>
+
+              {/* Specs */}
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <div className="spec-badge">
+                  <Clock size={11} />
+                  <span>{selectedNode.milestone.duration_estimate || 'N/A'}</span>
+                </div>
+                <div className={`spec-badge risk-${selectedNode.milestone.risk_level}`}>
+                  <span>{selectedNode.milestone.risk_level} Risk</span>
+                </div>
+              </div>
+
+              {/* Tasks List */}
+              <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '16px' }}>
+                <span style={{ fontSize: '10px', color: '#71717a', textTransform: 'uppercase', fontWeight: 'bold', display: 'block', marginBottom: '8px' }}>
+                  Tasks
+                </span>
+                {selectedNode.tasks.length === 0 ? (
+                  <span style={{ fontSize: '11px', color: '#71717a', fontStyle: 'italic' }}>No tasks assigned.</span>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                    {selectedNode.tasks.map(t => (
+                      <div key={t.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(255,255,255,0.02)', padding: '6px 10px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.04)' }}>
+                        {t.status === 'completed' ? (
+                          <CheckCircle2 size={13} style={{ color: '#34d399', flexShrink: 0 }} />
+                        ) : t.status === 'in_progress' ? (
+                          <Play size={13} style={{ color: '#3b82f6', flexShrink: 0 }} />
+                        ) : (
+                          <Circle size={13} style={{ color: '#71717a', flexShrink: 0 }} />
+                        )}
+                        <span style={{ fontSize: '11.5px', color: '#e4e4e7', textDecoration: t.status === 'completed' ? 'line-through' : 'none', opacity: t.status === 'completed' ? 0.6 : 0.9 }}>
+                          {t.name}
                         </span>
                       </div>
-                      
-                      <div className="card-body" style={{ gap: '10px' }}>
-                        <p style={{ margin: 0, fontSize: '11px', lineHeight: '1.4', color: '#94a3b8' }}>
-                          <strong>Deliverable:</strong> {milestone.deliverable}
-                        </p>
-
-                        <div style={{ display: 'flex', gap: '6px', fontSize: '9px', color: '#64748b' }}>
-                          <Clock size={11} /> Est: {milestone.duration_estimate || 'N/A'}
-                        </div>
-
-                        {milestoneTasks.length > 0 && (
-                          <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '8px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                            <span style={{ fontSize: '9px', fontWeight: '800', color: '#64748b', textTransform: 'uppercase' }}>Tasks</span>
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                              {tasksToShow.map(t => (
-                                <div key={t.id} className="sub-node">
-                                  {t.status === 'completed' ? (
-                                    <CheckCircle2 size={12} style={{ color: '#10b981', flexShrink: 0 }} />
-                                  ) : t.status === 'in_progress' ? (
-                                    <Play size={12} style={{ color: '#3b82f6', flexShrink: 0 }} />
-                                  ) : (
-                                    <Circle size={12} style={{ color: '#64748b', flexShrink: 0 }} />
-                                  )}
-                                  <span className="task-text" style={{ 
-                                    textDecoration: t.status === 'completed' ? 'line-through' : 'none',
-                                    opacity: t.status === 'completed' ? 0.5 : 0.9,
-                                    color: '#d1d5db'
-                                  }}>
-                                    {t.name}
-                                  </span>
-                                </div>
-                              ))}
-                              {milestoneTasks.length > 3 && (
-                                <button className="expand-toggle-btn" onClick={() => toggleExpand(mIdx)}>
-                                  {isExpanded ? 'Show Less' : `+ ${milestoneTasks.length - 3} More`}
-                                </button>
-                              )}
-                            </div>
-                          </div>
-                        )}
-
-                        {milestoneBlockers.length > 0 && (
-                          <div style={{ borderTop: '1px solid rgba(239, 68, 68, 0.2)', paddingTop: '8px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                            {milestoneBlockers.map(b => (
-                              <div key={b.id} className="sub-node blocker-node">
-                                <AlertTriangle size={11} style={{ color: '#ef4444', flexShrink: 0 }} />
-                                <span>{b.description}</span>
-                              </div>
-                            ))}
-                          </div>
-                        )}
-
-                      </div>
-                    </div>
-
+                    ))}
                   </div>
-                );
-              } else {
-                return (
-                  <div 
-                    key={`milestone-${mIdx}`} 
-                    style={{ 
-                      display: 'grid', 
-                      gridTemplateColumns: '1fr 140px 1fr', 
-                      alignItems: 'center',
-                      width: '100%',
-                      position: 'relative'
-                    }}
-                  >
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', width: '100%' }}>
-                      {isLeft ? (
-                        <div style={{ display: 'flex', alignItems: 'center', width: '100%', justifyContent: 'flex-end' }}>
-                          <div className="roadmap-sh-card interactive-hover" style={{ border: `1px solid ${phaseColor}40` }}>
-                            <div className="card-title" style={{ borderBottom: `1px solid ${phaseColor}20`, color: phaseColor }}>Tasks & Goals</div>
-                            <div className="card-body">
-                              {milestoneTasks.length === 0 ? (
-                                <div className="empty-text">No active tasks assigned</div>
-                              ) : (
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                                  {tasksToShow.map(t => (
-                                    <div key={t.id} className="sub-node">
-                                      {t.status === 'completed' ? (
-                                        <CheckCircle2 size={13} style={{ color: '#10b981', flexShrink: 0 }} />
-                                      ) : t.status === 'in_progress' ? (
-                                        <Play size={13} style={{ color: '#3b82f6', flexShrink: 0 }} />
-                                      ) : (
-                                        <Circle size={13} style={{ color: '#64748b', flexShrink: 0 }} />
-                                      )}
-                                      <span className="task-text" style={{ 
-                                        textDecoration: t.status === 'completed' ? 'line-through' : 'none',
-                                        opacity: t.status === 'completed' ? 0.5 : 0.9,
-                                        color: '#d1d5db'
-                                      }}>
-                                        {t.name}
-                                      </span>
-                                    </div>
-                                  ))}
-                                  {milestoneTasks.length > 3 && (
-                                    <button className="expand-toggle-btn" onClick={() => toggleExpand(mIdx)}>
-                                      {isExpanded ? 'Show Less' : `+ ${milestoneTasks.length - 3} More`}
-                                    </button>
-                                  )}
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                          <div className="branch-line branch-right" style={{ borderTop: `3px dashed ${phaseColor}`, opacity: 0.6 }} />
-                        </div>
-                      ) : (
-                        <div style={{ display: 'flex', alignItems: 'center', width: '100%', justifyContent: 'flex-end' }}>
-                          <div className="roadmap-sh-card detail-card interactive-hover" style={{ border: `1px solid ${phaseColor}40` }}>
-                            <div className="card-title text-blue" style={{ borderBottom: `1px solid ${phaseColor}20`, color: phaseColor }}>Deliverables & Risks</div>
-                            <div className="card-body">
-                              <p style={{ margin: '0 0 10px 0', fontSize: '12px', lineHeight: '1.4', fontWeight: '600', color: '#d1d5db' }}>
-                                {milestone.deliverable}
-                              </p>
-                              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '6px' }}>
-                                <span className="metadata-tag">
-                                  <Clock size={11} /> {milestone.duration_estimate}
-                                </span>
-                                <span className={`metadata-tag risk-${milestone.risk_level}`}>
-                                  {milestone.risk_level} Risk
-                                </span>
-                              </div>
-                              {milestoneBlockers.length > 0 && (
-                                <div style={{ marginTop: '12px', borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '10px' }}>
-                                  <div style={{ fontSize: '9px', fontWeight: 'bold', textTransform: 'uppercase', marginBottom: '6px', color: '#ef4444' }}>
-                                    Blockers
-                                  </div>
-                                  {milestoneBlockers.map(b => (
-                                    <div key={b.id} className="sub-node blocker-node">
-                                      <AlertTriangle size={12} style={{ color: '#ef4444', flexShrink: 0 }} />
-                                      <span>{b.description}</span>
-                                    </div>
-                                  ))}
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                          <div className="branch-line branch-right" style={{ borderTop: `3px dashed ${phaseColor}`, opacity: 0.6 }} />
-                        </div>
-                      )}
-                    </div>
+                )}
+              </div>
 
-                    <div style={{ justifySelf: 'center', display: 'flex', alignItems: 'center', zIndex: 3 }}>
-                      <div 
-                        onClick={() => onNodeClick && onNodeClick({ type: 'milestone', data: milestone, index: mIdx })}
-                        className="spine-dot-node"
-                        style={{
-                          borderColor: phaseColor,
-                          boxShadow: `0 0 10px ${phaseColor}40`,
-                        }}
-                      >
-                        {mIdx + 1}
+              {/* Blockers */}
+              {selectedNode.blockers.length > 0 && (
+                <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '16px' }}>
+                  <span style={{ fontSize: '10px', color: '#f87171', textTransform: 'uppercase', fontWeight: 'bold', display: 'block', marginBottom: '8px' }}>
+                    Active Blockers
+                  </span>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                    {selectedNode.blockers.map(b => (
+                      <div key={b.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(248, 113, 113, 0.05)', padding: '6px 10px', borderRadius: '8px', border: '1px solid rgba(248, 113, 113, 0.2)', color: '#fca5a5' }}>
+                        <AlertTriangle size={13} style={{ flexShrink: 0 }} />
+                        <span style={{ fontSize: '11.5px' }}>{b.description}</span>
                       </div>
-                    </div>
-
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', width: '100%' }}>
-                      {!isLeft ? (
-                        <div style={{ display: 'flex', alignItems: 'center', width: '100%', justifyContent: 'flex-start' }}>
-                          <div className="branch-line branch-left" style={{ borderTop: `3px dashed ${phaseColor}`, opacity: 0.6 }} />
-                          <div className="roadmap-sh-card interactive-hover" style={{ border: `1px solid ${phaseColor}40` }}>
-                            <div className="card-title" style={{ borderBottom: `1px solid ${phaseColor}20`, color: phaseColor }}>Tasks & Goals</div>
-                            <div className="card-body">
-                              {milestoneTasks.length === 0 ? (
-                                <div className="empty-text">No active tasks assigned</div>
-                              ) : (
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                                  {tasksToShow.map(t => (
-                                    <div key={t.id} className="sub-node">
-                                      {t.status === 'completed' ? (
-                                        <CheckCircle2 size={13} style={{ color: '#10b981', flexShrink: 0 }} />
-                                      ) : t.status === 'in_progress' ? (
-                                        <Play size={13} style={{ color: '#3b82f6', flexShrink: 0 }} />
-                                      ) : (
-                                        <Circle size={13} style={{ color: '#64748b', flexShrink: 0 }} />
-                                      )}
-                                      <span className="task-text" style={{ 
-                                        textDecoration: t.status === 'completed' ? 'line-through' : 'none',
-                                        opacity: t.status === 'completed' ? 0.5 : 0.9,
-                                        color: '#d1d5db'
-                                      }}>
-                                        {t.name}
-                                      </span>
-                                    </div>
-                                  ))}
-                                  {milestoneTasks.length > 3 && (
-                                    <button className="expand-toggle-btn" onClick={() => toggleExpand(mIdx)}>
-                                      {isExpanded ? 'Show Less' : `+ ${milestoneTasks.length - 3} More`}
-                                    </button>
-                                  )}
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      ) : (
-                        <div style={{ display: 'flex', alignItems: 'center', width: '100%', justifyContent: 'flex-start' }}>
-                          <div className="branch-line branch-left" style={{ borderTop: `3px dashed ${phaseColor}`, opacity: 0.6 }} />
-                          <div className="roadmap-sh-card detail-card interactive-hover" style={{ border: `1px solid ${phaseColor}40` }}>
-                            <div className="card-title text-blue" style={{ borderBottom: `1px solid ${phaseColor}20`, color: phaseColor }}>Deliverables & Risks</div>
-                            <div className="card-body">
-                              <p style={{ margin: '0 0 10px 0', fontSize: '12px', lineHeight: '1.4', fontWeight: '600', color: '#d1d5db' }}>
-                                {milestone.deliverable}
-                              </p>
-                              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '6px' }}>
-                                <span className="metadata-tag">
-                                  <Clock size={11} /> {milestone.duration_estimate}
-                                </span>
-                                <span className={`metadata-tag risk-${milestone.risk_level}`}>
-                                  {milestone.risk_level} Risk
-                                </span>
-                              </div>
-                              {milestoneBlockers.length > 0 && (
-                                <div style={{ marginTop: '12px', borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '10px' }}>
-                                  <div style={{ fontSize: '9px', fontWeight: 'bold', textTransform: 'uppercase', marginBottom: '6px', color: '#ef4444' }}>
-                                    Blockers
-                                  </div>
-                                  {milestoneBlockers.map(b => (
-                                    <div key={b.id} className="sub-node blocker-node">
-                                      <AlertTriangle size={12} style={{ color: '#ef4444', flexShrink: 0 }} />
-                                      <span>{b.description}</span>
-                                    </div>
-                                  ))}
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      )}
-                    </div>
+                    ))}
                   </div>
-                );
-              }
-            })}
+                </div>
+              )}
+            </div>
           </div>
-        </div>
+        )}
 
         <style>{`
           .ctrl-btn-action {
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 6px;
+            background: rgba(22, 19, 28, 0.85);
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            border-radius: 8px;
             padding: 6px 12px;
             cursor: pointer;
             box-shadow: 0 4px 10px rgba(0,0,0,0.3);
             display: flex;
             align-items: center;
             gap: 6px;
-            font-weight: 800;
-            font-size: 11px;
+            font-weight: 600;
+            font-size: 11.5px;
             color: #fff;
             transition: all 0.15s ease;
             backdrop-filter: blur(10px);
           }
           .ctrl-btn-action:hover {
-            background: rgba(255, 255, 255, 0.08);
-            border-color: rgba(255, 255, 255, 0.15);
+            background: rgba(255, 255, 255, 0.05);
+            border-color: rgba(255, 255, 255, 0.1);
           }
           .dropdown-item {
             background: transparent;
@@ -489,138 +471,68 @@ export default function RoadmapFlowchart({ roadmap = [], tasks = [], blockers = 
             padding: 8px 12px;
             text-align: left;
             font-size: 11px;
-            font-weight: 700;
+            font-weight: 600;
             cursor: pointer;
             width: 100%;
             color: #d1d5db;
             transition: background-color 0.15s ease, color 0.15s ease;
           }
           .dropdown-item:hover {
-            background-color: rgba(255, 255, 255, 0.05);
+            background-color: rgba(255, 255, 255, 0.04);
             color: #fff;
           }
           .dropdown-item:not(:last-child) {
-            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
           }
-          .spine-dot-node {
-            background-color: #0a0b10;
-            border: 3px solid #2563eb;
+          .flow-node-box:hover {
+            transform: translate(-50%, -54%) scale(1.03) !important;
+            box-shadow: 0 15px 40px rgba(191, 133, 255, 0.15) !important;
+            background-color: #1a1722 !important;
+          }
+          .conn-plus {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 14px;
+            height: 14px;
             border-radius: 50%;
-            width: 36px;
-            height: 36px;
+            background-color: #14111a;
+            border: 1px solid rgba(255,255,255,0.08);
             display: flex;
             align-items: center;
+            justify: center;
+            color: rgba(255,255,255,0.4);
             justify-content: center;
-            font-weight: 900;
-            font-size: 13px;
-            color: #fff;
-            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-            cursor: pointer;
           }
-          .spine-dot-node:hover {
-            transform: scale(1.1);
-            background-color: rgba(255,255,255,0.03);
-          }
-          .roadmap-sh-card {
-            background-color: rgba(15, 17, 26, 0.75);
-            backdrop-filter: blur(12px);
-            border-radius: 12px;
-            width: 100%;
-            max-width: 280px;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-            transition: all 0.25s ease;
-            z-index: 5;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-          }
-          .interactive-hover:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
-          }
-          .card-title {
-            background-color: rgba(255, 255, 255, 0.02);
-            padding: 8px 12px;
-            font-size: 11px;
-            font-weight: 900;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-          }
-          .card-body {
-            padding: 12px;
-            display: flex;
-            flex-direction: column;
-          }
-          .sub-node {
-            background-color: rgba(255, 255, 255, 0.02);
-            border: 1px solid rgba(255, 255, 255, 0.06);
+          .spec-badge {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.06);
+            padding: 4px 8px;
             border-radius: 6px;
-            padding: 5px 8px;
-            font-size: 11px;
-            font-weight: 700;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            color: #d1d5db;
-            text-align: left;
-            transition: background-color 0.15s ease;
-          }
-          .sub-node:hover {
-            background-color: rgba(255, 255, 255, 0.05);
-          }
-          .blocker-node {
-            background-color: rgba(239, 68, 68, 0.05);
-            border-color: rgba(239, 68, 68, 0.2);
-            color: #fca5a5;
-          }
-          .empty-text {
-            font-size: 11px;
-            color: #64748b;
-            font-style: italic;
-            padding: 4px;
-          }
-          .metadata-tag {
-            font-size: 9px;
-            font-weight: 800;
-            background-color: rgba(255, 255, 255, 0.02);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            padding: 2px 5px;
-            border-radius: 4px;
+            font-size: 10.5px;
             display: flex;
             align-items: center;
             gap: 4px;
-            width: fit-content;
-            color: #94a3b8;
+            color: #a1a1aa;
           }
-          .metadata-tag.risk-high {
-            background-color: rgba(239, 68, 68, 0.08);
-            border-color: rgba(239, 68, 68, 0.25);
+          .spec-badge.risk-high {
+            background-color: rgba(248, 113, 113, 0.08);
+            border-color: rgba(248, 113, 113, 0.25);
             color: #fca5a5;
           }
-          .metadata-tag.risk-medium {
-            background-color: rgba(245, 158, 11, 0.08);
-            border-color: rgba(245, 158, 11, 0.25);
+          .spec-badge.risk-medium {
+            background-color: rgba(251, 191, 36, 0.08);
+            border-color: rgba(251, 191, 36, 0.25);
             color: #fde047;
           }
-          .metadata-tag.risk-low {
-            background-color: rgba(16, 185, 129, 0.08);
-            border-color: rgba(16, 185, 129, 0.25);
+          .spec-badge.risk-low {
+            background-color: rgba(52, 211, 153, 0.08);
+            border-color: rgba(52, 211, 153, 0.25);
             color: #a7f3d0;
           }
-          .expand-toggle-btn {
-            background: none;
-            border: none;
-            color: #3b82f6;
-            font-size: 10px;
-            font-weight: 800;
-            cursor: pointer;
-            text-align: left;
-            padding: 4px 0 0 0;
-            text-transform: uppercase;
-          }
-          .expand-toggle-btn:hover {
-            text-decoration: underline;
-            color: #60a5fa;
+          @keyframes slideIn {
+            from { transform: translateX(100%); }
+            to { transform: translateX(0); }
           }
           .roadmap-sh-container.fullscreen {
             position: fixed !important;
@@ -641,8 +553,32 @@ export default function RoadmapFlowchart({ roadmap = [], tasks = [], blockers = 
     );
   };
 
-  if (isFullscreen) {
-    return createPortal(renderContent(), document.body);
-  }
-  return renderContent();
+  const stretchStyle = isFullscreen ? {} : {
+    resize: 'both',
+    overflow: 'auto',
+    minHeight: '480px',
+    height: '520px',
+    position: 'relative'
+  };
+
+  return (
+    <div style={stretchStyle}>
+      {isFullscreen ? createPortal(renderContent(), document.body) : renderContent()}
+      
+      {/* Visual Resize Grab Handle in Bottom-Right */}
+      {!isFullscreen && (
+        <div style={{
+          position: 'absolute',
+          bottom: '8px',
+          right: '8px',
+          width: '8px',
+          height: '8px',
+          borderRight: '2px solid rgba(191, 133, 255, 0.4)',
+          borderBottom: '2px solid rgba(191, 133, 255, 0.4)',
+          pointerEvents: 'none',
+          zIndex: 10
+        }} />
+      )}
+    </div>
+  );
 }
