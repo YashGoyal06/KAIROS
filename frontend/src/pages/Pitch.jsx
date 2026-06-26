@@ -25,9 +25,6 @@ export default function Pitch() {
       // Only sessions in execution or completed can generate pitch
       const planSessions = res.data.filter(s => s.status === 'execution' || s.status === 'completed');
       setSessions(planSessions);
-      if (planSessions.length > 0 && !activeSessionId) {
-        setActiveSessionId(planSessions[0].id);
-      }
     } catch (e) {
       console.error("Error loading sessions for pitch builder:", e);
     }
@@ -207,44 +204,60 @@ export default function Pitch() {
 
   return (
     <div className="main-content">
-      <div className="dashboard-header">
-        <div>
-          <h1 style={{ fontSize: '36px', fontWeight: 700, color: '#fff' }}>Presentation Pitch Studio</h1>
-          <p style={{ color: '#9ca3af', fontSize: '14px', marginTop: '4px' }}>
-            Structure final slide talking points, demo sequences, and script showcase templates.
-          </p>
-        </div>
-        <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-          {sessions.length > 0 && (
-            <select
-              className="form-select"
-              value={activeSessionId}
-              onChange={(e) => setActiveSessionId(e.target.value)}
-              style={{ width: '220px' }}
-            >
-              {sessions.map(s => (
-                <option key={s.id} value={s.id}>{s.name}</option>
-              ))}
-            </select>
-          )}
-          <button onClick={fetchSessionDetails} className="btn btn-secondary" style={{ padding: '10px 16px' }}>
-            <RefreshCw size={16} /> Sync Studio
-          </button>
-        </div>
-      </div>
-
       {!activeSessionId ? (
-        <div className="glass-card" style={{ textAlign: 'center', padding: '60px' }}>
-          <Presentation size={48} style={{ color: '#6b7280', marginBottom: '16px' }} />
-          <p style={{ color: '#9ca3af' }}>No roadmap execution sessions unlocked. Establish your planning milestones on the Coach tab first.</p>
-        </div>
+        <>
+          <div className="dashboard-header">
+            <div>
+              <h1 style={{ fontSize: '36px', fontWeight: 700, color: '#fff' }}>Presentation Pitch Studio</h1>
+              <p style={{ color: '#9ca3af', fontSize: '14px', marginTop: '4px' }}>
+                Select an active coaching session to structure final slide talking points, demo sequences, and script showcases.
+              </p>
+            </div>
+          </div>
+
+          <div className="dashboard-grid">
+            {sessions.length === 0 ? (
+              <div className="glass-card" style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '60px' }}>
+                <Presentation size={48} style={{ color: '#6b7280', marginBottom: '16px' }} />
+                <p style={{ color: '#9ca3af' }}>No roadmap execution sessions unlocked. Establish your planning milestones on the Coach tab and click "Accept & Start Execution" first.</p>
+              </div>
+            ) : (
+              sessions.map(s => (
+                <div key={s.id} className="glass-card" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', minHeight: '180px' }}>
+                  <div>
+                    <h3 style={{ color: '#fff', fontSize: '18px', marginBottom: '8px' }}>{s.name}</h3>
+                    <p style={{ fontSize: '12px', color: '#a1a1aa', textTransform: 'uppercase', fontWeight: 'bold' }}>
+                      Status: <span style={{ color: s.status === 'planning' ? '#fbbf24' : '#34d399' }}>{s.status}</span>
+                    </p>
+                  </div>
+                  <button onClick={() => setActiveSessionId(s.id)} className="btn btn-secondary" style={{ marginTop: '24px', width: '100%' }}>
+                    Open Pitch Studio
+                  </button>
+                </div>
+              ))
+            )}
+          </div>
+        </>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', flexGrow: 1 }}>
+          <div className="dashboard-header" style={{ marginBottom: '8px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+              <button onClick={() => { setActiveSessionId(''); setPitchText(''); }} className="btn btn-secondary" style={{ padding: '8px 16px', fontSize: '13px' }}>
+                ← Back to Pitch Rooms
+              </button>
+              <div>
+                <h2 style={{ fontSize: '24px', fontWeight: 700, color: '#fff', margin: 0 }}>Pitch Studio: {activeSession?.name}</h2>
+              </div>
+            </div>
+            <button onClick={fetchSessionDetails} className="btn btn-secondary" style={{ padding: '10px 16px' }}>
+              <RefreshCw size={16} /> Sync Studio
+            </button>
+          </div>
           
           {/* Main Layout Workspace */}
           {!pitchText && !isGenerating ? (
             <div className="glass-card" style={{ textAlign: 'center', padding: '80px 40px' }}>
-              <Presentation size={64} style={{ color: '#8b5cf6', marginBottom: '24px' }} />
+              <Presentation size={64} style={{ color: '#bf85ff', marginBottom: '24px' }} />
               <h2 style={{ fontSize: '28px', color: '#fff', marginBottom: '12px' }}>Generate Presentation Package</h2>
               <p style={{ color: '#9ca3af', maxWidth: '500px', margin: '0 auto 32px auto', fontSize: '14px', lineHeight: '1.6' }}>
                 KAIROS will consolidate task completion, assignees, technical architecture, and milestones into a coherent Pitch Outline, Demo Path, and Full Script.
@@ -285,7 +298,7 @@ export default function Pitch() {
 
                 {isGenerating && !pitchText ? (
                   <div style={{ display: 'flex', flexDirection: 'column', flexGrow: 1, justifyContent: 'center', alignItems: 'center', gap: '16px' }}>
-                    <Loader className="spin" size={32} style={{ color: '#3b82f6', animation: 'spinSlow 2s linear infinite' }} />
+                    <Loader className="spin" size={32} style={{ color: '#bf85ff', animation: 'spinSlow 2s linear infinite' }} />
                     <span style={{ color: '#9ca3af', fontSize: '13px' }}>Compiling project assets and skills profiles...</span>
                   </div>
                 ) : (
@@ -298,7 +311,7 @@ export default function Pitch() {
               {/* Right Pane - Chat tuning interface */}
               <div className="glass-card" style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
                 <h3 style={{ fontSize: '18px', display: 'flex', alignItems: 'center', gap: '8px', color: '#fff', marginBottom: '16px' }}>
-                  <Layers size={18} style={{ color: '#8b5cf6' }} /> Adjust Pitch Layout
+                  <Layers size={18} style={{ color: '#bf85ff' }} /> Adjust Pitch Layout
                 </h3>
                 <p style={{ color: '#9ca3af', fontSize: '13px', lineHeight: '1.5', marginBottom: '24px' }}>
                   Instruct the AI Pitch Architect to modify specific slides, add technical depth, re-structure demo features, or edit speaking bullet points.
@@ -333,7 +346,6 @@ export default function Pitch() {
 
             </div>
           )}
-
         </div>
       )}
     </div>
