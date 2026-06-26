@@ -1,4 +1,5 @@
 /* KAIROS Global Premium Design System */
+@import url('https://fonts.googleapis.com/css2?family=Dosis:wght@200..800&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap');
 @import url('https://cdn.jsdelivr.net/npm/geist@1.3.0/dist/fonts/geist-sans/style.css');
 
@@ -25,8 +26,8 @@
   --danger: #f87171;
   
   --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  --font-display: 'Outfit', sans-serif;
-  --font-body: 'Plus Jakarta Sans', sans-serif;
+  --font-display: 'Dosis', sans-serif;
+  --font-body: 'Dosis', sans-serif;
 }
 
 * {
@@ -140,20 +141,19 @@ h1, h2, h3, h4, h5, h6 {
   position: relative;
 }
 
-/* Glassmorphic Components */
 .glass-card {
-  background: rgba(22, 19, 28, 0.7);
-  border: 1px solid var(--border-color);
-  border-radius: 20px;
+  background: rgba(22, 19, 28, 0.65);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 16px;
   padding: 24px;
-  backdrop-filter: blur(12px);
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(16px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.03);
   transition: var(--transition-smooth);
 }
 
 .glass-card:hover {
-  border-color: var(--border-hover);
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45), 0 0 15px rgba(191, 133, 255, 0.05);
+  border-color: rgba(191, 133, 255, 0.25);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45), 0 0 15px rgba(191, 133, 255, 0.08);
 }
 
 /* Dynamic Forms */
@@ -358,9 +358,23 @@ h1, h2, h3, h4, h5, h6 {
   font-weight: bold;
 }
 
-.priority-high { color: var(--danger); background: rgba(239, 68, 68, 0.15); }
-.priority-medium { color: var(--warning); background: rgba(245, 158, 11, 0.15); }
-.priority-low { color: var(--success); background: rgba(16, 185, 129, 0.15); }
+.priority-high {
+  color: #f472b6 !important;
+  background: rgba(244, 114, 182, 0.08) !important;
+  border: 1px solid rgba(244, 114, 182, 0.2) !important;
+  text-shadow: 0 0 8px rgba(244, 114, 182, 0.25) !important;
+}
+.priority-medium {
+  color: #bf85ff !important;
+  background: rgba(191, 133, 255, 0.08) !important;
+  border: 1px solid rgba(191, 133, 255, 0.2) !important;
+  text-shadow: 0 0 8px rgba(191, 133, 255, 0.25) !important;
+}
+.priority-low {
+  color: #38bdf8 !important;
+  background: rgba(56, 189, 248, 0.08) !important;
+  border: 1px solid rgba(56, 189, 248, 0.2) !important;
+}
 
 /* Pitch Deck Slides Layout */
 .slide-container {
@@ -635,73 +649,168 @@ h1, h2, h3, h4, h5, h6 {
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  background-color: #0f0d14;
-  border-left: 1px solid rgba(191, 133, 255, 0.12); /* Thin mauve line */
+  background-color: transparent;
+  border-left: none;
 }
 
-/* Sidebar Overrides */
-.sidebar-kairos {
-  width: 260px;
-  flex-shrink: 0;
-  background-color: #0f0d14;
+/* Sidebar Capsule Layout */
+.sidebar-container-kairos {
   display: flex;
   flex-direction: column;
-  padding: 24px 16px;
-  z-index: 10;
-  height: 100%;
+  align-items: center;
+  gap: 20px;
+  padding: 24px 12px;
+  height: 100vh;
+  z-index: 100;
+  position: relative;
+  flex-shrink: 0;
+  background: transparent;
 }
 
-.sidebar-logo-kairos {
-  font-family: var(--font-display);
-  font-size: 24px;
-  font-weight: 700;
-  margin-bottom: 32px;
+.sidebar-logo-circle {
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 2px solid rgba(255, 255, 255, 0.08);
   display: flex;
   align-items: center;
-  gap: 8px;
-  color: #ffffff;
+  justify-content: center;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+  background: #0f0d14;
 }
 
-.sidebar-logo-kairos span {
-  color: #ffffff;
-  text-shadow: 0 0 10px rgba(191, 133, 255, 0.8), 0 0 20px rgba(191, 133, 255, 0.4);
+.sidebar-logo-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
-.sidebar-logo-kairos svg {
-  filter: drop-shadow(0 0 6px rgba(191, 133, 255, 0.8));
-}
-
-.sidebar-menu-kairos {
+.sidebar-bar-kairos {
+  width: 64px;
+  background-color: #000000;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 32px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  align-items: center;
+  padding: 20px 0;
+  gap: 24px;
   flex-grow: 1;
+  position: relative;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+}
+
+.sidebar-menu-btn {
+  color: #71717a;
+  cursor: pointer;
+  transition: color 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sidebar-menu-btn:hover {
+  color: #ffffff;
+}
+
+.sidebar-links-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  position: relative;
 }
 
 .sidebar-link-kairos {
+  width: 100%;
+  height: 48px;
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 12px;
-  color: #a1a1aa; /* Muted grey */
+  justify-content: center;
+  color: #a1a1aa;
   text-decoration: none;
-  font-weight: 500;
-  border-radius: 12px;
-  transition: var(--transition-smooth);
-  border: 1px solid transparent;
+  position: relative;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.sidebar-link-kairos:hover {
-  color: #f3f4f6;
-  background: rgba(255, 255, 255, 0.03);
+.sidebar-link-kairos .icon-wrapper {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 10;
 }
 
-.sidebar-link-kairos.active {
-  background: linear-gradient(90deg, rgba(191, 133, 255, 0.12), rgba(244, 114, 182, 0.03));
-  border-color: rgba(191, 133, 255, 0.3);
+/* Tooltip/Label popping on hover */
+.sidebar-label {
+  position: absolute;
+  left: 80px;
+  background: rgba(22, 19, 28, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 6px 12px;
+  border-radius: 8px;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateX(-10px);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+  z-index: 1000;
+}
+
+.sidebar-link-kairos:hover .sidebar-label {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.sidebar-link-kairos:hover .icon-wrapper {
   color: #ffffff;
-  text-shadow: 0 0 8px rgba(191, 133, 255, 0.6);
-  box-shadow: 0 0 15px rgba(191, 133, 255, 0.08);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+/* Curved Active State Cutout */
+.sidebar-link-kairos.active {
+  color: #ffffff;
+}
+
+.sidebar-link-kairos.active .icon-wrapper {
+  background: #f472b6; /* Pink active button circle */
+  color: #ffffff;
+  transform: translateX(12px); /* Pop out of sidebar slightly */
+  box-shadow: 0 4px 14px rgba(244, 114, 182, 0.4);
+}
+
+.sidebar-footer-kairos {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+}
+
+.sidebar-user-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #bf85ff, #f472b6);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  border: 2px solid rgba(255,255,255,0.1);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+  cursor: pointer;
 }
 
 /* Header & Controls */
@@ -854,7 +963,8 @@ h1, h2, h3, h4, h5, h6 {
 
 /* Card Rebrand Styles */
 .kairos-card {
-  background-color: #0F0C11;
+  background-color: rgba(22, 19, 28, 0.65);
+  backdrop-filter: blur(16px);
   border: 1px solid rgba(255, 255, 255, 0.05);
   border-radius: 12px;
   padding: 20px;
@@ -1035,29 +1145,29 @@ h1, h2, h3, h4, h5, h6 {
    ══════════════════════════════════════════════════════════════ */
 
 .main-content {
-  background-color: #0F0C11 !important;
+  background-color: transparent !important;
   color: #ffffff !important;
 }
 
 .dashboard-header h1 {
   color: #ffffff !important;
-  text-shadow: 0 0 10px rgba(236, 72, 153, 0.6), 0 0 20px rgba(236, 72, 153, 0.3) !important;
+  text-shadow: 0 0 10px rgba(191, 133, 255, 0.6), 0 0 20px rgba(191, 133, 255, 0.3) !important;
 }
 
 .glass-card {
-  background-color: #0F0C11 !important;
+  background-color: rgba(22, 19, 28, 0.65) !important;
   background-image: none !important;
   border: 1px solid rgba(255, 255, 255, 0.05) !important;
   border-radius: 12px !important;
   padding: 24px !important;
-  backdrop-filter: blur(8px) !important;
+  backdrop-filter: blur(16px) !important;
   transition: var(--transition-smooth) !important;
-  box-shadow: none !important;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.03) !important;
 }
 
 .glass-card:hover {
-  border-color: rgba(236, 72, 153, 0.25) !important;
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4), 0 0 15px rgba(236, 72, 153, 0.05) !important;
+  border-color: rgba(191, 133, 255, 0.25) !important;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45), 0 0 15px rgba(191, 133, 255, 0.08) !important;
 }
 
 .glass-card h3 {
@@ -1066,7 +1176,7 @@ h1, h2, h3, h4, h5, h6 {
   font-weight: 700 !important;
   letter-spacing: 0.1em !important;
   color: #ffffff !important;
-  text-shadow: 0 0 8px rgba(236, 72, 153, 0.6) !important;
+  text-shadow: 0 0 8px rgba(191, 133, 255, 0.6) !important;
   text-transform: uppercase !important;
 }
 
@@ -1146,7 +1256,8 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .profile-card-left {
-  background-color: #0F0C11;
+  background-color: rgba(22, 19, 28, 0.65);
+  backdrop-filter: blur(16px);
   border: 1px solid rgba(255, 255, 255, 0.05);
   border-radius: 12px;
   padding: 24px;
@@ -1154,26 +1265,27 @@ h1, h2, h3, h4, h5, h6 {
   flex-direction: column;
   align-items: center;
   height: fit-content;
-  box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.3);
   transition: var(--transition-smooth);
 }
 
 .profile-card-left:hover {
-  border-color: rgba(236, 72, 153, 0.25);
-  box-shadow: 0 12px 50px rgba(0, 0, 0, 0.6), 0 0 20px rgba(236, 72, 153, 0.05);
+  border-color: rgba(191, 133, 255, 0.25);
+  box-shadow: 0 12px 50px rgba(0, 0, 0, 0.45), 0 0 20px rgba(191, 133, 255, 0.08);
 }
 
 .profile-card-right {
-  background-color: #0F0C11;
+  background-color: rgba(22, 19, 28, 0.65);
+  backdrop-filter: blur(16px);
   border: 1px solid rgba(255, 255, 255, 0.05);
   border-radius: 12px;
   padding: 24px;
-  box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.3);
   transition: var(--transition-smooth);
 }
 
 .profile-card-right:hover {
-  border-color: rgba(236, 72, 153, 0.15);
+  border-color: rgba(191, 133, 255, 0.15);
 }
 
 .profile-section-header {
@@ -1182,7 +1294,7 @@ h1, h2, h3, h4, h5, h6 {
   font-weight: 700;
   letter-spacing: 0.1em;
   color: #ffffff;
-  text-shadow: 0 0 8px rgba(236, 72, 153, 0.6);
+  text-shadow: 0 0 8px rgba(191, 133, 255, 0.6);
   margin-bottom: 20px;
   margin-top: 20px;
   text-transform: uppercase;
@@ -1193,6 +1305,159 @@ h1, h2, h3, h4, h5, h6 {
 .profile-section-header:first-of-type {
   margin-top: 0;
 }
+
+/* Responsive Mobile Layouts (max-width: 768px) */
+.mobile-header-kairos {
+  display: none;
+  width: 100%;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 18px;
+  background-color: #000000;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  position: relative;
+  z-index: 1001;
+}
+
+.mobile-nav-dropdown {
+  position: absolute;
+  top: 60px;
+  left: 0;
+  right: 0;
+  background-color: rgba(15, 13, 20, 0.98);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  padding: 16px 20px;
+  z-index: 1000;
+  box-shadow: 0 15px 30px rgba(0,0,0,0.6);
+  animation: slideDown 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes slideDown {
+  from { transform: translateY(-10px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.mobile-links-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.mobile-link-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: #a1a1aa;
+  text-decoration: none;
+  padding: 10px 12px;
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.mobile-link-item:hover, .mobile-link-item.active {
+  color: #ffffff;
+  background-color: rgba(255,255,255,0.04);
+}
+
+@media (max-width: 768px) {
+  .app-container-full {
+    flex-direction: column !important;
+  }
+  
+  .sidebar-container-kairos {
+    width: 100% !important;
+    height: auto !important;
+    padding: 0 !important;
+  }
+  
+  .desktop-only {
+    display: none !important;
+  }
+  
+  .mobile-header-kairos {
+    display: flex !important;
+  }
+  
+  .app-content-wrapper-full {
+    height: calc(100vh - 61px) !important;
+    overflow-y: auto !important;
+    border-left: none !important;
+  }
+  
+  /* Redesigning main-content components to stack on mobile */
+  .main-content {
+    padding: 16px !important;
+  }
+  
+  /* Stack grid layouts on mobile */
+  div[style*="gridTemplateColumns"],
+  div[style*="grid-template-columns"] {
+    grid-template-columns: 1fr !important;
+  }
+  
+  /* Header flex wrap on mobile */
+  div[style*="justifyContent: 'space-between'"],
+  div[style*="justify-content: space-between"] {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 12px !important;
+  }
+  
+  /* Sidebar action bar flex wrapping */
+  div[style*="alignItems: 'center'"],
+  div[style*="align-items: center"] {
+    flex-wrap: wrap !important;
+    gap: 8px !important;
+  }
+  
+  /* Teams page columns */
+  .dashboard-grid {
+    grid-template-columns: 1fr !important;
+    gap: 16px !important;
+  }
+  
+  /* Profile page columns */
+  .profile-grid-kairos {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* Neobrutalist Shape & Theme Override for Dashboard and Global Elements */
+.kairos-card,
+.glass-card,
+.profile-card-left,
+.profile-card-right,
+.form-input,
+.form-select,
+.form-textarea,
+.tag-input-container,
+.btn,
+.btn-primary,
+.btn-secondary,
+.btn-kairos-action,
+input,
+select,
+textarea,
+button {
+  border-radius: 0px !important;
+}
+
+/* Ensure nice dark-glass neobrutalist borders */
+.kairos-card, .glass-card {
+  border: 2px solid rgba(255, 255, 255, 0.15) !important;
+  box-shadow: 4px 4px 0px rgba(0, 0, 0, 0.3) !important;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.kairos-card:hover, .glass-card:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 6px 6px 0px rgba(0, 0, 0, 0.45) !important;
+  border-color: rgba(255, 255, 255, 0.3) !important;
+}
+
 
 
 

@@ -1,19 +1,27 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { RefreshCw } from 'lucide-react';
+import { 
+  RefreshCw, CheckCircle2, Clock, AlertTriangle, Calendar, Plus, 
+  Search, Bell, Grid, Settings, Moon, ChevronDown, Check, User
+} from 'lucide-react';
 import { getTechIconUrl } from '../utils/techIcons';
 
 export default function Dashboard() {
+  const navigate = useNavigate();
   const { profile, API_BASE, user } = useAuth();
   const [teams, setTeams] = useState([]);
   const [sessions, setSessions] = useState([]);
   const [allTasks, setAllTasks] = useState([]);
   const [allBlockers, setAllBlockers] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [activeFilter, setActiveFilter] = useState('telemetry');
-
-
+  
+  // Filters & State
+  const [taskFilter, setTaskFilter] = useState('all'); // all, pending, done
+  const [sortBy, setSortBy] = useState('name'); // name, priority
+  const [newTaskName, setNewTaskName] = useState('');
+  const [selectedSessionId, setSelectedSessionId] = useState('');
 
   const fetchData = async () => {
     if (!profile) return;
@@ -31,18 +39,21 @@ export default function Dashboard() {
         s.creator_id === profile.id || teamsRes.data.some(t => t.id === s.team_id)
       );
       setSessions(userSessions);
+      if (userSessions.length > 0 && !selectedSessionId) {
+        setSelectedSessionId(userSessions[0].id);
+      }
 
-      // 3. For each session, fetch tasks & blockers
+      // 3. Fetch tasks & blockers for each session
       let compiledTasks = [];
       let compiledBlockers = [];
       
       for (const s of userSessions) {
         try {
           const tasksRes = await axios.get(`${API_BASE}/sessions/${s.id}/tasks`);
-          compiledTasks = [...compiledTasks, ...tasksRes.data];
+          compiledTasks = [...compiledTasks, ...tasksRes.data.map(t => ({ ...t, sessionName: s.name }))];
 
           const blockersRes = await axios.get(`${API_BASE}/sessions/${s.id}/blockers`);
-          compiledBlockers = [...compiledBlockers, ...blockersRes.data.filter(b => b.status === 'open')];
+          compiledBlockers = [...compiledBlockers, ...blockersRes.data.filter(b => b.status === 'open').map(b => ({ ...b, sessionName: s.name }))];
         } catch (e) {
           console.error(`Error loading data for session ${s.id}`, e);
         }
@@ -61,265 +72,507 @@ export default function Dashboard() {
     fetchData();
   }, [profile]);
 
+  const handleStatusToggle = async (taskId, currentStatus) => {
+    const nextStatus = currentStatus === 'completed' ? 'pending' : 'completed';
+    try {
+      await axios.put(`${API_BASE}/tasks/${taskId}`, { status: nextStatus });
+      
+      // Update local state directly for speed
+      setAllTasks(prev => prev.map(t => t.id === taskId ? { ...t, status: nextStatus } : t));
+    } catch (e) {
+      console.error("Error updating task status:", e);
+    }
+  };
+
+  const handleAddTask = async (e) => {
+    e.preventDefault();
+    if (!newTaskName.trim() || !selectedSessionId) return;
+
+    // Find milestone_id for the first milestone in this session
+    const currentSession = sessions.find(s => s.id === selectedSessionId);
+    const milestones = currentSession?.milestones || [];
+    const milestoneId = milestones.length > 0 ? (milestones[0].phase || "phase_1") : "phase_1";
+
+    try {
+      const res = await axios.post(`${API_BASE}/sessions/${selectedSessionId}/tasks`, {
+        name: newTaskName.trim(),
+        milestone_id: milestoneId,
+        priority: "medium",
+        dependencies: []
+      });
+
+      setNewTaskName('');
+      fetchData(); // Reload list & counts
+    } catch (err) {
+      console.error("Error creating task:", err);
+    }
+  };
+
   if (loading) {
     return (
-      <div style={{ display: 'flex', flexGrow: 1, justifyContent: 'center', alignItems: 'center' }}>
-        <div style={{ animation: 'spinSlow 2s linear infinite', color: '#ec4899', fontSize: '24px' }}>●</div>
+      <div style={{ display: 'flex', flexGrow: 1, justifyContent: 'center', alignItems: 'center', height: '80vh' }}>
+        <div style={{ animation: 'spinSlow 2s linear infinite', color: '#bf85ff', fontSize: '28px' }}>●</div>
       </div>
     );
   }
 
-  const completedTasksCount = allTasks.filter(t => t.status === 'completed').length;
-  const completionPercentage = allTasks.length > 0 ? Math.round((completedTasksCount / allTasks.length) * 100) : 0;
+  // Filter & Sort Tasks
+  let filteredTasks = [...allTasks];
+  if (taskFilter === 'pending') {
+    filteredTasks = filteredTasks.filter(t => t.status !== 'completed');
+  } else if (taskFilter === 'done') {
+    filteredTasks = filteredTasks.filter(t => t.status === 'completed');
+  }
+
+  if (sortBy === 'name') {
+    filteredTasks.sort((a, b) => a.name.localeCompare(b.name));
+  } else if (sortBy === 'priority') {
+    const priorityWeight = { high: 3, medium: 2, low: 1 };
+    filteredTasks.sort((a, b) => (priorityWeight[b.priority] || 0) - (priorityWeight[a.priority] || 0));
+  }
+
+  // Calculate stats for top card widgets
+  const getSessionStats = (sess) => {
+    const sessTasks = allTasks.filter(t => t.session_id === sess.id);
+    const completed = sessTasks.filter(t => t.status === 'completed').length;
+    const pct = sessTasks.length > 0 ? Math.round((completed / sessTasks.length) * 100) : 0;
+    return { count: sessTasks.length, completed, pct };
+  };
 
   return (
-    <div className="main-content" style={{ padding: 0, display: 'flex', flexDirection: 'column' }}>
-      {/* Top Header Space */}
-      <div className="dashboard-header-container">
-        <div className="dashboard-header-top">
-          <div className="welcome-section">
-            <h1 className="welcome-title">Dashboard</h1>
-            <p className="welcome-subtitle">
-              Welcome back, <span className="welcome-name">Azhaan Ali Siddiqui</span>.
-            </p>
+    <div style={{ padding: '24px 32px', display: 'flex', flexDirection: 'column', gap: '24px', overflowY: 'auto', flex: 1 }}>
+      
+      {/* Top Header bar matching Mockup */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div>
+          <h1 style={{ fontSize: '26px', fontWeight: '800', color: '#ffffff', letterSpacing: '-0.02em', marginBottom: '4px' }}>Dashboard</h1>
+          <p style={{ fontSize: '13px', color: '#a1a1aa' }}>
+            Overview of your active workspace sessions and milestone checklist.
+          </p>
+        </div>
+
+        {/* Global Action Bar */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+          <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+            <Search size={16} style={{ position: 'absolute', left: '12px', color: '#71717a' }} />
+            <input 
+              type="text" 
+              placeholder="Search tasks..." 
+              style={{
+                background: 'rgba(255, 255, 255, 0.04)',
+                border: '2px solid rgba(255, 255, 255, 0.15)',
+                borderRadius: '0px',
+                padding: '8px 16px 8px 36px',
+                fontSize: '13px',
+                color: '#fff',
+                width: '180px',
+                outline: 'none',
+                transition: 'all 0.2s ease'
+              }}
+              onFocus={(e) => {
+                e.target.style.width = '240px';
+                e.target.style.borderColor = '#bf85ff';
+              }}
+              onBlur={(e) => {
+                e.target.style.width = '180px';
+                e.target.style.borderColor = 'rgba(255, 255, 255, 0.15)';
+              }}
+            />
           </div>
+
+          <button style={{ background: 'rgba(255, 255, 255, 0.04)', border: '2px solid rgba(255, 255, 255, 0.15)', padding: '8px', borderRadius: '0px', color: '#a1a1aa', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+            <Bell size={16} />
+          </button>
+
+          <button 
+            onClick={() => navigate('/coach')}
+            style={{
+              background: 'linear-gradient(135deg, #bf85ff, #f472b6)',
+              border: '2px solid rgba(255, 255, 255, 0.2)',
+              padding: '8px 16px',
+              borderRadius: '0px',
+              color: '#ffffff',
+              fontSize: '13px',
+              fontWeight: '600',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              boxShadow: '4px 4px 0px rgba(0, 0, 0, 0.3)',
+              cursor: 'pointer',
+              transition: 'transform 0.1s ease, box-shadow 0.1s ease'
+            }}
+            onMouseDown={(e) => {
+              e.currentTarget.style.transform = 'translate(2px, 2px)';
+              e.currentTarget.style.boxShadow = '2px 2px 0px rgba(0, 0, 0, 0.3)';
+            }}
+            onMouseUp={(e) => {
+              e.currentTarget.style.transform = 'none';
+              e.currentTarget.style.boxShadow = '4px 4px 0px rgba(0, 0, 0, 0.3)';
+            }}
+          >
+            <Plus size={14} />
+            <span>Create new</span>
+          </button>
         </div>
       </div>
 
-      {/* Modular Dashboard Grid */}
-      <div className="kairos-dashboard-grid">
-        
-        {/* Card 1: KAIROS Data Insights */}
-        <div className="kairos-col-left">
-          {/* Card 1a: Profile Status */}
-          <div className="kairos-card">
-            <div className="kairos-card-header">/// PROFILE_STATUS</div>
-            <div className="kairos-metric-large" style={{ fontSize: '20px', fontWeight: '700', marginTop: '8px' }}>
-              {profile?.primary_role || "Full Stack Developer"}
-            </div>
-            <div style={{ fontSize: '11px', color: '#6b7280', marginTop: '6px' }}>
-              LEVEL: <span style={{ color: '#ffffff', fontWeight: '600' }}>{(profile?.experience_level || "Intermediate").toUpperCase()}</span>
-            </div>
-          </div>
+      {/* 3 Top Progress Grid Cards */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '20px' }}>
+        {sessions.slice(0, 3).map((s, idx) => {
+          const stats = getSessionStats(s);
+          return (
+            <div key={s.id} className="kairos-card" style={{ display: 'flex', flexDirection: 'column', gap: '16px', borderRadius: '0px', border: '2px solid rgba(255, 255, 255, 0.15)' }}>
+              <div>
+                <h3 style={{ fontSize: '15px', fontWeight: '700', color: '#ffffff', marginBottom: '6px', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+                  {s.name}
+                </h3>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: '#a1a1aa' }}>
+                  <span>Progress</span>
+                  <span style={{ fontWeight: '700', color: '#bf85ff' }}>{stats.pct}%</span>
+                </div>
+              </div>
 
-          {/* Card 1b: Tech Stack tag cluster */}
-          <div className="kairos-card" style={{ flexGrow: 1 }}>
-            <div className="kairos-card-header">/// TECH_STACK</div>
-            <div style={{ 
-              display: 'grid', 
-              gridTemplateColumns: 'repeat(auto-fill, minmax(40px, 1fr))', 
-              gap: '10px',
-              marginTop: '12px'
-            }}>
-              {(profile?.tech_stack && profile.tech_stack.length > 0 ? profile.tech_stack : ["React", "FastAPI", "Python", "Docker", "Supabase"]).map(tech => (
-                <div 
-                  key={tech} 
-                  title={tech}
+              {/* Progress Bar fill */}
+              <div style={{ height: '8px', background: 'rgba(255, 255, 255, 0.05)', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: '0px', overflow: 'hidden' }}>
+                <div style={{
+                  height: '100%',
+                  width: `${stats.pct}%`,
+                  background: idx === 0 ? '#bf85ff' : idx === 1 ? '#f472b6' : '#38bdf8',
+                  borderRadius: '0px'
+                }} />
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '4px' }}>
+                <span style={{ fontSize: '11px', fontFamily: 'monospace', color: '#71717a' }}>
+                  {new Date(s.created_at || Date.now()).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+                </span>
+                
+                {/* Team member circles */}
+                <div style={{ display: 'flex', alignItems: 'center' }}>
+                  {(() => {
+                    const sessionTeam = teams.find(t => t.id === s.team_id);
+                    const members = sessionTeam ? sessionTeam.members : [profile];
+                    return members.slice(0, 3).map((m, mIdx) => {
+                      const colors = ['#bf85ff', '#f472b6', '#38bdf8'];
+                      const initials = (m.full_name || m.name || 'User').split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
+                      return (
+                        <div 
+                          key={m.id || mIdx}
+                          style={{ 
+                            width: '22px', 
+                            height: '22px', 
+                            borderRadius: '0px', 
+                            background: colors[mIdx % colors.length], 
+                            border: '1.5px solid #0f0d14', 
+                            display: 'flex', 
+                            alignItems: 'center', 
+                            justifyContent: 'center', 
+                            fontSize: '9px', 
+                            fontWeight: 'bold', 
+                            color: '#000',
+                            marginLeft: mIdx > 0 ? '-6px' : '0', 
+                            zIndex: 3 - mIdx 
+                          }}
+                          title={m.full_name || m.name}
+                        >
+                          {initials}
+                        </div>
+                      );
+                    });
+                  })()}
+                </div>
+              </div>
+            </div>
+          );
+        })}
+        {sessions.length === 0 && (
+          <div className="kairos-card" style={{ gridColumn: 'span 3', display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '40px', color: '#a1a1aa' }}>
+            Create a session inside the Coach tab to begin tracking milestones.
+          </div>
+        )}
+      </div>
+
+      {/* Filter and Sort Row */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '10px' }}>
+        <div style={{ display: 'flex', gap: '4px', background: 'rgba(255, 255, 255, 0.02)', border: '2px solid rgba(255, 255, 255, 0.15)', padding: '4px', borderRadius: '0px' }}>
+          <button 
+            onClick={() => setTaskFilter('all')}
+            style={{
+              background: taskFilter === 'all' ? 'rgba(255, 255, 255, 0.12)' : 'transparent',
+              border: 'none',
+              padding: '6px 12px',
+              borderRadius: '0px',
+              color: taskFilter === 'all' ? '#fff' : '#a1a1aa',
+              fontSize: '12px',
+              fontWeight: '600',
+              cursor: 'pointer'
+            }}
+          >
+            All Tasks
+          </button>
+          <button 
+            onClick={() => setTaskFilter('pending')}
+            style={{
+              background: taskFilter === 'pending' ? 'rgba(255, 255, 255, 0.12)' : 'transparent',
+              border: 'none',
+              padding: '6px 12px',
+              borderRadius: '0px',
+              color: taskFilter === 'pending' ? '#fff' : '#a1a1aa',
+              fontSize: '12px',
+              fontWeight: '600',
+              cursor: 'pointer'
+            }}
+          >
+            Pending
+          </button>
+          <button 
+            onClick={() => setTaskFilter('done')}
+            style={{
+              background: taskFilter === 'done' ? 'rgba(255, 255, 255, 0.12)' : 'transparent',
+              border: 'none',
+              padding: '6px 12px',
+              borderRadius: '0px',
+              color: taskFilter === 'done' ? '#fff' : '#a1a1aa',
+              fontSize: '12px',
+              fontWeight: '600',
+              cursor: 'pointer'
+            }}
+          >
+            Done
+          </button>
+        </div>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <span style={{ fontSize: '11px', color: '#71717a', textTransform: 'uppercase', fontFamily: 'monospace' }}>Sort by:</span>
+          <select 
+            value={sortBy} 
+            onChange={(e) => setSortBy(e.target.value)}
+            style={{
+              background: 'rgba(22, 19, 28, 0.85)',
+              border: '2px solid rgba(255, 255, 255, 0.15)',
+              borderRadius: '0px',
+              color: '#d1d5db',
+              fontSize: '12px',
+              padding: '6px 12px',
+              outline: 'none',
+              cursor: 'pointer'
+            }}
+          >
+            <option value="name">Alphabetical</option>
+            <option value="priority">Priority</option>
+          </select>
+        </div>
+      </div>
+
+      {/* Main Grid: Left Column for Task Manager / Right Column for Widgets */}
+      <div style={{ display: 'grid', gridTemplateColumns: '7fr 3fr', gap: '24px' }}>
+        
+        {/* Left Column: Tasks Manager */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          {/* Quick Task Creation Box */}
+          {sessions.length > 0 && (
+            <form onSubmit={handleAddTask} style={{ display: 'flex', gap: '12px', background: 'rgba(255, 255, 255, 0.02)', border: '2px dashed rgba(255, 255, 255, 0.15)', padding: '12px', borderRadius: '0px', alignItems: 'center' }}>
+              <div style={{ width: '24px', height: '24px', borderRadius: '0px', background: '#bf85ff', color: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', fontWeight: 'bold' }}>
+                {profile?.name?.slice(0, 2).toUpperCase() || 'AA'}
+              </div>
+              <input 
+                type="text"
+                placeholder="Type to add a new task..."
+                value={newTaskName}
+                onChange={(e) => setNewTaskName(e.target.value)}
+                style={{
+                  flex: 1,
+                  background: 'transparent',
+                  border: 'none',
+                  outline: 'none',
+                  color: '#fff',
+                  fontSize: '13px'
+                }}
+              />
+              {sessions.length > 1 && (
+                <select 
+                  value={selectedSessionId}
+                  onChange={(e) => setSelectedSessionId(e.target.value)}
                   style={{
-                    width: '40px',
-                    height: '40px',
-                    borderRadius: '8px',
-                    border: '1px solid rgba(255, 255, 255, 0.08)',
-                    background: 'rgba(255, 255, 255, 0.02)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    transition: 'all 0.2s ease',
-                    cursor: 'pointer',
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.borderColor = 'rgba(236, 72, 153, 0.5)';
-                    e.currentTarget.style.boxShadow = '0 0 10px rgba(236, 72, 153, 0.3)';
-                    e.currentTarget.style.transform = 'translateY(-2px)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.08)';
-                    e.currentTarget.style.boxShadow = 'none';
-                    e.currentTarget.style.transform = 'translateY(0)';
+                    background: 'rgba(22, 19, 28, 0.9)',
+                    border: '2px solid rgba(255, 255, 255, 0.15)',
+                    borderRadius: '0px',
+                    color: '#d1d5db',
+                    fontSize: '11px',
+                    padding: '4px 8px'
                   }}
                 >
-                  <img 
-                    src={getTechIconUrl(tech)} 
-                    alt={tech} 
-                    style={{ width: '22px', height: '22px', objectFit: 'contain' }}
-                    onError={(e) => {
-                      e.currentTarget.style.display = 'none';
-                      const parent = e.currentTarget.parentElement;
-                      if (parent && !parent.querySelector('.fallback-icon-text')) {
-                        const span = document.createElement('span');
-                        span.className = 'fallback-icon-text';
-                        span.style.fontSize = '10px';
-                        span.style.fontWeight = 'bold';
-                        span.style.fontFamily = 'monospace';
-                        span.style.color = '#ec4899';
-                        span.innerText = tech.slice(0, 2).toUpperCase();
-                        parent.appendChild(span);
-                      }
-                    }}
-                  />
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* Card 2: Workspace Health */}
-        <div className="kairos-card" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-          <div className="kairos-card-header">/// WORKSPACE_HEALTH</div>
-          
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', flexGrow: 1, justifyContent: 'center' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-              <div style={{ fontSize: '28px', fontWeight: '700', color: '#ffffff', fontFamily: 'monospace', minWidth: '40px' }}>
-                {allTasks.length}
-              </div>
-              <div style={{ fontSize: '11px', color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Total Tasks</div>
-            </div>
-            
-            <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-              <div style={{ fontSize: '28px', fontWeight: '700', color: '#00FF66', fontFamily: 'monospace', minWidth: '40px', textShadow: '0 0 10px rgba(0, 255, 102, 0.4)' }}>
-                {completedTasksCount}
-              </div>
-              <div style={{ fontSize: '11px', color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Completed</div>
-            </div>
-            
-            <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-              <div 
-                style={{ 
-                  fontSize: '28px', 
-                  fontWeight: '700', 
-                  fontFamily: 'monospace', 
-                  minWidth: '40px',
-                  color: allBlockers.length === 0 ? '#00FF66' : '#ec4899', 
-                  textShadow: allBlockers.length === 0 ? '0 0 10px rgba(0, 255, 102, 0.3)' : '0 0 10px rgba(236, 72, 153, 0.3)'
+                  {sessions.map(s => (
+                    <option key={s.id} value={s.id}>{s.name.slice(0, 16)}...</option>
+                  ))}
+                </select>
+              )}
+              <button 
+                type="submit"
+                style={{
+                  background: 'rgba(255, 255, 255, 0.06)',
+                  border: '2px solid rgba(255, 255, 255, 0.15)',
+                  borderRadius: '0px',
+                  color: '#fff',
+                  fontSize: '11px',
+                  fontWeight: '600',
+                  padding: '5px 12px',
+                  cursor: 'pointer'
                 }}
               >
-                {allBlockers.length}
-              </div>
-              <div style={{ fontSize: '11px', color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Active Blockers</div>
-            </div>
-          </div>
-          
-          <div style={{ marginTop: '16px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '11px' }}>
-              <span style={{ color: '#9ca3af' }}>TASK PROGRESS</span>
-              <span style={{ color: '#ffffff', fontWeight: 'bold' }}>{completionPercentage}% Done</span>
-            </div>
-            <div className="progress-bar-container-kairos">
-              <div 
-                className="progress-bar-fill-kairos" 
-                style={{ width: `${completionPercentage}%` }}
-              />
-            </div>
-          </div>
-        </div>
+                Create Task
+              </button>
+            </form>
+          )}
 
-        {/* Card 3: Active Teams */}
-        <div className="kairos-card" style={{ display: 'flex', flexDirection: 'column' }}>
-          <div className="kairos-card-header">/// ACTIVE_TEAMS</div>
-          <div style={{ flexGrow: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-            {teams.length === 0 ? (
-              <p style={{ color: '#9ca3af', fontSize: '12px', lineHeight: '1.6' }}>
-                You haven't created or joined any teams yet... head to the Teams page.
-              </p>
+          {/* Task List container - Styled to group tasks with borders exactly like the mockup */}
+          <div style={{ 
+            display: 'flex', 
+            flexDirection: 'column', 
+            border: '2px solid rgba(255, 255, 255, 0.15)',
+            borderRadius: '0px',
+            background: 'rgba(22, 19, 28, 0.45)',
+            overflow: 'hidden'
+          }}>
+            {filteredTasks.length === 0 ? (
+              <div style={{ padding: '30px', textAlign: 'center', color: '#71717a', fontSize: '13px' }}>
+                No tasks match the active filter.
+              </div>
             ) : (
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-                {teams.slice(0, 4).map(t => (
-                  <div key={t.id} style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', padding: '10px', borderRadius: '8px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', minHeight: '80px' }}>
-                    <div>
-                      <div style={{ fontSize: '12px', fontWeight: '700', color: '#ffffff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        {t.name}
-                      </div>
-                      <div style={{ fontSize: '10px', fontFamily: 'monospace', color: '#8b5cf6', marginTop: '2px', fontWeight: 'bold' }}>
-                        {t.code}
+              filteredTasks.map((t, index) => {
+                const isCompleted = t.status === 'completed';
+                const isLast = index === filteredTasks.length - 1;
+                return (
+                  <div 
+                    key={t.id} 
+                    style={{ 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      justifyContent: 'space-between',
+                      padding: '14px 18px',
+                      opacity: isCompleted ? 0.75 : 1,
+                      borderBottom: isLast ? 'none' : '1px solid rgba(255, 255, 255, 0.12)',
+                      borderLeft: `4px solid ${t.priority === 'high' ? '#f472b6' : t.priority === 'medium' ? '#bf85ff' : '#38bdf8'}`,
+                      background: isCompleted ? 'rgba(255, 255, 255, 0.01)' : 'transparent',
+                      transition: 'background 0.2s ease'
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '14px', flex: 1 }}>
+                      <button 
+                        onClick={() => handleStatusToggle(t.id, t.status)}
+                        style={{
+                          background: isCompleted ? '#bf85ff' : 'transparent',
+                          border: `2px solid ${isCompleted ? '#bf85ff' : 'rgba(255, 255, 255, 0.3)'}`,
+                          width: '18px',
+                          height: '18px',
+                          borderRadius: '0px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          cursor: 'pointer',
+                          padding: 0
+                        }}
+                      >
+                        {isCompleted && <Check size={12} style={{ color: '#000', strokeWidth: 4 }} />}
+                      </button>
+
+                      <div style={{ display: 'flex', flexDirection: 'column' }}>
+                        <span style={{ 
+                          fontSize: '13px', 
+                          fontWeight: '600', 
+                          color: '#ffffff',
+                          textDecoration: isCompleted ? 'line-through' : 'none'
+                        }}>
+                          {t.name}
+                        </span>
+                        <span style={{ fontSize: '10px', color: '#71717a', marginTop: '2px' }}>
+                          Session: {t.sessionName || "General"} • Phase: {t.milestone_id}
+                        </span>
                       </div>
                     </div>
-                    <div style={{ fontSize: '10px', color: '#6b7280', marginTop: '8px' }}>
-                      {t.members.length} member{t.members.length !== 1 ? 's' : ''}
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                      <span 
+                        className={`priority-${t.priority}`}
+                        style={{
+                          fontSize: '9px',
+                          fontFamily: 'monospace',
+                          fontWeight: 'bold',
+                          padding: '2px 6px',
+                          textTransform: 'uppercase',
+                          borderRadius: '0px'
+                        }}
+                      >
+                        {t.priority}
+                      </span>
+
+                      <div style={{ width: '22px', height: '22px', borderRadius: '0px', background: '#bf85ff', color: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '9px', fontWeight: 'bold' }}>
+                        {profile?.name?.slice(0, 2).toUpperCase() || 'AA'}
+                      </div>
                     </div>
                   </div>
-                ))}
-              </div>
+                );
+              })
             )}
           </div>
         </div>
 
-        {/* Bottom row span cards */}
-        <div className="kairos-row-bottom">
-          
-          {/* Card 4: System-Level Insights / Kernel Decisions */}
-          <div className="kairos-card kairos-card-velvet" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', minHeight: '180px' }}>
-            <div>
-              <div className="kairos-card-header">/// KERNEL_DECISIONS</div>
-              <p style={{ color: '#ffffff', fontSize: '13px', lineHeight: '1.6', marginTop: '8px' }}>
-                All tasks are running smoothly. No open blockers.
-              </p>
+        {/* Right Column: Widgets */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+          {/* Due Tasks Widget */}
+          <div className="kairos-card" style={{ display: 'flex', flexDirection: 'column', gap: '16px', borderRadius: '0px', border: '2px solid rgba(255, 255, 255, 0.15)' }}>
+            <div style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.1)', paddingBottom: '10px' }}>
+              <h3 style={{ fontSize: '13px', fontWeight: '800', color: '#ffffff', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Due Tasks</h3>
             </div>
-            <div style={{ marginTop: '16px' }}>
-              <button onClick={fetchData} className="btn-kairos-action" style={{ width: '100%' }}>
-                RE-INITIALIZE SEQUENCE
-              </button>
-            </div>
-          </div>
 
-          {/* Card 5: Active Hackathons */}
-          <div className="kairos-card" style={{ position: 'relative', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', overflow: 'hidden', minHeight: '180px' }}>
-            <div style={{ position: 'relative', zIndex: 2 }}>
-              <div className="kairos-card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span>/// ACTIVE_HACKATHONS</span>
-                <span style={{ fontSize: '9px', color: '#6b7280', fontFamily: 'monospace' }}>ACTIVE FEED: {sessions.length}</span>
-              </div>
-              
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '8px' }}>
-                {sessions.length === 0 ? (
-                  <p style={{ color: '#9ca3af', fontSize: '12px', marginTop: '8px' }}>No active hackathons / sessions found.</p>
-                ) : (
-                  sessions.map(s => {
-                    let dateStr = "Started recently";
-                    try {
-                      if (s.created_at) {
-                        const date = new Date(s.created_at);
-                        if (!isNaN(date)) {
-                          dateStr = date.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
-                        }
-                      }
-                    } catch (e) {}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              {allTasks.filter(t => t.status !== 'completed' && t.priority === 'high').slice(0, 2).map(t => (
+                <div key={t.id} style={{ background: 'rgba(255, 255, 255, 0.02)', border: '1px solid rgba(255, 255, 255, 0.08)', padding: '12px', borderRadius: '0px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', color: '#f472b6', marginBottom: '8px' }}>
+                    <Calendar size={12} />
+                    <span>HIGH PRIORITY</span>
+                  </div>
+                  <h4 style={{ fontSize: '12px', fontWeight: '700', color: '#fff', marginBottom: '4px' }}>{t.name}</h4>
+                  <p style={{ fontSize: '10px', color: '#71717a' }}>Phase Reference: {t.milestone_id}</p>
+                </div>
+              ))}
 
-                    return (
-                      <div key={s.id} className="hackathon-list-item" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <div>
-                          <div style={{ fontSize: '13px', fontWeight: '700', color: '#ffffff' }}>
-                            {s.name}
-                          </div>
-                          <div style={{ fontSize: '10px', color: '#6b7280', marginTop: '2px' }}>
-                            Created: {dateStr}
-                          </div>
-                        </div>
-                        <div>
-                          <span style={{ 
-                            fontSize: '10px', 
-                            color: s.status === 'planning' ? '#f59e0b' : '#10b981', 
-                            border: `1px solid ${s.status === 'planning' ? 'rgba(245,158,11,0.3)' : 'rgba(16,185,129,0.3)'}`, 
-                            background: s.status === 'planning' ? 'rgba(245,158,11,0.1)' : 'rgba(16,185,129,0.1)', 
-                            padding: '2px 8px', 
-                            borderRadius: '4px', 
-                            fontWeight: 'bold', 
-                            fontFamily: 'monospace',
-                            textTransform: 'uppercase'
-                          }}>
-                            {s.status}
-                          </span>
-                        </div>
-                      </div>
-                    );
-                  })
-                )}
-              </div>
+              {allTasks.filter(t => t.status !== 'completed' && t.priority === 'high').length === 0 && (
+                <p style={{ fontSize: '11px', color: '#71717a', fontStyle: 'italic' }}>
+                  No urgent high-priority tasks pending. Keep it up!
+                </p>
+              )}
             </div>
           </div>
 
+          {/* Active Blockers Widget */}
+          <div className="kairos-card" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <div style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.05)', paddingBottom: '10px' }}>
+              <h3 style={{ fontSize: '13px', fontWeight: '800', color: '#ffffff', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Open Blockers</h3>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              {allBlockers.slice(0, 3).map(b => (
+                <div key={b.id} style={{ display: 'flex', gap: '10px', alignItems: 'flex-start' }}>
+                  <AlertTriangle size={14} style={{ color: '#f87171', marginTop: '2px', flexShrink: 0 }} />
+                  <div>
+                    <div style={{ fontSize: '12px', color: '#ffffff', fontWeight: '600' }}>{b.description}</div>
+                    <div style={{ fontSize: '10px', color: '#71717a', marginTop: '2px' }}>Session: {b.sessionName}</div>
+                  </div>
+                </div>
+              ))}
+
+              {allBlockers.length === 0 && (
+                <p style={{ fontSize: '11px', color: '#71717a', fontStyle: 'italic' }}>
+                  Clear workspace. No active roadblocks reported.
+                </p>
+              )}
+            </div>
+          </div>
         </div>
 
       </div>
+
     </div>
   );
 }
