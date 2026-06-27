@@ -32,6 +32,7 @@ app.include_router(tasks.router, prefix="/api/v1")
 app.include_router(pitch.router, prefix="/api/v1")
 
 @app.get("/")
+@app.head("/")
 async def root():
     return {"status": "online", "message": "KAIROS Core API"}
 
