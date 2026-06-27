@@ -81,11 +81,6 @@ export default function Sidebar() {
         </div>
       )}
 
-      {/* Desktop Circular Logo */}
-      <div className="sidebar-logo-circle desktop-only">
-        <img src="/kairos_logo.jpeg" alt="Logo" className="sidebar-logo-img" />
-      </div>
-
       {/* Desktop capsule sidebar (hidden on mobile via CSS) */}
       <div className="sidebar-bar-kairos desktop-only">
         {/* Nav Links */}
