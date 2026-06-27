@@ -6,8 +6,12 @@ from fastapi.responses import StreamingResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from backend.app.db.connection import get_db
-from backend.app.db.models import Session, Task, Team, Profile
+from backend.app.db.models import Session, Task, Team, Profile, Blocker
+from pydantic import BaseModel
 from backend.app.agents.coach import CoachAgent
+
+class PitchOutlineUpdateSchema(BaseModel):
+    pitch_outline: dict
 
 router = APIRouter(prefix="/sessions/{session_id}/pitch", tags=["Pitch"])
 logger = logging.getLogger("kairos.pitch")
@@ -38,6 +42,17 @@ async def generate_pitch_outline(
         }
         for t in tasks_res.scalars().all()
     ]
+
+    # Retrieve blockers
+    blockers_res = await db.execute(select(Blocker).where(Blocker.session_id == session_id))
+    blockers = [
+        {
+            "description": b.description,
+            "severity": b.severity,
+            "status": b.status
+        }
+        for b in blockers_res.scalars().all()
+    ]
     
     # Gather team capabilities
     team_data = {}
@@ -66,6 +81,7 @@ async def generate_pitch_outline(
             user_idea=session.user_idea or "",
             milestones=milestones,
             tasks=tasks,
+            blockers=blockers,
             team_profile_json=team_data,
             model_preference=model_preference
         ):
@@ -76,7 +92,7 @@ async def generate_pitch_outline(
 @router.put("")
 async def save_pitch_outline(
     session_id: uuid.UUID,
-    pitch_outline: dict,
+    data: PitchOutlineUpdateSchema,
     db: AsyncSession = Depends(get_db)
 ):
     sess_res = await db.execute(select(Session).where(Session.id == session_id))
@@ -84,6 +100,6 @@ async def save_pitch_outline(
     if not session:
         raise HTTPException(status_code=404, detail="Session not found")
         
-    session.pitch_outline = pitch_outline
+    session.pitch_outline = data.pitch_outline
     await db.commit()
     return {"status": "success", "pitch_outline": session.pitch_outline}

@@ -35,6 +35,7 @@ class SessionResponseSchema(BaseModel):
 
 class RoadmapUpdateSchema(BaseModel):
     milestones: List[dict]
+    status: Optional[str] = None
 
 class ChatMessageSchema(BaseModel):
     message: str
@@ -202,32 +203,35 @@ async def update_roadmap(
         
     # Update milestones JSON
     session.milestones = data.milestones
-    session.status = "execution" # Lock milestones and switch to execution phase
+    if data.status:
+        session.status = data.status
+        
     await db.commit()
     await db.refresh(session)
     
-    # Auto-generate tasks from the milestones if tasks don't exist yet
-    task_count_res = await db.execute(select(Task).where(Task.session_id == session_id))
-    if not task_count_res.scalars().first():
-        # Seed tasks based on deliverables and duration estimate
-        for m_idx, m in enumerate(data.milestones):
-            task_id = uuid.uuid4()
-            title = m.get("title", f"Task {m_idx + 1}")
-            deliverable = m.get("deliverable", "Setup baseline code structure")
-            phase_id = m.get("phase", f"phase_{m_idx + 1}")
-            risk = m.get("risk_level", "medium")
-            
-            task = Task(
-                id=task_id,
-                session_id=session_id,
-                name=f"{title} - {deliverable}",
-                milestone_id=phase_id,
-                priority=risk if risk in ["low", "medium", "high"] else "medium",
-                status="pending",
-                dependencies=[]
-            )
-            db.add(task)
-        await db.commit()
+    # Auto-generate tasks only when session transitions to execution phase
+    if session.status == "execution":
+        task_count_res = await db.execute(select(Task).where(Task.session_id == session_id))
+        if not task_count_res.scalars().first():
+            # Seed tasks based on deliverables and duration estimate
+            for m_idx, m in enumerate(data.milestones):
+                task_id = uuid.uuid4()
+                title = m.get("title", f"Task {m_idx + 1}")
+                deliverable = m.get("deliverable", "Setup baseline code structure")
+                phase_id = m.get("phase", f"phase_{m_idx + 1}")
+                risk = m.get("risk_level", "medium")
+                
+                task = Task(
+                    id=task_id,
+                    session_id=session_id,
+                    name=f"{title} - {deliverable}",
+                    milestone_id=phase_id,
+                    priority=risk if risk in ["low", "medium", "high"] else "medium",
+                    status="pending",
+                    dependencies=[]
+                )
+                db.add(task)
+            await db.commit()
         
     return SessionResponseSchema(
         id=session.id,
@@ -272,3 +276,15 @@ async def chat_with_coach(
             yield chunk
             
     return StreamingResponse(sse_generator(), media_type="text/event-stream")
+
+@router.delete("/{session_id}")
+async def delete_session(session_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
+    """Deletes a coaching session and all cascaded tasks/blockers."""
+    sess_result = await db.execute(select(Session).where(Session.id == session_id))
+    session = sess_result.scalars().first()
+    if not session:
+        raise HTTPException(status_code=404, detail="Session not found")
+        
+    await db.delete(session)
+    await db.commit()
+    return {"status": "success", "message": "Session deleted successfully"}

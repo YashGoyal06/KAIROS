@@ -324,7 +324,15 @@ h1, h2, h3, h4, h5, h6 {
   gap: 12px;
   max-height: 100%;
   overflow-y: auto;
+  transition: var(--transition-smooth);
 }
+
+.kanban-column.drag-over {
+  background: rgba(191, 133, 255, 0.04);
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 15px rgba(191, 133, 255, 0.15);
+}
+
 
 .column-header {
   font-size: 16px;

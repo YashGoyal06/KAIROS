@@ -32,6 +32,13 @@ export default function Coach() {
   const [generationStep, setGenerationStep] = useState('');
   const [tasks, setTasks] = useState([]);
   const [blockers, setBlockers] = useState([]);
+  const [toast, setToast] = useState(null); // { message: '', type: 'success' | 'error' }
+
+  const showToast = (message, type = 'success') => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 4000);
+  };
+
 
   const fetchSessionTasksAndBlockers = async (sessionId) => {
     if (!sessionId) return;
@@ -101,6 +108,16 @@ export default function Coach() {
       { role: 'assistant', content: `Welcome back to KAIROS Coach Room! Here is your generated roadmap. Let me know if you would like to edit or adjust any milestones.` }
     ]);
     setView('workspace');
+  };
+
+  const handleDeleteSession = async (sessionId) => {
+    if (!window.confirm("Are you sure you want to delete this coaching session? This will also delete all related tasks and blockers.")) return;
+    try {
+      await axios.delete(`${API_BASE}/sessions/${sessionId}`);
+      setSessions(prev => prev.filter(s => s.id !== sessionId));
+    } catch (e) {
+      console.error("Error deleting session:", e);
+    }
   };
 
   const handleFileChange = (e) => {
@@ -266,7 +283,7 @@ export default function Coach() {
     } catch (err) {
       console.error("Error creating session:", err);
       setIsGenerating(false);
-      alert("Failed to initialize session. Make sure backend is running.");
+      showToast("Failed to initialize session. Make sure backend is running.", "error");
     }
   };
 
@@ -342,10 +359,11 @@ export default function Coach() {
     if (!activeSession) return;
     try {
       const res = await axios.put(`${API_BASE}/sessions/${activeSession.id}/roadmap`, {
-        milestones: roadmap
+        milestones: roadmap,
+        status: 'execution'
       });
       setActiveSession(res.data);
-      alert("Roadmap successfully locked and task boards seeded!");
+      showToast("Roadmap successfully locked! Tasks generated on your Task Board.", "success");
     } catch (e) {
       console.error("Error accepting roadmap:", e);
     }
@@ -421,7 +439,19 @@ export default function Coach() {
               sessions.map(s => (
                 <div key={s.id} className="glass-card" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', minHeight: '180px' }}>
                   <div>
-                    <h3 style={{ color: '#fff', fontSize: '18px', marginBottom: '8px' }}>{s.name}</h3>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                      <h3 style={{ color: '#fff', fontSize: '18px', marginBottom: '8px' }}>{s.name}</h3>
+                      <button 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteSession(s.id);
+                        }} 
+                        style={{ background: 'transparent', border: 'none', color: '#f87171', cursor: 'pointer', padding: '4px', transition: 'color 0.2s' }}
+                        title="Delete Session"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
                     <p style={{ fontSize: '12px', color: '#6b7280', textTransform: 'uppercase', fontWeight: 'bold' }}>
                       Status: <span style={{ color: s.status === 'planning' ? '#f59e0b' : '#10b981' }}>{s.status}</span>
                     </p>
@@ -543,7 +573,7 @@ export default function Coach() {
                 </button>
                 {activeSession.creator_id === profile.id && activeSession.status === 'planning' && (
                   <button onClick={handleAcceptRoadmap} className="btn btn-primary">
-                    <Check size={14} /> Accept & Start Execution
+                    <Check size={14} /> Lock Roadmap & Generate Tasks
                   </button>
                 )}
               </div>
@@ -645,6 +675,34 @@ export default function Coach() {
 
             </div>
           </div>
+        </div>
+      )}
+      {toast && (
+        <div style={{
+          position: 'fixed',
+          top: '24px',
+          right: '24px',
+          zIndex: 9999,
+          background: 'rgba(15, 13, 20, 0.9)',
+          backdropFilter: 'blur(12px)',
+          border: '1px solid rgba(255, 255, 255, 0.1)',
+          borderRadius: '12px',
+          padding: '16px 20px',
+          color: '#fff',
+          boxShadow: '0 20px 40px rgba(0,0,0,0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '12px',
+          animation: 'slideIn 0.3s ease-out',
+          maxWidth: '350px'
+        }}>
+          <div style={{
+            width: '8px',
+            height: '8px',
+            borderRadius: '50%',
+            background: toast.type === 'success' ? '#10b981' : '#ef4444'
+          }} />
+          <span style={{ fontSize: '14px', fontWeight: '500' }}>{toast.message}</span>
         </div>
       )}
     </div>
