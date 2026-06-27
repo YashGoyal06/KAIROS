@@ -487,11 +487,11 @@ export default function Coach() {
             
             <form onSubmit={handleCreateSessionSubmit}>
               <div className="form-group">
-                <label className="form-label">Hackathon Project Name</label>
+                <label className="form-label">Hackathon & Project Name</label>
                 <input
                   type="text"
                   className="form-input"
-                  placeholder="e.g. Kairos Auth"
+                  placeholder="e.g. HackMIT - Kairos Auth"
                   value={hackathonName}
                   onChange={(e) => setHackathonName(e.target.value)}
                   required
@@ -521,13 +521,7 @@ export default function Coach() {
                 </div>
               )}
 
-              <div className="form-group">
-                <label className="form-label">Preferred LLM Router Model</label>
-                <select className="form-select" value={modelPref} onChange={(e) => setModelPref(e.target.value)}>
-                  <option value="deepseek">DeepSeek R1 (Ollama - Primary)</option>
-                  <option value="huggingface">Qwen 72B / Llama 3 (Free Hugging Face Fallback)</option>
-                </select>
-              </div>
+
 
               <div className="form-group">
                 <label className="form-label">Problem Statement File (PDF / Docx)</label>
