@@ -1,5 +1,6 @@
 import uuid
 import logging
+import json
 from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -40,6 +41,7 @@ class TaskUpdateSchema(BaseModel):
     priority: Optional[str] = None
     status: Optional[str] = None # pending, in_progress, completed, blocked
     dependencies: Optional[List[uuid.UUID]] = None
+    blocker_description: Optional[str] = None
 
 class BlockerResponseSchema(BaseModel):
     id: uuid.UUID
@@ -48,7 +50,7 @@ class BlockerResponseSchema(BaseModel):
     description: str
     severity: str
     status: str
-    created_at: str
+    created_at: Optional[str] = None
 
 @router.get("/sessions/{session_id}/tasks", response_model=List[TaskResponseSchema])
 async def list_tasks(session_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
@@ -152,11 +154,12 @@ async def update_task(
             select(Blocker).where(Blocker.task_id == task.id, Blocker.status == "open")
         )
         if not blocker_res.scalars().first():
+            desc = data.blocker_description or f"Task '{task.name}' was manually marked as Blocked by assignee."
             new_blocker = Blocker(
                 id=uuid.uuid4(),
                 session_id=task.session_id,
                 task_id=task.id,
-                description=f"Task '{task.name}' was manually marked as Blocked by assignee.",
+                description=desc,
                 severity=task.priority,
                 status="open"
             )
@@ -303,3 +306,31 @@ async def check_dependency_blockers(session_id: uuid.UUID, db: AsyncSession = De
                 )
                 db.add(new_blocker)
     await db.commit()
+
+@router.post("/tasks/blockers/{blocker_id}/suggest-fix")
+async def suggest_blocker_fix(blocker_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
+    """AI analyzes a specific blocker and suggests a quick code/architecture fix."""
+    blocker_res = await db.execute(select(Blocker).where(Blocker.id == blocker_id))
+    blocker = blocker_res.scalars().first()
+    if not blocker:
+        raise HTTPException(status_code=404, detail="Blocker not found")
+        
+    system_prompt = (
+        "You are KAIROS, a senior technical co-founder and debugger.\n"
+        "Your task is to review the description of a task blocker and suggest a concise 3-step action plan to fix it.\n"
+        "Keep your output direct, extremely action-oriented, and formatted in clean markdown. Max 100 tokens."
+    )
+    prompt = f"Blocker Description: {blocker.description}\nSeverity: {blocker.severity}\nProvide a 3-step technical solution."
+    
+    from backend.app.agents.coach import router as router_instance
+    ans = ""
+    async for chunk in router_instance.stream_complete(system_prompt, prompt, "chat"):
+        if chunk.startswith("data:"):
+            try:
+                val = json.loads(chunk[5:].strip())
+                if val.get("type") == "text_delta":
+                    ans += val.get("content", "")
+            except:
+                pass
+                
+    return {"suggestion": ans or "Check connection states and configurations."}
