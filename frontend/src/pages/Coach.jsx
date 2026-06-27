@@ -214,7 +214,9 @@ export default function Coach() {
           const actualStart = text.indexOf(']', startIdx) + 1;
           const actualEnd = endIdx !== -1 ? text.lastIndexOf('[', endIdx) : text.length;
           jsonStr = text.substring(actualStart, actualEnd).trim();
-          critiqueText = text.substring(0, startIdx).trim();
+          
+          const bracketIdx = text.lastIndexOf('[', startIdx);
+          critiqueText = text.substring(0, bracketIdx !== -1 ? bracketIdx : startIdx).trim();
         } else {
           // Fallback 1: Try to find ```json ... ``` block
           const matchBlock = text.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
@@ -231,6 +233,9 @@ export default function Coach() {
             }
           }
         }
+
+        // Clean trailing separator
+        critiqueText = critiqueText.replace(/\n\s*---\s*$/, '').trim();
 
         // Clean any residual markdown ticks in the JSON string
         jsonStr = jsonStr.replace(/^```json\s*/i, '').replace(/```$/, '').trim();
