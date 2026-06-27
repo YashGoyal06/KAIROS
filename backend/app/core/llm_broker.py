@@ -58,7 +58,6 @@ class LLMOrchestrator:
             except Exception as e:
                 last_error = e
                 logger.warning(f"Orchestrator: Engine '{engine_name}' failed. Error: {str(e)}")
-                yield f"data: {json.dumps({'type': 'system_info', 'content': f'Notice: Failed to load {engine_name}. Falling back...'})}\n\n"
                 await asyncio.sleep(0.3)
 
         if not success:

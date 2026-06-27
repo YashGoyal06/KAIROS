@@ -44,7 +44,7 @@ const MainLayout = ({ children }) => (
         colorStops={["#6a00f4", "#8900f2", "#a100f2"]}
         blend={0.5}
         amplitude={1.0}
-        speed={1}
+        speed={0.2}
       />
     </div>
     <Sidebar />
