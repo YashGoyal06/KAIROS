@@ -184,3 +184,78 @@ class CoachAgent:
         
         async for chunk in router.stream_complete(system_prompt, prompt, "chat"):
             yield chunk
+
+    @staticmethod
+    async def analyze_concept_gaps(
+        hackathon_name: str,
+        problem_statement: str,
+        user_idea: str,
+        team_profile_json: dict,
+        model_preference: str = "claude"
+    ) -> AsyncGenerator[str, None]:
+        """
+        Reviews a project concept/idea and identifies missing architectural/design/feature pieces.
+        """
+        system_prompt = (
+            "You are KAIROS, a senior technical co-founder and hackathon strategist.\n"
+            "Review the user's project concept, idea, and problem statement to identify missing pieces.\n"
+            "Specifically call out: \n"
+            "1. Architectural/infrastructure missing elements (e.g. databases, auth, hosting, external APIs).\n"
+            "2. Critical user flows or features omitted in the current idea.\n"
+            "3. Integration risks.\n"
+            "Output your analysis in structured, clean markdown. Keep it action-oriented and concise (max 300 words)."
+        )
+        prompt = (
+            f"Hackathon Name: {hackathon_name}\n"
+            f"Problem Statement: {problem_statement}\n"
+            f"Project Idea: {user_idea}\n"
+            f"Team Profile: {json.dumps(team_profile_json)}"
+        )
+        async for chunk in router.stream_complete(system_prompt, prompt, "critique"):
+            yield chunk
+
+    @staticmethod
+    async def recalibrate_roadmap(
+        hackathon_name: str,
+        problem_statement: str,
+        user_idea: str,
+        current_milestones: list,
+        active_tasks: list,
+        open_blockers: list,
+        slipping_tasks: list,
+        team_profile_json: dict,
+        model_preference: str = "claude"
+    ) -> AsyncGenerator[str, None]:
+        """
+        Recalibrates the milestones array based on progress (slipping tasks, active blockers, completed tasks).
+        Outputs the updated JSON array wrapped in [ROADMAP_JSON_START] and [ROADMAP_JSON_END].
+        """
+        system_prompt = (
+            "You are KAIROS, the master hackathon planner.\n"
+            "Given the original roadmap milestones, tasks, open blockers, slipping tasks, and team skills, recalibrate the remaining milestones.\n"
+            "Ensure the plan adjusts for delays (slipping tasks/blockers) by descoping features or re-scheduling tasks to fit the remaining time.\n"
+            "Output exactly the marker '[ROADMAP_JSON_START]' on a new line, followed by the updated JSON array of milestones, and end with the marker '[ROADMAP_JSON_END]' on a new line.\n"
+            "The JSON array schema must match:\n"
+            "[\n"
+            "  {\n"
+            "    \"phase\": \"Phase name\",\n"
+            "    \"title\": \"Title of Phase\",\n"
+            "    \"deliverable\": \"Primary concrete deliverable\",\n"
+            "    \"duration_estimate\": \"e.g., 6 hours\",\n"
+            "    \"dependencies\": [],\n"
+            "    \"risk_level\": \"low|medium|high\"\n"
+            "  }\n"
+            "]"
+        )
+        prompt = (
+            f"Hackathon: {hackathon_name}\n"
+            f"Problem Statement: {problem_statement}\n"
+            f"User Idea: {user_idea}\n"
+            f"Current Milestones: {json.dumps(current_milestones, indent=2)}\n"
+            f"Active Tasks: {json.dumps(active_tasks, indent=2)}\n"
+            f"Open Blockers: {json.dumps(open_blockers, indent=2)}\n"
+            f"Slipping Tasks: {json.dumps(slipping_tasks, indent=2)}\n"
+            f"Team Profile: {json.dumps(team_profile_json, indent=2)}"
+        )
+        async for chunk in router.stream_complete(system_prompt, prompt, "refinement"):
+            yield chunk

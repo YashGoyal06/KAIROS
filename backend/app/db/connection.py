@@ -33,9 +33,14 @@ AsyncSessionLocal = sessionmaker(
 
 async def init_db():
     from backend.app.db.models import Base
+    from sqlalchemy import text
     async with engine.begin() as conn:
         # Create tables
         await conn.run_sync(Base.metadata.create_all)
+        try:
+            await conn.execute(text("ALTER TABLE sessions ADD COLUMN scope_critique TEXT;"))
+        except Exception:
+            pass
 
 async def get_db():
     async with AsyncSessionLocal() as session:

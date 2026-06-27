@@ -103,6 +103,7 @@ export default function Coach() {
   const selectSession = async (sess) => {
     setActiveSession(sess);
     setRoadmap(sess.milestones || []);
+    setCritique(sess.scope_critique || '');
     // Seed initial message if milestones exist
     setMessages([
       { role: 'assistant', content: `Welcome back to KAIROS Coach Room! Here is your generated roadmap. Let me know if you would like to edit or adjust any milestones.` }
@@ -266,7 +267,8 @@ export default function Coach() {
         try {
           // Auto-save milestones to backend DB
           const updateRes = await axios.put(`${API_BASE}/sessions/${session.id}/roadmap`, {
-            milestones: extracted.roadmap
+            milestones: extracted.roadmap,
+            scope_critique: extracted.critique
           });
           setActiveSession(updateRes.data);
         } catch (dbErr) {
@@ -360,7 +362,8 @@ export default function Coach() {
     try {
       const res = await axios.put(`${API_BASE}/sessions/${activeSession.id}/roadmap`, {
         milestones: roadmap,
-        status: 'execution'
+        status: 'execution',
+        scope_critique: critique
       });
       setActiveSession(res.data);
       showToast("Roadmap successfully locked! Tasks generated on your Task Board.", "success");

@@ -56,6 +56,7 @@ class Session(Base):
     milestones = Column(JSONB, nullable=True, default=list) # Array of milestones
     pitch_outline = Column(JSONB, nullable=True, default=dict) # Contains demo_flow, pitch_outline, final_pitch
     status = Column(String, default="planning") # planning, execution, completed
+    scope_critique = Column(String, nullable=True)
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
 
     # Relationships

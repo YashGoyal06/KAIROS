@@ -30,12 +30,14 @@ class SessionResponseSchema(BaseModel):
     user_idea: Optional[str] = None
     milestones: Optional[List[dict]] = []
     pitch_outline: Optional[dict] = {}
+    scope_critique: Optional[str] = None
     status: str
     created_at: str
 
 class RoadmapUpdateSchema(BaseModel):
     milestones: List[dict]
     status: Optional[str] = None
+    scope_critique: Optional[str] = None
 
 class ChatMessageSchema(BaseModel):
     message: str
@@ -72,6 +74,7 @@ async def create_session(data: SessionCreateSchema, db: AsyncSession = Depends(g
         user_idea=new_session.user_idea,
         milestones=new_session.milestones,
         pitch_outline=new_session.pitch_outline,
+        scope_critique=new_session.scope_critique,
         status=new_session.status,
         created_at=str(new_session.created_at)
     )
@@ -106,6 +109,7 @@ async def list_sessions(profile_id: Optional[uuid.UUID] = None, db: AsyncSession
             user_idea=s.user_idea,
             milestones=s.milestones,
             pitch_outline=s.pitch_outline,
+            scope_critique=s.scope_critique,
             status=s.status,
             created_at=str(s.created_at)
         ) for s in sessions
@@ -126,6 +130,7 @@ async def get_session(session_id: uuid.UUID, db: AsyncSession = Depends(get_db))
         user_idea=s.user_idea,
         milestones=s.milestones,
         pitch_outline=s.pitch_outline,
+        scope_critique=s.scope_critique,
         status=s.status,
         created_at=str(s.created_at)
     )
@@ -205,6 +210,8 @@ async def update_roadmap(
     session.milestones = data.milestones
     if data.status:
         session.status = data.status
+    if data.scope_critique is not None:
+        session.scope_critique = data.scope_critique
         
     await db.commit()
     await db.refresh(session)
@@ -242,6 +249,7 @@ async def update_roadmap(
         user_idea=session.user_idea,
         milestones=session.milestones,
         pitch_outline=session.pitch_outline,
+        scope_critique=session.scope_critique,
         status=session.status,
         created_at=str(session.created_at)
     )
@@ -275,6 +283,103 @@ async def chat_with_coach(
         ):
             yield chunk
             
+    return StreamingResponse(sse_generator(), media_type="text/event-stream")
+
+@router.get("/{session_id}/concept-gaps")
+async def get_concept_gaps(session_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
+    """Reviews the session's project concept to identify missing architectural or feature pieces."""
+    sess_result = await db.execute(select(Session).where(Session.id == session_id))
+    session = sess_result.scalars().first()
+    if not session:
+        raise HTTPException(status_code=404, detail="Session not found")
+        
+    team_data = {}
+    if session.team_id:
+        team_res = await db.execute(select(Team).where(Team.id == session.team_id))
+        team = team_res.scalars().first()
+        if team and team.master_json:
+            team_data = team.master_json
+
+    async def sse_generator():
+        async for chunk in CoachAgent.analyze_concept_gaps(
+            hackathon_name=session.name,
+            problem_statement=session.problem_statement or "",
+            user_idea=session.user_idea or "",
+            team_profile_json=team_data
+        ):
+            yield chunk
+
+    return StreamingResponse(sse_generator(), media_type="text/event-stream")
+
+@router.post("/{session_id}/recalibrate-roadmap")
+async def recalibrate_session_roadmap(session_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
+    """Generates a recalibrated roadmap based on slipping tasks, blockers, and progress."""
+    sess_result = await db.execute(select(Session).where(Session.id == session_id))
+    session = sess_result.scalars().first()
+    if not session:
+        raise HTTPException(status_code=404, detail="Session not found")
+        
+    # Get active tasks
+    tasks_res = await db.execute(select(Task).where(Task.session_id == session_id))
+    tasks = tasks_res.scalars().all()
+    
+    # Get open blockers
+    blockers_res = await db.execute(select(Blocker).where(Blocker.session_id == session_id, Blocker.status == "open"))
+    blockers = blockers_res.scalars().all()
+    
+    # Get slipping tasks
+    from datetime import datetime, timedelta
+    now = datetime.utcnow()
+    slipping_tasks = []
+    active_tasks_list = []
+    
+    for t in tasks:
+        task_info = {
+            "id": str(t.id),
+            "name": t.name,
+            "status": t.status,
+            "deadline": str(t.deadline) if t.deadline else None,
+            "priority": t.priority
+        }
+        active_tasks_list.append(task_info)
+        
+        # Check if slipping
+        if t.status != "completed" and t.deadline:
+            # deadline is past or within 2 hours
+            if t.deadline < now or t.deadline <= (now + timedelta(hours=2)):
+                slipping_tasks.append(task_info)
+                
+    # Get team/creator details for profile
+    capabilities = {}
+    if session.team_id:
+        team_result = await db.execute(select(Team).where(Team.id == session.team_id))
+        team = team_result.scalars().first()
+        if team and team.master_json:
+            capabilities = team.master_json
+    else:
+        prof_result = await db.execute(select(Profile).where(Profile.id == session.creator_id))
+        prof = prof_result.scalars().first()
+        if prof:
+            capabilities = {
+                "name": prof.full_name,
+                "role": prof.primary_role,
+                "level": prof.experience_level,
+                "skills": prof.tech_stack
+            }
+
+    async def sse_generator():
+        async for chunk in CoachAgent.recalibrate_roadmap(
+            hackathon_name=session.name,
+            problem_statement=session.problem_statement or "",
+            user_idea=session.user_idea or "",
+            current_milestones=session.milestones or [],
+            active_tasks=active_tasks_list,
+            open_blockers=[{"description": b.description, "severity": b.severity} for b in blockers],
+            slipping_tasks=slipping_tasks,
+            team_profile_json=capabilities
+        ):
+            yield chunk
+
     return StreamingResponse(sse_generator(), media_type="text/event-stream")
 
 @router.delete("/{session_id}")
