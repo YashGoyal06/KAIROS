@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: kairos-backend
+    env: python
+    buildCommand: pip install -r backend/requirements.txt
+    startCommand: python -m uvicorn backend.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: DATABASE_URL
+        sync: true
+      - key: SUPABASE_URL
+        sync: true
+      - key: SUPABASE_ANON_KEY
+        sync: true
+      - key: GEMINI_API_KEY
+        sync: true
+      - key: NVIDIA_API_KEY
+        sync: true
+      - key: NVIDIA_MODEL
+        value: z-ai/glm-5.1
