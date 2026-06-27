@@ -12,6 +12,7 @@ class LLMOrchestrator:
     def __init__(self):
         self.groq_key = os.getenv("GROQ_API_KEY")
         self.nvidia_key = os.getenv("NVIDIA_API_KEY")
+        self.nvidia_model = os.getenv("NVIDIA_MODEL", "z-ai/glm-5.1")
         self.hf_key = os.getenv("HF_API_KEY")
         self.ollama_url = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434").rstrip("/")
         self.ollama_model = os.getenv("OLLAMA_MODEL", "deepseek-r1:8b")
@@ -141,8 +142,8 @@ class LLMOrchestrator:
         if not self.nvidia_key:
             raise ValueError("NVIDIA_API_KEY is not configured")
         
-        # GLM 5.1 is perfect for structured outline / slide pitches
-        model = "z-ai/glm-5.1"
+        # NVIDIA model is loaded from env, default is z-ai/glm-5.1
+        model = self.nvidia_model
         
         async with httpx.AsyncClient(timeout=60.0) as client:
             async with client.stream(
