@@ -228,22 +228,42 @@ async def get_task_suggestions(session_id: uuid.UUID, db: AsyncSession = Depends
         if team and team.master_json:
             team_data = team.master_json
             
+    # Identify slipping tasks
+    from datetime import datetime, timedelta
+    now = datetime.utcnow()
+    slipping_tasks = []
+    for t in tasks:
+        if t.status != "completed" and t.deadline:
+            if t.deadline < now or t.deadline <= (now + timedelta(hours=2)):
+                slipping_tasks.append({
+                    "id": str(t.id),
+                    "name": t.name,
+                    "deadline": str(t.deadline),
+                    "assigned_to": str(t.assigned_to) if t.assigned_to else "unassigned",
+                    "status": t.status
+                })
+
     # LLM request
     system_prompt = (
         "You are KAIROS, the team's Project Execution Analyst.\n"
-        "Your task is to analyze the active milestones, tasks, open blockers, and team profile JSON.\n"
-        "Recommend actionable scheduling adjustments. Suggest reassigning blocked tasks to other available members based on their tech stack.\n"
+        "Your task is to analyze the active milestones, tasks, open blockers, slipping tasks, and team profile JSON.\n"
+        "Specifically identify:\n"
+        "1. Critical risks (e.g. tasks using technologies not listed in any member's skill set, or tasks assigned to members without matching skills).\n"
+        "2. Slipping tasks (tasks past deadline or due very soon but not completed) and their delay impact.\n"
+        "3. Actionable adjustments, reassignments, or descoping suggestions to get back on track.\n"
         "Keep your output short, direct, and formatted in clean markdown bullet points. Do not include markdown code block wrappings."
     )
     
     prompt = (
         f"Active Tasks:\n"
         f"{[{'id': str(t.id), 'name': t.name, 'assigned_to': str(t.assigned_to), 'status': t.status, 'dependencies': [str(d) for d in (t.dependencies or [])]} for t in tasks]}\n\n"
+        f"Slipping Tasks (Overdue or due in <2 hours):\n"
+        f"{slipping_tasks}\n\n"
         f"Active Blockers:\n"
         f"{[{'description': b.description, 'severity': b.severity} for b in blockers]}\n\n"
         f"Team Members Profile:\n"
         f"{team_data}\n\n"
-        "Provide direct recommendations."
+        "Provide direct recommendations for risk mitigation, slipping task updates, and task re-assignments."
     )
     
     # Call Gemini or Claude wrapper synchronously (non-streaming helper for direct API payload)
@@ -259,7 +279,6 @@ async def get_task_suggestions(session_id: uuid.UUID, db: AsyncSession = Depends
             except Exception:
                 pass
 
-                
     if not ans:
         ans = "* No critical blockages or delay threats detected. Keep pushing forward!"
         
