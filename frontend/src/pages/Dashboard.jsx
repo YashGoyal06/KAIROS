@@ -35,8 +35,11 @@ export default function Dashboard() {
       const sessionsRes = await axios.get(`${API_BASE}/sessions`, {
         params: { profile_id: profile.id }
       });
-      const userSessions = sessionsRes.data.filter(s => 
-        s.creator_id === profile.id || teamsRes.data.some(t => t.id === s.team_id)
+      const sessionsList = Array.isArray(sessionsRes.data) ? sessionsRes.data : [];
+      const teamsList = Array.isArray(teamsRes.data) ? teamsRes.data : [];
+
+      const userSessions = sessionsList.filter(s => 
+        s.creator_id === profile.id || teamsList.some(t => t.id === s.team_id)
       );
       setSessions(userSessions);
       if (userSessions.length > 0 && !selectedSessionId) {
