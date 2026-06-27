@@ -112,12 +112,13 @@ export default function Coach() {
   };
 
   const handleDeleteSession = async (sessionId) => {
-    if (!window.confirm("Are you sure you want to delete this coaching session? This will also delete all related tasks and blockers.")) return;
     try {
       await axios.delete(`${API_BASE}/sessions/${sessionId}`);
       setSessions(prev => prev.filter(s => s.id !== sessionId));
+      showToast("Session deleted successfully!", "success");
     } catch (e) {
       console.error("Error deleting session:", e);
+      showToast("Failed to delete session.", "error");
     }
   };
 
