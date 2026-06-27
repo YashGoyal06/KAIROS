@@ -9,9 +9,12 @@ DATABASE_URL = os.getenv("DATABASE_URL")
 if not DATABASE_URL:
     # Use SQLite async fallback for local testing if no Postgres DB URL is defined
     DATABASE_URL = "sqlite+aiosqlite:///./kairos.db"
-elif DATABASE_URL.startswith("postgresql://"):
-    # Convert postgresql protocol to asyncpg
-    DATABASE_URL = DATABASE_URL.replace("postgresql://", "postgresql+asyncpg://", 1)
+else:
+    # Convert postgresql or postgres protocol to asyncpg
+    if DATABASE_URL.startswith("postgresql://"):
+        DATABASE_URL = DATABASE_URL.replace("postgresql://", "postgresql+asyncpg://", 1)
+    elif DATABASE_URL.startswith("postgres://"):
+        DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql+asyncpg://", 1)
 
 engine = create_async_engine(
     DATABASE_URL,
