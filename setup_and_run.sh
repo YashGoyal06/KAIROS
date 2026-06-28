@@ -58,12 +58,9 @@ pip install --upgrade pip
 pip install -r backend/requirements.txt
 
 # Setup Frontend Node modules
-echo "Checking frontend dependencies..."
+echo "Checking/Installing frontend dependencies..."
 cd frontend
-if [ ! -d "node_modules" ]; then
-    echo "Installing frontend dependencies..."
-    npm install
-fi
+npm install
 cd ..
 
 # Cleanup function to kill all launched background processes on exit (CTRL+C)
