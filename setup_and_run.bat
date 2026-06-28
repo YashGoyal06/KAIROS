@@ -52,12 +52,9 @@ python -m pip install --upgrade pip
 pip install -r backend/requirements.txt
 
 :: Setup Frontend Node modules
-echo Checking frontend dependencies...
+echo Checking/Installing frontend dependencies...
 cd frontend
-if not exist node_modules (
-    echo Installing frontend dependencies...
-    call npm install
-)
+call npm install
 cd ..
 
 :: Start servers concurrently in new console windows
