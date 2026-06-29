@@ -13,6 +13,16 @@ export default function Landing() {
   const { user, profile, loading, loginWithGoogle } = useAuth();
   const btnRef = useRef(null);
 
+  React.useEffect(() => {
+    if (!loading && user) {
+      if (profile) {
+        navigate('/dashboard');
+      } else {
+        navigate('/onboarding');
+      }
+    }
+  }, [user, profile, loading, navigate]);
+
 
 
   // Spotlight button logic
@@ -98,7 +108,7 @@ export default function Landing() {
           ref={btnRef}
           className="btn-spotlight"
           onMouseMove={handleMouseMove}
-          onClick={() => user ? navigate('/dashboard') : loginWithGoogle()}
+          onClick={() => user ? navigate('/dashboard') : navigate('/login')}
           style={{ pointerEvents: 'auto' }} // Re-enable pointer events just for the button
         >
           {user ? 'A c c e s s' : 'I n i t i a t e'}

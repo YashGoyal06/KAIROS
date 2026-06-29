@@ -11,6 +11,7 @@ import Tasks from './pages/Tasks';
 import Pitch from './pages/Pitch';
 import Profile from './pages/Profile';
 import EditProfile from './pages/EditProfile';
+import Login from './pages/Login';
 import { Component as ThreeDotsLoader } from './components/ui/3-dots-loader';
 
 const Loader = () => (
@@ -23,7 +24,7 @@ const Loader = () => (
 const ProtectedRoute = ({ children }) => {
   const { user, profile, loading } = useAuth();
   if (loading) return <Loader />;
-  if (!user) return <Navigate to="/" replace />;
+  if (!user) return <Navigate to="/login" replace />;
   if (!profile) return <Navigate to="/onboarding" replace />;
   return children;
 };
@@ -32,7 +33,7 @@ const ProtectedRoute = ({ children }) => {
 const ProtectedRouteOnboarding = ({ children }) => {
   const { user, profile, loading } = useAuth();
   if (loading) return <Loader />;
-  if (!user) return <Navigate to="/" replace />;
+  if (!user) return <Navigate to="/login" replace />;
   if (profile) return <Navigate to="/dashboard" replace />;
   return children;
 };
@@ -61,6 +62,7 @@ function AppContent() {
     <Router>
       <Routes>
         <Route path="/" element={<Landing />} />
+        <Route path="/login" element={<Login />} />
         <Route path="/onboarding" element={
           <ProtectedRouteOnboarding><Onboarding /></ProtectedRouteOnboarding>
         } />
