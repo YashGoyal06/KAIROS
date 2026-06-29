@@ -11,10 +11,11 @@ import Tasks from './pages/Tasks';
 import Pitch from './pages/Pitch';
 import Profile from './pages/Profile';
 import EditProfile from './pages/EditProfile';
+import { Component as ThreeDotsLoader } from './components/ui/3-dots-loader';
 
 const Loader = () => (
   <div style={{ display: 'flex', height: '100vh', width: '100vw', justifyContent: 'center', alignItems: 'center', backgroundColor: '#08090c' }}>
-    <div style={{ fontFamily: 'Outfit', fontSize: '24px', color: '#8b5cf6' }}>●</div>
+    <ThreeDotsLoader />
   </div>
 );
 

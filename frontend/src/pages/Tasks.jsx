@@ -4,6 +4,8 @@ import { useAuth } from '../context/AuthContext';
 import { ShieldAlert, Users, Award, Brain, RefreshCw, Plus, Check, ArrowLeft } from 'lucide-react';
 import MarkdownRenderer from '../components/MarkdownRenderer';
 
+import { Component as AiLoader } from '../components/ui/ai-loader';
+
 export default function Tasks() {
   const { profile, API_BASE } = useAuth();
   
@@ -283,7 +285,12 @@ export default function Tasks() {
                   {loadingSuggestions ? 'Analyzing...' : 'Ask AI for Suggestions'}
                 </button>
               </div>
-              {aiSuggestions && (
+              {loadingSuggestions && (
+                <div style={{ marginTop: '16px' }}>
+                  <AiLoader text="Evaluating" fullscreen={false} />
+                </div>
+              )}
+              {!loadingSuggestions && aiSuggestions && (
                 <div style={{ marginTop: '16px', padding: '16px', background: 'rgba(0,0,0,0.2)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)', fontSize: '13px', color: '#e5e7eb', lineHeight: '1.6' }}>
                   <MarkdownRenderer content={aiSuggestions} />
                 </div>

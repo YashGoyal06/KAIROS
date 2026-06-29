@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { MessageSquare, Plus, Send, Check, Trash2, Calendar, FileText, Download, User, ArrowLeft, Loader } from 'lucide-react';
 import RoadmapFlowchart from '../components/RoadmapFlowchart';
 import MarkdownRenderer from '../components/MarkdownRenderer';
+import { Component as AiLoader } from '../components/ui/ai-loader';
 
 export default function Coach() {
   const { profile, API_BASE } = useAuth();
@@ -598,16 +599,14 @@ export default function Coach() {
               </div>
 
               <div style={{ flexGrow: 1, position: 'relative', height: 'calc(100% - 45px)' }}>
-                {isGenerating && roadmap.length === 0 ? (
-                  <div style={{ display: 'flex', flexDirection: 'column', height: '100%', justifyContent: 'center', alignItems: 'center', gap: '16px', background: 'rgba(8,9,12,0.4)' }}>
-                    <Loader className="spin" size={36} style={{ color: '#8b5cf6', animation: 'spinSlow 2s linear infinite' }} />
-                    <div style={{ fontSize: '15px', color: '#fff', fontWeight: 'bold' }}>{generationStep}</div>
-                    <p style={{ color: '#6b7280', fontSize: '11px', margin: 0 }}>KAIROS agents are assessing scope constraints...</p>
-                  </div>
-                ) : roadmap.length === 0 ? (
-                  <div style={{ display: 'flex', height: '100%', justifyContent: 'center', alignItems: 'center', color: '#6b7280' }}>
-                    Roadmap milestones will render here.
-                  </div>
+                {roadmap.length === 0 ? (
+                  isGenerating ? (
+                    <AiLoader text="Analyzing" fullscreen={false} />
+                  ) : (
+                    <div style={{ display: 'flex', height: '100%', justifyContent: 'center', alignItems: 'center', color: '#6b7280' }}>
+                      Roadmap milestones will render here.
+                    </div>
+                  )
                 ) : (
                   <RoadmapFlowchart 
                     roadmap={roadmap} 
@@ -630,8 +629,8 @@ export default function Coach() {
                     <MarkdownRenderer content={critique} />
                   </div>
                 ) : (
-                  <div style={{ display: 'flex', flexGrow: 1, justifyContent: 'center', alignItems: 'center', color: '#6b7280', fontSize: '13px' }}>
-                    {isGenerating ? "Analyzing project idea and streaming critique..." : "Critique assessment will stream here..."}
+                  <div style={{ display: 'flex', flexGrow: 1, justifyContent: 'center', alignItems: 'center', width: '100%' }}>
+                    <span style={{ color: '#6b7280', fontSize: '13px' }}>Critique assessment will stream here...</span>
                   </div>
                 )}
               </div>

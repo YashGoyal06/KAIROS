@@ -7,6 +7,7 @@ import {
   Search, Bell, Grid, Settings, Moon, ChevronDown, Check, User
 } from 'lucide-react';
 import { getTechIconUrl } from '../utils/techIcons';
+import { Component as ThreeDotsLoader } from '../components/ui/3-dots-loader';
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -114,7 +115,7 @@ export default function Dashboard() {
   if (loading) {
     return (
       <div style={{ display: 'flex', flexGrow: 1, justifyContent: 'center', alignItems: 'center', height: '80vh' }}>
-        <div style={{ animation: 'spinSlow 2s linear infinite', color: '#bf85ff', fontSize: '28px' }}>●</div>
+        <ThreeDotsLoader />
       </div>
     );
   }

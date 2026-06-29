@@ -3,6 +3,8 @@ import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import { Users, Plus, Key, RefreshCw, Layers, Shield } from 'lucide-react';
 
+import { Component as ThreeDotsLoader } from '../components/ui/3-dots-loader';
+
 export default function Teams() {
   const { profile, API_BASE } = useAuth();
   const [teams, setTeams] = useState([]);
@@ -96,8 +98,8 @@ export default function Teams() {
 
   if (loading) {
     return (
-      <div style={{ display: 'flex', flexGrow: 1, justifyContent: 'center', alignItems: 'center' }}>
-        <div style={{ animation: 'spinSlow 2s linear infinite' }}>●</div>
+      <div style={{ display: 'flex', flexGrow: 1, justifyContent: 'center', alignItems: 'center', height: '80vh' }}>
+        <ThreeDotsLoader />
       </div>
     );
   }
