@@ -10,6 +10,7 @@ import Coach from './pages/Coach';
 import Tasks from './pages/Tasks';
 import Pitch from './pages/Pitch';
 import Profile from './pages/Profile';
+import EditProfile from './pages/EditProfile';
 
 const Loader = () => (
   <div style={{ display: 'flex', height: '100vh', width: '100vw', justifyContent: 'center', alignItems: 'center', backgroundColor: '#08090c' }}>
@@ -79,6 +80,9 @@ function AppContent() {
         } />
         <Route path="/profile" element={
           <ProtectedRoute><MainLayout><Profile /></MainLayout></ProtectedRoute>
+        } />
+        <Route path="/profile-edit" element={
+          <ProtectedRoute><MainLayout><EditProfile /></MainLayout></ProtectedRoute>
         } />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

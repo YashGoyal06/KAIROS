@@ -40,8 +40,28 @@ async def init_db():
     async with engine.begin() as conn:
         # Create tables
         await conn.run_sync(Base.metadata.create_all)
+    
+    async with engine.begin() as conn:
         try:
             await conn.execute(text("ALTER TABLE sessions ADD COLUMN scope_critique TEXT;"))
+        except Exception:
+            pass
+
+    async with engine.begin() as conn:
+        try:
+            await conn.execute(text("ALTER TABLE profiles ADD COLUMN linkedin VARCHAR;"))
+        except Exception:
+            pass
+
+    async with engine.begin() as conn:
+        try:
+            await conn.execute(text("ALTER TABLE profiles ADD COLUMN github VARCHAR;"))
+        except Exception:
+            pass
+
+    async with engine.begin() as conn:
+        try:
+            await conn.execute(text("ALTER TABLE profiles ADD COLUMN gmail VARCHAR;"))
         except Exception:
             pass
 

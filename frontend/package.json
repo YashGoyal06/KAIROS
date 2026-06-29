@@ -16,10 +16,12 @@
     "axios": "^1.18.1",
     "gsap": "^3.15.0",
     "html-to-image": "^1.11.13",
+    "imagesloaded": "^5.0.0",
     "lucide-react": "^1.21.0",
     "ogl": "^1.0.11",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
+    "react-icons": "^5.6.0",
     "react-router-dom": "^7.18.0",
     "three": "^0.184.0"
   },

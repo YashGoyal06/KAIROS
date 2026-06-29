@@ -21,6 +21,9 @@ export default function Onboarding() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedTech, setSelectedTech] = useState([]);
   const [customTech, setCustomTech] = useState('');
+  const [linkedin, setLinkedin] = useState('');
+  const [github, setGithub] = useState('');
+  const [gmail, setGmail] = useState('');
 
   const handleTechSelect = (tech) => {
     if (!selectedTech.includes(tech)) {
@@ -53,7 +56,10 @@ export default function Onboarding() {
         full_name: fullName,
         primary_role: role,
         experience_level: experience,
-        tech_stack: selectedTech
+        tech_stack: selectedTech,
+        linkedin,
+        github,
+        gmail
       });
       await refreshProfile();
       navigate('/dashboard');
@@ -91,6 +97,39 @@ export default function Onboarding() {
               onChange={(e) => setFullName(e.target.value)}
               placeholder="e.g. John Doe"
               required
+            />
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">LinkedIn URL (Optional)</label>
+            <input
+              type="text"
+              className="form-input"
+              value={linkedin}
+              onChange={(e) => setLinkedin(e.target.value)}
+              placeholder="e.g. https://linkedin.com/in/username"
+            />
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">GitHub URL (Optional)</label>
+            <input
+              type="text"
+              className="form-input"
+              value={github}
+              onChange={(e) => setGithub(e.target.value)}
+              placeholder="e.g. https://github.com/username"
+            />
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">Gmail (Optional)</label>
+            <input
+              type="email"
+              className="form-input"
+              value={gmail}
+              onChange={(e) => setGmail(e.target.value)}
+              placeholder="e.g. username@gmail.com"
             />
           </div>
 

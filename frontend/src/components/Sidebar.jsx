@@ -3,7 +3,7 @@ import { NavLink } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { 
   LayoutDashboard, Users, MessageSquare, CheckSquare, 
-  Presentation, User, LogOut, Menu, X
+  Presentation, User, LogOut, Menu, X, Settings
 } from 'lucide-react';
 
 export default function Sidebar() {
@@ -58,6 +58,10 @@ export default function Sidebar() {
             <NavLink to="/profile" onClick={closeMenu} className="mobile-link-item">
               <User size={18} />
               <span>My Profile</span>
+            </NavLink>
+            <NavLink to="/profile-edit" onClick={closeMenu} className="mobile-link-item">
+              <Settings size={18} />
+              <span>Edit Profile</span>
             </NavLink>
             
             <div style={{ height: '1px', background: 'rgba(255,255,255,0.08)', margin: '12px 0' }} />
@@ -126,15 +130,17 @@ export default function Sidebar() {
             </div>
             <span className="sidebar-label">My Profile</span>
           </NavLink>
+
+          <NavLink to="/profile-edit" className={({ isActive }) => `sidebar-link-kairos ${isActive ? 'active' : ''}`}>
+            <div className="icon-wrapper">
+              <Settings size={20} />
+            </div>
+            <span className="sidebar-label">Edit Profile</span>
+          </NavLink>
         </div>
 
         {/* Footer Actions */}
         <div className="sidebar-footer-kairos">
-          {/* User Profile Avatar */}
-          <div className="sidebar-user-avatar" title={profile?.full_name || "Profile"}>
-            {userInitials}
-          </div>
-
           {/* Sign Out */}
           {profile && (
             <button 

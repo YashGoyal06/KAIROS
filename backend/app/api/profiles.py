@@ -15,6 +15,9 @@ class ProfileSchema(BaseModel):
     primary_role: str
     experience_level: str
     tech_stack: List[str]
+    linkedin: Optional[str] = None
+    github: Optional[str] = None
+    gmail: Optional[str] = None
 
 @router.post("", response_model=ProfileSchema)
 async def create_or_update_profile(data: ProfileSchema, db: AsyncSession = Depends(get_db)):
@@ -28,6 +31,9 @@ async def create_or_update_profile(data: ProfileSchema, db: AsyncSession = Depen
         profile.primary_role = data.primary_role
         profile.experience_level = data.experience_level
         profile.tech_stack = data.tech_stack
+        profile.linkedin = data.linkedin
+        profile.github = data.github
+        profile.gmail = data.gmail
     else:
         # Create new
         profile = Profile(
@@ -35,7 +41,10 @@ async def create_or_update_profile(data: ProfileSchema, db: AsyncSession = Depen
             full_name=data.full_name,
             primary_role=data.primary_role,
             experience_level=data.experience_level,
-            tech_stack=data.tech_stack
+            tech_stack=data.tech_stack,
+            linkedin=data.linkedin,
+            github=data.github,
+            gmail=data.gmail
         )
         db.add(profile)
         

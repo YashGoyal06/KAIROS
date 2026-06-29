@@ -13,6 +13,9 @@ class Profile(Base):
     primary_role = Column(String, nullable=False)
     experience_level = Column(String, nullable=False)
     tech_stack = Column(JSONB, nullable=False, default=list) # List of skills
+    linkedin = Column(String, nullable=True)
+    github = Column(String, nullable=True)
+    gmail = Column(String, nullable=True)
     updated_at = Column(DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow)
 
     # Relationships
