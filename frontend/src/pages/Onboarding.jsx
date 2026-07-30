@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import { Check, Plus, X } from 'lucide-react';
+import { FaLinkedin, FaGithub } from 'react-icons/fa';
 
 const PREDEFINED_TECH = {
   "Languages": ["Python", "JavaScript", "TypeScript", "Rust", "Go", "C++", "HTML/CSS", "Solidity"],
@@ -18,6 +19,8 @@ export default function Onboarding() {
   const [fullName, setFullName] = useState(user?.user_metadata?.full_name || '');
   const [role, setRole] = useState('Frontend Developer');
   const [experience, setExperience] = useState('Intermediate');
+  const [linkedinUrl, setLinkedinUrl] = useState('');
+  const [githubUrl, setGithubUrl] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedTech, setSelectedTech] = useState([]);
   const [customTech, setCustomTech] = useState('');
@@ -53,7 +56,9 @@ export default function Onboarding() {
         full_name: fullName,
         primary_role: role,
         experience_level: experience,
-        tech_stack: selectedTech
+        tech_stack: selectedTech,
+        linkedin_url: linkedinUrl,
+        github_url: githubUrl
       });
       await refreshProfile();
       navigate('/dashboard');
@@ -114,6 +119,33 @@ export default function Onboarding() {
               <option value="Intermediate">Intermediate (Experienced coder)</option>
               <option value="Advanced">Advanced (Hackathon winner / Professional)</option>
             </select>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
+            <div className="form-group" style={{ marginBottom: 0 }}>
+              <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <FaLinkedin size={14} style={{ color: '#0077b5' }} /> LinkedIn Profile
+              </label>
+              <input
+                type="url"
+                className="form-input"
+                value={linkedinUrl}
+                onChange={(e) => setLinkedinUrl(e.target.value)}
+                placeholder="https://linkedin.com/in/username"
+              />
+            </div>
+            <div className="form-group" style={{ marginBottom: 0 }}>
+              <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <FaGithub size={14} style={{ color: '#fff' }} /> GitHub Profile
+              </label>
+              <input
+                type="url"
+                className="form-input"
+                value={githubUrl}
+                onChange={(e) => setGithubUrl(e.target.value)}
+                placeholder="https://github.com/username"
+              />
+            </div>
           </div>
 
           <div className="form-group">

@@ -1,240 +1,443 @@
-import React, { useEffect, useRef, useState } from 'react';
-import gsap from 'gsap';
-import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { cn } from '../lib/utils';
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+import { useAuth } from '../context/AuthContext';
+import { Check, Plus, X } from 'lucide-react';
+import { FaLinkedin, FaGithub } from 'react-icons/fa';
+import { getTechIconUrl } from '../utils/techIcons';
 
-gsap.registerPlugin(ScrollTrigger);
+const PREDEFINED_TECH = {
+  "Languages": ["Python", "JavaScript", "TypeScript", "Rust", "Go", "C++", "HTML/CSS", "Solidity"],
+  "Frameworks": ["React", "Next.js", "FastAPI", "Django", "Node.js", "Express", "Svelte", "Flask"],
+  "Databases": ["PostgreSQL", "Supabase", "MongoDB", "Redis", "MySQL", "DynamoDB"],
+  "AI/ML": ["PyTorch", "TensorFlow", "OpenAI API", "Hugging Face", "LangChain", "Gemini API"],
+  "Tools": ["Docker", "Kubernetes", "Git", "AWS", "GitHub Actions", "Vercel"]
+};
 
-export function StaggeredGrid({
-    images = [],
-    centerText = "TECH STACK",
-    credits = {
-        madeBy: { text: "@codrops", href: "https://x.com/codrops" },
-        moreDemos: { text: "More demos", href: "https://tympanus.net/codrops/demos" }
-    },
-    className,
-    showFooter = false,
-    scroller
-}) {
-    const [isLoaded, setIsLoaded] = useState(false);
-    const gridFullRef = useRef(null);
-    const textRef = useRef(null);
+export default function Profile() {
+  const { profile, refreshProfile, API_BASE, user } = useAuth();
+  
+  const [fullName, setFullName] = useState('');
+  const [role, setRole] = useState('Frontend Developer');
+  const [experience, setExperience] = useState('Intermediate');
+  const [linkedinUrl, setLinkedinUrl] = useState('');
+  const [githubUrl, setGithubUrl] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedTech, setSelectedTech] = useState([]);
+  const [customTech, setCustomTech] = useState('');
+  const [updating, setUpdating] = useState(false);
 
-    const splitText = (text) => {
-        return text.split('').map((char, i) => (
-            <span key={i} className="char inline-block" style={{ willChange: 'transform' }}>
-                {char === ' ' ? '\u00A0' : char}
-            </span>
-        ));
-    };
+  useEffect(() => {
+    if (profile) {
+      setFullName(profile.full_name || '');
+      setRole(profile.primary_role || 'Frontend Developer');
+      setExperience(profile.experience_level || 'Intermediate');
+      setSelectedTech(profile.tech_stack || []);
+      setLinkedinUrl(profile.linkedin_url || '');
+      setGithubUrl(profile.github_url || '');
+    }
+  }, [profile]);
 
-    useEffect(() => {
-        setIsLoaded(true);
-    }, []);
+  const handleTechSelect = (tech) => {
+    if (!selectedTech.includes(tech)) {
+      setSelectedTech([...selectedTech, tech]);
+    }
+  };
 
-    useEffect(() => {
-        if (!isLoaded || !gridFullRef.current) return;
+  const handleTechRemove = (tech) => {
+    setSelectedTech(selectedTech.filter(t => t !== tech));
+  };
 
-        const mainContent = document.querySelector('.main-content');
-        const scrollerTarget = scroller || mainContent || window;
+  const handleAddCustom = (e) => {
+    e.preventDefault();
+    if (customTech.trim() && !selectedTech.includes(customTech.trim())) {
+      setSelectedTech([...selectedTech, customTech.trim()]);
+      setCustomTech('');
+    }
+  };
 
-        const ctx = gsap.context(() => {
-            // Header Text Animation
-            if (textRef.current) {
-                const chars = textRef.current.querySelectorAll('.char');
-                gsap.fromTo(chars,
-                    { yPercent: 200, autoAlpha: 0 },
-                    {
-                        yPercent: 0,
-                        autoAlpha: 1,
-                        ease: 'power3.out',
-                        stagger: {
-                            each: 0.04,
-                            from: 'center'
-                        },
-                        scrollTrigger: {
-                            trigger: textRef.current,
-                            scroller: scrollerTarget,
-                            start: 'top 95%',
-                            end: 'center center',
-                            scrub: 1,
-                        }
-                    }
-                );
-            }
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!fullName.trim()) {
+      alert("Name is required.");
+      return;
+    }
+    
+    setUpdating(true);
+    try {
+      await axios.post(`${API_BASE}/profiles`, {
+        id: user.id,
+        full_name: fullName,
+        primary_role: role,
+        experience_level: experience,
+        tech_stack: selectedTech,
+        linkedin_url: linkedinUrl,
+        github_url: githubUrl
+      });
+      await refreshProfile();
+      alert("Profile updated successfully!");
+    } catch (err) {
+      console.error('Error saving profile:', err);
+      alert("Error updating profile.");
+    } finally {
+      setUpdating(false);
+    }
+  };
 
-            // Pyramidal Column Staggered Animation
-            const gridFullItems = gridFullRef.current.querySelectorAll('.grid__item');
-            const numColumns = 7;
-            const columns = Array.from({ length: numColumns }, () => []);
-
-            gridFullItems.forEach((item) => {
-                const colAttr = item.getAttribute('data-col');
-                const columnIndex = colAttr !== null ? parseInt(colAttr, 10) : 0;
-                if (columns[columnIndex]) {
-                    columns[columnIndex].push(item);
-                }
-            });
-
-            columns.forEach((columnItems, columnIndex) => {
-                if (!columnItems || columnItems.length === 0) return;
-
-                // Center column is the peak of the wave
-                const distanceFromCenter = Math.abs(columnIndex - 3);
-                const pyramidBaseY = distanceFromCenter * 35;
-
-                gsap.fromTo(columnItems,
-                    { 
-                        y: pyramidBaseY + 220, 
-                        autoAlpha: 0,
-                        scale: 0.9,
-                    },
-                    {
-                        y: pyramidBaseY,
-                        autoAlpha: 1,
-                        scale: 1,
-                        ease: 'power2.out',
-                        stagger: 0.06,
-                        scrollTrigger: {
-                            trigger: gridFullRef.current,
-                            scroller: scrollerTarget,
-                            start: 'top 85%',
-                            end: 'bottom 45%',
-                            scrub: 1.2,
-                        }
-                    }
-                );
-            });
-        }, gridFullRef);
-
-        const refreshTimer = setTimeout(() => {
-            ScrollTrigger.refresh();
-        }, 150);
-
-        return () => {
-            clearTimeout(refreshTimer);
-            ctx.revert();
-        };
-    }, [isLoaded, images, scroller]);
-
-    const techItems = (images && images.length > 0) 
-        ? images 
-        : ["Python", "JavaScript", "TypeScript", "React", "Next.js", "FastAPI", "Django", "PostgreSQL", "Supabase", "Docker", "Git", "PyTorch", "Tailwind", "C++"];
-
-    return (
-        <div
-            className={cn("shadow relative overflow-hidden w-full bg-black/40 backdrop-blur-md rounded-3xl border border-white/10 p-6 sm:p-8", className)}
-            style={{ width: '100%', boxSizing: 'border-box' }}
-        >
-            {/* Header Text */}
-            <section style={{ display: 'flex', justifyContent: 'center', width: '100%', marginTop: '12px', marginBottom: '32px' }}>
-                <div 
-                    ref={textRef} 
-                    className="text font-alt uppercase flex content-center text-[clamp(2.2rem,5vw,4.5rem)] leading-none text-white tracking-widest font-black"
-                >
-                    {splitText(centerText)}
-                </div>
-            </section>
-
-            {/* Structured 7-Column Grid */}
-            <section style={{ width: '100%', display: 'flex', justifyContent: 'center', padding: '10px 0' }}>
-                <div 
-                    ref={gridFullRef} 
-                    style={{
-                        display: 'grid',
-                        gridTemplateColumns: 'repeat(7, minmax(0, 1fr))',
-                        gap: '14px',
-                        width: '100%',
-                        maxWidth: '1100px',
-                        boxSizing: 'border-box'
-                    }}
-                >
-                    {techItems.map((item, i) => {
-                        const colIdx = i % 7;
-                        let label = typeof item === 'string' ? item : item.name || item.title || "Tech";
-                        let customIconUrl = typeof item === 'string' 
-                            ? `https://cdn.simpleicons.org/${item.toLowerCase().replace(/[^a-z0-9]/g, '')}`
-                            : null;
-
-                        return (
-                            <figure 
-                                key={`tech-${i}`} 
-                                data-col={colIdx} 
-                                className="grid__item group cursor-pointer"
-                                style={{
-                                    margin: 0,
-                                    position: 'relative',
-                                    zIndex: 10,
-                                    width: '100%',
-                                    aspectRatio: '1 / 1',
-                                    boxSizing: 'border-box'
-                                }}
-                            >
-                                {/* CLEAN TRANSLUCENT GLASS CARD */}
-                                <div 
-                                    className="grid__item-img"
-                                    style={{
-                                        width: '100%',
-                                        height: '100%',
-                                        borderRadius: '16px',
-                                        overflow: 'hidden',
-                                        border: '1px solid rgba(255, 255, 255, 0.08)',
-                                        background: 'rgba(255, 255, 255, 0.03)',
-                                        backdropFilter: 'blur(12px)',
-                                        WebkitBackdropFilter: 'blur(12px)',
-                                        display: 'flex',
-                                        flexDirection: 'column',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        position: 'relative',
-                                        transition: 'background 0.3s ease, border-color 0.3s ease, transform 0.2s ease'
-                                    }}
-                                    onMouseEnter={(e) => {
-                                        e.currentTarget.style.background = 'rgba(255, 255, 255, 0.07)';
-                                        e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.2)';
-                                    }}
-                                    onMouseLeave={(e) => {
-                                        e.currentTarget.style.background = 'rgba(255, 255, 255, 0.03)';
-                                        e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.08)';
-                                    }}
-                                >
-                                    {/* Content Container */}
-                                    <div style={{ position: 'relative', zIndex: 10, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '8px', padding: '10px' }}>
-                                        {customIconUrl && (
-                                            <img 
-                                                src={customIconUrl} 
-                                                alt={label} 
-                                                style={{ width: '30px', height: '30px', objectFit: 'contain' }}
-                                                onError={(e) => {
-                                                    e.currentTarget.style.display = 'none';
-                                                }}
-                                            />
-                                        )}
-
-                                        <div style={{ textAlign: 'center' }}>
-                                            <span style={{ display: 'block', fontSize: '8px', fontWeight: '700', color: '#ec4899', textTransform: 'uppercase', letterSpacing: '0.06em', fontFamily: 'monospace' }}>
-                                                BUILD WITH
-                                            </span>
-                                            <span style={{ display: 'block', fontSize: '11px', fontWeight: '600', color: '#f3f4f6', marginTop: '1px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '90px' }}>
-                                                {label}
-                                            </span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </figure>
-                        );
-                    })}
-                </div>
-            </section>
-
-            {showFooter && (
-                <footer style={{ width: '100%', padding: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: '#9ca3af', textTransform: 'uppercase', fontSize: '11px', letterSpacing: '0.05em', borderTop: '1px solid rgba(255,255,255,0.08)', marginTop: '16px' }}>
-                    <a href={credits.madeBy.href} style={{ color: 'inherit', textDecoration: 'none' }}>{credits.madeBy.text}</a>
-                    <a href={credits.moreDemos.href} style={{ color: 'inherit', textDecoration: 'none' }}>{credits.moreDemos.text}</a>
-                </footer>
-            )}
+  return (
+    <div className="main-content" style={{ padding: '24px 32px', display: 'flex', flexDirection: 'column' }}>
+      <div className="dashboard-header" style={{ marginBottom: '16px', paddingBottom: '16px' }}>
+        <div>
+          <h1 style={{ fontSize: '30px', fontWeight: 700, color: '#fff' }}>My Profile Settings</h1>
+          <p style={{ color: '#9ca3af', fontSize: '13px', marginTop: '4px' }}>
+            Update your identity, social links, role, experience level, and tech stack.
+          </p>
         </div>
-    );
-}
+      </div>
 
-export default StaggeredGrid;
+      <div className="profile-grid-kairos">
+        {/* Left Column: Visual Profile Card */}
+        <div className="profile-card-left">
+          <div style={{ display: 'flex', flexDirection: 'column', padding: '16px 0', width: '100%' }}>
+            
+            {/* Header Row: Name on Left, LinkedIn & GitHub Icons on Most Right */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', gap: '12px', flexWrap: 'wrap' }}>
+              <h2 style={{ fontSize: '22px', fontWeight: '700', color: '#fff', textShadow: '0 0 8px rgba(236, 72, 153, 0.6)', margin: 0 }}>
+                {fullName || "User Profile"}
+              </h2>
+              
+              {/* Most Right Social Links */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginLeft: 'auto' }}>
+                {linkedinUrl ? (
+                  <a 
+                    href={linkedinUrl.startsWith('http') ? linkedinUrl : `https://${linkedinUrl}`} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      width: '32px',
+                      height: '32px',
+                      borderRadius: '8px',
+                      background: 'rgba(0, 119, 181, 0.15)',
+                      border: '1px solid rgba(0, 119, 181, 0.4)',
+                      color: '#0077b5',
+                      transition: 'all 0.2s ease',
+                      textDecoration: 'none'
+                    }}
+                    title={`LinkedIn: ${linkedinUrl}`}
+                  >
+                    <FaLinkedin size={16} />
+                  </a>
+                ) : (
+                  <span 
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      width: '32px',
+                      height: '32px',
+                      borderRadius: '8px',
+                      background: 'rgba(255, 255, 255, 0.03)',
+                      border: '1px solid rgba(255, 255, 255, 0.08)',
+                      color: '#4b5563'
+                    }}
+                    title="No LinkedIn profile added"
+                  >
+                    <FaLinkedin size={16} />
+                  </span>
+                )}
+
+                {githubUrl ? (
+                  <a 
+                    href={githubUrl.startsWith('http') ? githubUrl : `https://${githubUrl}`} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      width: '32px',
+                      height: '32px',
+                      borderRadius: '8px',
+                      background: 'rgba(255, 255, 255, 0.1)',
+                      border: '1px solid rgba(255, 255, 255, 0.2)',
+                      color: '#ffffff',
+                      transition: 'all 0.2s ease',
+                      textDecoration: 'none'
+                    }}
+                    title={`GitHub: ${githubUrl}`}
+                  >
+                    <FaGithub size={16} />
+                  </a>
+                ) : (
+                  <span 
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      width: '32px',
+                      height: '32px',
+                      borderRadius: '8px',
+                      background: 'rgba(255, 255, 255, 0.03)',
+                      border: '1px solid rgba(255, 255, 255, 0.08)',
+                      color: '#4b5563'
+                    }}
+                    title="No GitHub profile added"
+                  >
+                    <FaGithub size={16} />
+                  </span>
+                )}
+              </div>
+            </div>
+            
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', marginTop: '6px' }}>
+              <span style={{ 
+                fontSize: '12px', 
+                color: '#00FF66', 
+                fontWeight: '700', 
+                fontFamily: 'monospace', 
+                textTransform: 'uppercase', 
+                letterSpacing: '0.05em', 
+                textShadow: '0 0 8px rgba(0, 255, 102, 0.3)'
+              }}>
+                {role}
+              </span>
+              
+              <span style={{ 
+                fontSize: '11px', 
+                color: '#9ca3af', 
+                marginTop: '8px', 
+                background: 'rgba(255,255,255,0.03)', 
+                border: '1px solid rgba(255,255,255,0.06)', 
+                padding: '4px 12px', 
+                borderRadius: '9999px' 
+              }}>
+                {experience.replace(/\s*\(.*\)/g, '')}
+              </span>
+            </div>
+          </div>
+
+          <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '20px', marginTop: '10px', width: '100%' }}>
+            <div style={{ fontFamily: 'monospace', fontSize: '11px', fontWeight: 'bold', color: '#9ca3af', letterSpacing: '0.05em', textTransform: 'uppercase', marginBottom: '12px' }}>
+              /// SYNERGY_STACK ({selectedTech.length})
+            </div>
+            <div style={{ 
+              display: 'grid', 
+              gridTemplateColumns: 'repeat(auto-fill, minmax(40px, 1fr))', 
+              gap: '10px',
+              marginTop: '4px'
+            }}>
+              {selectedTech.length === 0 ? (
+                <span style={{ fontSize: '11px', color: '#6b7280', gridColumn: '1 / -1' }}>No skills integrated yet.</span>
+              ) : (
+                selectedTech.map(tech => (
+                  <div 
+                    key={tech} 
+                    title={tech}
+                    style={{
+                      width: '40px',
+                      height: '40px',
+                      borderRadius: '8px',
+                      border: '1px solid rgba(255, 255, 255, 0.08)',
+                      background: 'rgba(255, 255, 255, 0.02)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      transition: 'all 0.2s ease',
+                      cursor: 'pointer',
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.borderColor = 'rgba(236, 72, 153, 0.5)';
+                      e.currentTarget.style.boxShadow = '0 0 10px rgba(236, 72, 153, 0.3)';
+                      e.currentTarget.style.transform = 'translateY(-2px)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.08)';
+                      e.currentTarget.style.boxShadow = 'none';
+                      e.currentTarget.style.transform = 'translateY(0)';
+                    }}
+                  >
+                    <img 
+                      src={getTechIconUrl(tech)} 
+                      alt={tech} 
+                      style={{ width: '22px', height: '22px', objectFit: 'contain' }}
+                      onError={(e) => {
+                        e.currentTarget.style.display = 'none';
+                        const parent = e.currentTarget.parentElement;
+                        if (parent && !parent.querySelector('.fallback-icon-text')) {
+                          const span = document.createElement('span');
+                          span.className = 'fallback-icon-text';
+                          span.style.fontSize = '10px';
+                          span.style.fontWeight = 'bold';
+                          span.style.fontFamily = 'monospace';
+                          span.style.color = '#ec4899';
+                          span.innerText = tech.slice(0, 2).toUpperCase();
+                          parent.appendChild(span);
+                        }
+                      }}
+                    />
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Right Column: Settings Form */}
+        <div className="profile-card-right">
+          <form onSubmit={handleSubmit}>
+            <div className="profile-section-header">/// USER_IDENTITY & SOCIALS</div>
+            
+            <div className="form-group">
+              <label className="form-label" style={{ fontSize: '12px' }}>Full Name</label>
+              <input
+                type="text"
+                className="form-input"
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+                placeholder="e.g. John Doe"
+                required
+              />
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
+              <div className="form-group" style={{ marginBottom: 0 }}>
+                <label className="form-label" style={{ fontSize: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <FaLinkedin size={14} style={{ color: '#0077b5' }} /> LinkedIn Profile
+                </label>
+                <input
+                  type="url"
+                  className="form-input"
+                  value={linkedinUrl}
+                  onChange={(e) => setLinkedinUrl(e.target.value)}
+                  placeholder="https://linkedin.com/in/username"
+                />
+              </div>
+              <div className="form-group" style={{ marginBottom: 0 }}>
+                <label className="form-label" style={{ fontSize: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <FaGithub size={14} style={{ color: '#fff' }} /> GitHub Profile
+                </label>
+                <input
+                  type="url"
+                  className="form-input"
+                  value={githubUrl}
+                  onChange={(e) => setGithubUrl(e.target.value)}
+                  placeholder="https://github.com/username"
+                />
+              </div>
+            </div>
+
+            <div className="profile-section-header">/// PROFESSIONAL_LEVEL</div>
+
+            <div className="form-group">
+              <label className="form-label" style={{ fontSize: '12px' }}>Primary Role</label>
+              <select className="form-select" value={role} onChange={(e) => setRole(e.target.value)}>
+                <option value="Frontend Developer">Frontend Developer</option>
+                <option value="Backend Developer">Backend Developer</option>
+                <option value="Full Stack Developer">Full Stack Developer</option>
+                <option value="AI/ML Engineer">AI/ML Engineer</option>
+                <option value="UI/UX Designer">UI/UX Designer</option>
+                <option value="DevOps Engineer">DevOps Engineer</option>
+                <option value="Research & Pitch">Research & Pitch</option>
+              </select>
+            </div>
+
+            <div className="form-group">
+              <label className="form-label" style={{ fontSize: '12px' }}>Experience Level</label>
+              <select className="form-select" value={experience} onChange={(e) => setExperience(e.target.value)}>
+                <option value="Beginner">Beginner (1st/2nd Hackathon)</option>
+                <option value="Intermediate">Intermediate (Experienced coder)</option>
+                <option value="Advanced">Advanced (Hackathon winner / Professional)</option>
+              </select>
+            </div>
+
+            <div className="profile-section-header">/// KERNEL_INTEGRATION</div>
+
+            <div className="form-group">
+              <label className="form-label" style={{ fontSize: '12px' }}>Search & Select Tech Stack</label>
+              <input
+                type="text"
+                className="form-input"
+                placeholder="Search technologies..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+              
+              <div style={{ maxHeight: '150px', overflowY: 'auto', border: '1px solid rgba(255,255,255,0.05)', padding: '10px', borderRadius: '8px', background: 'rgba(0,0,0,0.2)', marginTop: '8px' }}>
+                {Object.entries(PREDEFINED_TECH).map(([category, items]) => {
+                  const filtered = items.filter(item => item.toLowerCase().includes(searchQuery.toLowerCase()));
+                  if (filtered.length === 0) return null;
+                  return (
+                    <div key={category} style={{ marginBottom: '12px' }}>
+                      <div style={{ fontSize: '10px', textTransform: 'uppercase', color: '#6b7280', fontWeight: 'bold', marginBottom: '6px', fontFamily: 'monospace' }}>{category}</div>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                        {filtered.map(tech => (
+                          <button
+                            key={tech}
+                            type="button"
+                            onClick={() => handleTechSelect(tech)}
+                            style={{
+                              padding: '4px 10px',
+                              borderRadius: '4px',
+                              border: '1px solid rgba(255,255,255,0.08)',
+                              background: selectedTech.includes(tech) ? 'rgba(236, 72, 153, 0.2)' : 'rgba(255,255,255,0.03)',
+                              color: selectedTech.includes(tech) ? '#ffffff' : '#9ca3af',
+                              fontSize: '11px',
+                              cursor: 'pointer',
+                              transition: 'all 0.2s ease',
+                              fontFamily: 'monospace'
+                            }}
+                          >
+                            {tech}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="form-group">
+              <label className="form-label" style={{ fontSize: '12px' }}>Add Custom Technology</label>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <input
+                  type="text"
+                  className="form-input"
+                  style={{ flexGrow: 1 }}
+                  placeholder="e.g. Web3.js"
+                  value={customTech}
+                  onChange={(e) => setCustomTech(e.target.value)}
+                />
+                <button type="button" onClick={handleAddCustom} className="btn btn-secondary" style={{ padding: '0 16px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}>
+                  <Plus size={16} />
+                </button>
+              </div>
+            </div>
+
+            <div className="form-group">
+              <label className="form-label" style={{ fontSize: '12px' }}>Selected Technologies</label>
+              <div className="tag-input-container" style={{ background: 'rgba(0,0,0,0.1)', border: '1px solid rgba(255,255,255,0.05)' }}>
+                {selectedTech.length === 0 ? (
+                  <span style={{ fontSize: '12px', color: '#6b7280', padding: '4px' }}>No skills integrated yet.</span>
+                ) : (
+                  selectedTech.map(tech => (
+                    <div key={tech} className="tag" style={{ background: 'rgba(236, 72, 153, 0.05)', borderColor: 'rgba(236, 72, 153, 0.15)', color: '#ffffff' }}>
+                      {tech}
+                      <X size={12} className="tag-remove" onClick={() => handleTechRemove(tech)} />
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+
+            <button type="submit" className="btn btn-primary" style={{ width: '100%', marginTop: '24px' }} disabled={updating}>
+              <Check size={18} /> {updating ? 'Saving...' : 'Save Profile Changes'}
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+  );
+}
