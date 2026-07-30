@@ -139,11 +139,23 @@ async def export_pptx(
         if team and team.master_json:
             team_data = team.master_json
 
+    def clean_pitch_text(text: str) -> str:
+        if not text:
+            return ""
+        # Strip markdown headings, bold, bullet points
+        cleaned = re.sub(r'#+\s*', '', text)
+        cleaned = re.sub(r'\*+|\_+', '', cleaned)
+        cleaned = re.sub(r'\n+', ' ', cleaned).strip()
+        # Return first 180 chars cleanly
+        return cleaned[:180] + "..." if len(cleaned) > 180 else cleaned
+
     pitch_sections = {}
-    if session.pitch_outline and "full_raw" in session.pitch_outline:
-        raw = session.pitch_outline["full_raw"]
-        pitch_sections["showcase"] = raw
-        pitch_sections["demo"] = raw
+    if session.pitch_outline and isinstance(session.pitch_outline, dict):
+        raw = session.pitch_outline.get("full_raw", "")
+        cleaned_summary = clean_pitch_text(raw)
+        pitch_sections["showcase"] = cleaned_summary or "KAIROS provides an end-to-end execution co-founder."
+        pitch_sections["demo"] = cleaned_summary or "Real-time AI workflow engine for execution teams."
+        pitch_sections["architecture"] = "FastAPI async backend, Supabase DB, React 19 UI."
 
     custom_bytes = await file.read() if file else None
 

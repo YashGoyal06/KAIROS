@@ -524,35 +524,173 @@ export default function PresentationStudio() {
             }}
           >
             {/* Template Glow Accent */}
-            <div style={{ position: 'absolute', top: '-40px', right: '-40px', width: '200px', height: '200px', borderRadius: '50%', background: activeT.accentColor, filter: 'blur(80px)', opacity: 0.25 }} />
+            <div style={{ position: 'absolute', top: '-40px', right: '-40px', width: '220px', height: '220px', borderRadius: '50%', background: activeT.accentColor, filter: 'blur(80px)', opacity: 0.25 }} />
 
-            {/* Slide Header */}
-            <div>
-              <span style={{ fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.1em', color: activeT.accentColor, fontWeight: 700 }}>
-                {activeSession?.name || 'KAIROS PRESENTATION'}
-              </span>
-              <h2 style={{ fontSize: '28px', color: '#fff', fontWeight: 800, margin: '8px 0 4px 0', lineHeight: 1.2 }}>
+            {/* Slide Header & Pill Badge */}
+            <div style={{ zIndex: 2 }}>
+              <div style={{ display: 'inline-block', background: activeT.accentColor, padding: '3px 12px', borderRadius: '12px', fontSize: '10px', fontWeight: 800, color: '#fff', letterSpacing: '0.08em', marginBottom: '8px' }}>
+                {currentSlide.category?.toUpperCase() || 'KAIROS PRESENTATION'}
+              </div>
+              <h2 style={{ fontSize: '26px', color: '#fff', fontWeight: 800, margin: '2px 0 2px 0', lineHeight: 1.2 }}>
                 {currentSlide.title}
               </h2>
-              <p style={{ fontSize: '14px', color: '#94a3b8', margin: 0 }}>
+              <p style={{ fontSize: '13px', color: '#94a3b8', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                 {currentSlide.subtitle}
               </p>
             </div>
 
-            {/* Slide Bullet Items (Anti-Overflow Layout Box) */}
-            <div style={{ margin: '20px 0', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-              {currentSlide.bullets.map((b, i) => (
-                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '10px', background: 'rgba(255,255,255,0.04)', padding: '10px 14px', borderRadius: '6px', borderLeft: `3px solid ${activeT.accentColor}` }}>
-                  <Sparkles size={14} style={{ color: activeT.accentColor, flexShrink: 0 }} />
-                  <span style={{ fontSize: '13px', color: '#f1f5f9', fontWeight: 500 }}>{b}</span>
+            {/* DYNAMIC 1:1 GAMMA SLIDE CONTENT LAYOUTS */}
+            <div style={{ margin: '14px 0', zIndex: 2, flexGrow: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+              
+              {/* SLIDE 1: HERO COVER */}
+              {currentSlide.num === 1 && (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '14px', marginTop: '10px' }}>
+                  {[
+                    { t: '01. AI Coach Engine', d: 'Real-time AI architecture & scope advisor.' },
+                    { t: '02. Task Board Sync', d: 'Automated priority task breakdown.' },
+                    { t: '03. Gamma Studio Export', d: 'Anti-overflow PPTX presentation suite.' }
+                  ].map((card, i) => (
+                    <div key={i} style={{ background: i === 0 ? 'rgba(168,85,247,0.15)' : 'rgba(18,20,30,0.8)', border: i === 0 ? '1.5px solid #a855f7' : '1px solid #2a2438', padding: '14px', borderRadius: '10px' }}>
+                      <h4 style={{ fontSize: '14px', color: i === 0 ? '#c084fc' : '#fff', fontWeight: 700, margin: '0 0 6px 0' }}>{card.t}</h4>
+                      <p style={{ fontSize: '11px', color: '#94a3b8', margin: 0, lineHeight: 1.4 }}>{card.d}</p>
+                    </div>
+                  ))}
                 </div>
-              ))}
+              )}
+
+              {/* SLIDE 2: PROBLEM STATEMENT (3 COLUMN CARDS) */}
+              {currentSlide.num === 2 && (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '14px', marginTop: '10px' }}>
+                  {[
+                    { num: '01.', t: 'Loss of Momentum', d: 'Teams waste 40% time formatting slides instead of building features.' },
+                    { num: '02.', t: 'Scope Creep', d: 'Unstructured tasks lead to missed crunch deadlines.' },
+                    { num: '03.', t: 'Static Text Decks', d: 'Traditional PPT generators fail to impress hackathon judges.' }
+                  ].map((card, i) => (
+                    <div key={i} style={{ background: 'rgba(18,20,30,0.85)', border: '1px solid #2a2438', padding: '14px', borderRadius: '10px' }}>
+                      <span style={{ fontSize: '16px', color: '#38bdf8', fontWeight: 800 }}>{card.num}</span>
+                      <h4 style={{ fontSize: '14px', color: '#fff', fontWeight: 700, margin: '4px 0 6px 0' }}>{card.t}</h4>
+                      <p style={{ fontSize: '11px', color: '#94a3b8', margin: 0, lineHeight: 1.4 }}>{card.d}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* SLIDE 3: CORE SOLUTION (2-COLUMN HERO SPLIT) */}
+              {currentSlide.num === 3 && (
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.4fr', gap: '16px', marginTop: '8px' }}>
+                  <div style={{ background: 'rgba(52,211,153,0.1)', border: '1.5px solid #34d399', padding: '16px', borderRadius: '10px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                    <span style={{ fontSize: '42px', fontWeight: 900, color: '#34d399', lineHeight: 1 }}>10x</span>
+                    <h4 style={{ fontSize: '15px', color: '#fff', fontWeight: 800, margin: '6px 0' }}>Faster Deck Creation</h4>
+                    <p style={{ fontSize: '11px', color: '#94a3b8', margin: 0 }}>{currentSlide.subtitle}</p>
+                  </div>
+                  <div style={{ background: 'rgba(18,20,30,0.85)', border: '1px solid #2a2438', padding: '14px', borderRadius: '10px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    {currentSlide.bullets.map((b, i) => (
+                      <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <Sparkles size={12} style={{ color: '#a855f7', flexShrink: 0 }} />
+                        <span style={{ fontSize: '11px', color: '#f1f5f9', fontWeight: 600 }}>{b}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* SLIDE 4: SYSTEM ARCHITECTURE (4 GRID CARDS) */}
+              {currentSlide.num === 4 && (
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginTop: '8px' }}>
+                  {[
+                    { t: 'FastAPI Backend', d: 'Async Python server with SQLAlchemy ORM & SSE.' },
+                    { t: 'Supabase DB & Auth', d: 'PostgreSQL database with real-time subscriptions.' },
+                    { t: 'LLM Orchestrator', d: 'Multi-model fallback broker routing Groq & Nvidia.' },
+                    { t: 'React 19 & Vite UI', d: 'Modern glassmorphism interface with Lenis scroll.' }
+                  ].map((card, i) => (
+                    <div key={i} style={{ background: 'rgba(18,20,30,0.85)', border: '1px solid #2a2438', padding: '10px 14px', borderRadius: '8px' }}>
+                      <h4 style={{ fontSize: '12px', color: i % 2 === 0 ? '#38bdf8' : '#c084fc', fontWeight: 700, margin: 0 }}>{card.t}</h4>
+                      <p style={{ fontSize: '10px', color: '#94a3b8', margin: '4px 0 0 0' }}>{card.d}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* SLIDE 5: ROADMAP MILESTONES (3 STAGE CARDS) */}
+              {currentSlide.num === 5 && (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '14px', marginTop: '10px' }}>
+                  {currentSlide.bullets.slice(0, 3).map((b, i) => (
+                    <div key={i} style={{ background: 'rgba(18,20,30,0.85)', border: '1px solid #2a2438', padding: '14px', borderRadius: '10px' }}>
+                      <span style={{ fontSize: '10px', color: '#34d399', fontWeight: 800 }}>STAGE 0{i+1}</span>
+                      <h4 style={{ fontSize: '13px', color: '#fff', fontWeight: 700, margin: '6px 0' }}>{b.split(':')[0]}</h4>
+                      <span style={{ fontSize: '9px', background: 'rgba(56,189,248,0.2)', color: '#38bdf8', padding: '2px 6px', borderRadius: '4px', fontWeight: 700 }}>
+                        {b.split(':')[1] || 'IN PROGRESS'}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* SLIDE 6: SPRINT TASK METRICS */}
+              {currentSlide.num === 6 && (
+                <div style={{ background: 'rgba(18,20,30,0.85)', border: '1px solid #2a2438', padding: '14px', borderRadius: '10px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  {currentSlide.bullets.map((b, i) => (
+                    <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(255,255,255,0.03)', padding: '6px 12px', borderRadius: '6px' }}>
+                      <span style={{ fontSize: '11px', color: '#fff', fontWeight: 600 }}>• {b}</span>
+                      <span style={{ fontSize: '9px', color: '#a855f7', background: 'rgba(168,85,247,0.2)', padding: '2px 6px', borderRadius: '4px', fontWeight: 700 }}>High Priority</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* SLIDE 7: TEAM & TECHNICAL MASTERY */}
+              {currentSlide.num === 7 && (
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px', marginTop: '8px' }}>
+                  <div style={{ background: 'rgba(18,20,30,0.85)', border: '1px solid #2a2438', padding: '14px', borderRadius: '10px' }}>
+                    <h4 style={{ fontSize: '16px', color: '#fff', fontWeight: 800, margin: 0 }}>{profile?.full_name || 'Innovator'}</h4>
+                    <span style={{ fontSize: '11px', color: '#c084fc', fontWeight: 600 }}>Lead Architect</span>
+                    <p style={{ fontSize: '10px', color: '#94a3b8', margin: '8px 0 0 0' }}>Stack: Python, FastAPI, React, Supabase</p>
+                  </div>
+                  <div style={{ background: 'rgba(18,20,30,0.85)', border: '1px solid #2a2438', padding: '14px', borderRadius: '10px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                    <span style={{ fontSize: '11px', color: '#38bdf8', fontWeight: 700 }}>✔ Fullstack Async Architecture</span>
+                    <span style={{ fontSize: '11px', color: '#38bdf8', fontWeight: 700 }}>✔ Multi-LLM Cascading Broker</span>
+                    <span style={{ fontSize: '11px', color: '#38bdf8', fontWeight: 700 }}>✔ Vector Card Bounding Engine</span>
+                  </div>
+                </div>
+              )}
+
+              {/* SLIDE 8: VALUE PROPOSITION SHOWCASE */}
+              {currentSlide.num === 8 && (
+                <div style={{ background: 'rgba(52,211,153,0.1)', border: '1.5px solid #34d399', padding: '20px', borderRadius: '10px' }}>
+                  <p style={{ fontSize: '14px', color: '#fff', fontWeight: 700, margin: 0, lineHeight: 1.5 }}>
+                    “ {currentSlide.subtitle} ”
+                  </p>
+                </div>
+              )}
+
+              {/* SLIDE 9: RISK MATRIX */}
+              {currentSlide.num === 9 && (
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px', marginTop: '8px' }}>
+                  <div style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', padding: '12px', borderRadius: '10px' }}>
+                    <h4 style={{ fontSize: '12px', color: '#f87171', fontWeight: 800, margin: '0 0 6px 0' }}>Potential Risks</h4>
+                    <p style={{ fontSize: '10px', color: '#94a3b8', margin: 0 }}>⚠ LLM rate limits & server drops</p>
+                  </div>
+                  <div style={{ background: 'rgba(52,211,153,0.1)', border: '1px solid rgba(52,211,153,0.3)', padding: '12px', borderRadius: '10px' }}>
+                    <h4 style={{ fontSize: '12px', color: '#34d399', fontWeight: 800, margin: '0 0 6px 0' }}>KAIROS Strategy</h4>
+                    <p style={{ fontSize: '10px', color: '#fff', margin: 0 }}>✔ Multi-model fallback cascade broker</p>
+                  </div>
+                </div>
+              )}
+
+              {/* SLIDE 10: CONCLUSION CTA */}
+              {currentSlide.num === 10 && (
+                <div style={{ background: 'rgba(168,85,247,0.15)', border: '1.5px solid #a855f7', padding: '24px', borderRadius: '12px', textAlign: 'center' }}>
+                  <h3 style={{ fontSize: '20px', color: '#fff', fontWeight: 900, margin: 0 }}>Ready for Production Execution</h3>
+                  <p style={{ fontSize: '12px', color: '#94a3b8', margin: '8px 0 0 0' }}>KAIROS empowers hackathon teams to ship faster, present smarter, and win bigger.</p>
+                </div>
+              )}
+
             </div>
 
             {/* Slide Footer */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: '12px' }}>
-              <span style={{ fontSize: '11px', color: '#64748b' }}>KAIROS Anti-Overflow Slide Engine</span>
-              <span style={{ fontSize: '11px', color: activeT.accentColor, fontWeight: 700 }}>Slide {currentSlide.num}</span>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: '10px', zIndex: 2 }}>
+              <span style={{ fontSize: '10px', color: '#64748b' }}>KAIROS Gamma 1:1 Live Canvas Engine</span>
+              <span style={{ fontSize: '10px', color: activeT.accentColor, fontWeight: 700 }}>Slide {currentSlide.num} of 10</span>
             </div>
 
           </div>
