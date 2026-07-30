@@ -38,6 +38,16 @@ export default function Tasks() {
   const [blockingModalData, setBlockingModalData] = useState(null); // { taskId: '...', targetStatus: '...' }
   const [blockReasonInput, setBlockReasonInput] = useState('');
 
+  const fetchMyTeams = async () => {
+    if (!profile) return;
+    try {
+      const res = await axios.get(`${API_BASE}/teams/user/${profile.id}`);
+      setMyTeams(res.data);
+    } catch (e) {
+      console.error("Error fetching user teams:", e);
+    }
+  };
+
   const fetchSessions = async () => {
     if (!profile) return;
     try {
@@ -82,6 +92,7 @@ export default function Tasks() {
 
   useEffect(() => {
     fetchSessions();
+    fetchMyTeams();
   }, [profile]);
 
   useEffect(() => {

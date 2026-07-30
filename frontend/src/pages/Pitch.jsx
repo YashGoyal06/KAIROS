@@ -9,6 +9,7 @@ export default function Pitch() {
   const { profile, API_BASE } = useAuth();
   
   const [sessions, setSessions] = useState([]);
+  const [myTeams, setMyTeams] = useState([]);
   const [activeSessionId, setActiveSessionId] = useState('');
   const [activeSession, setActiveSession] = useState(null);
   
@@ -16,6 +17,16 @@ export default function Pitch() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [activeTab, setActiveTab] = useState('demo'); // 'demo' | 'slides' | 'showcase'
   const [inputText, setInputText] = useState('');
+
+  const fetchMyTeams = async () => {
+    if (!profile) return;
+    try {
+      const res = await axios.get(`${API_BASE}/teams/user/${profile.id}`);
+      setMyTeams(res.data);
+    } catch (e) {
+      console.error("Error fetching user teams:", e);
+    }
+  };
 
   const fetchSessions = async () => {
     if (!profile) return;
@@ -49,6 +60,7 @@ export default function Pitch() {
 
   useEffect(() => {
     fetchSessions();
+    fetchMyTeams();
   }, [profile]);
 
   useEffect(() => {
