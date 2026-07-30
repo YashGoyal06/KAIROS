@@ -2,10 +2,17 @@ import React, { useEffect, useRef, useState } from 'react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { getTechIconUrl } from '../utils/techIcons';
+import { FaLinkedin, FaGithub } from 'react-icons/fa';
 
 gsap.registerPlugin(ScrollTrigger);
 
-export function StaggeredGrid({ items = [], centerText = "MY TECH STACK", scroller }) {
+export function StaggeredGrid({ 
+  items = [], 
+  centerText = "MY TECH STACK", 
+  linkedinUrl = "",
+  githubUrl = "",
+  scroller 
+}) {
   const [isLoaded, setIsLoaded] = useState(false);
   const gridFullRef = useRef(null);
   const textRef = useRef(null);
@@ -114,34 +121,13 @@ export function StaggeredGrid({ items = [], centerText = "MY TECH STACK", scroll
   return (
     <div style={{
       width: '100%',
-      backgroundColor: 'rgba(12, 10, 18, 0.65)',
-      backdropFilter: 'blur(24px)',
-      WebkitBackdropFilter: 'blur(24px)',
-      border: '1px solid rgba(255, 255, 255, 0.08)',
-      borderRadius: '28px',
-      padding: '40px 24px',
-      boxSizing: 'border-box',
       display: 'flex',
       flexDirection: 'column',
       alignItems: 'center',
       gap: '32px',
-      boxShadow: '0 25px 60px rgba(0,0,0,0.6)',
-      position: 'relative',
-      overflow: 'hidden'
+      position: 'relative'
     }}>
-      {/* Background Radial Glow */}
-      <div style={{
-        position: 'absolute',
-        top: '50%',
-        left: '50%',
-        transform: 'translate(-50%, -50%)',
-        width: '350px',
-        height: '350px',
-        background: 'radial-gradient(circle, rgba(168, 85, 247, 0.15) 0%, transparent 70%)',
-        pointerEvents: 'none'
-      }} />
-
-      {/* Header Wave Text */}
+      {/* Header Wave Text (No Outer Box Container) */}
       <div ref={textRef} style={{
         margin: 0,
         fontSize: '24px',
@@ -158,7 +144,7 @@ export function StaggeredGrid({ items = [], centerText = "MY TECH STACK", scroll
         {splitText(centerText)}
       </div>
 
-      {/* 7-Column Pyramid Staggered Grid */}
+      {/* 7-Column Pyramid Staggered Grid Direct Page Container */}
       <div 
         ref={gridFullRef}
         style={{
@@ -166,7 +152,7 @@ export function StaggeredGrid({ items = [], centerText = "MY TECH STACK", scroll
           gridTemplateColumns: 'repeat(7, minmax(0, 1fr))',
           gap: '14px',
           width: '100%',
-          maxWidth: '960px',
+          maxWidth: '1000px',
           boxSizing: 'border-box'
         }}
       >
@@ -269,6 +255,131 @@ export function StaggeredGrid({ items = [], centerText = "MY TECH STACK", scroll
             </div>
           );
         })}
+
+        {/* LinkedIn Tile as Part of Staggered Grid */}
+        <div
+          data-col={(techList.length) % 7}
+          className="grid__item"
+          style={{
+            gridColumn: 'span 2',
+            height: '100%',
+            minHeight: '100px',
+            backgroundColor: 'rgba(30, 58, 138, 0.2)',
+            border: '1px solid rgba(59, 130, 246, 0.3)',
+            borderRadius: '18px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '12px',
+            padding: '12px 16px',
+            boxSizing: 'border-box',
+            backdropFilter: 'blur(12px)',
+            WebkitBackdropFilter: 'blur(12px)',
+            transition: 'transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), border-color 0.3s ease, background-color 0.3s ease, box-shadow 0.3s ease',
+            cursor: 'pointer',
+            position: 'relative',
+            zIndex: 10
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.transform = 'translateY(-8px) scale(1.03)';
+            e.currentTarget.style.borderColor = 'rgba(59, 130, 246, 0.6)';
+            e.currentTarget.style.boxShadow = '0 0 25px rgba(59, 130, 246, 0.4)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.transform = 'translateY(0) scale(1)';
+            e.currentTarget.style.borderColor = 'rgba(59, 130, 246, 0.3)';
+            e.currentTarget.style.boxShadow = 'none';
+          }}
+          onClick={() => {
+            if (linkedinUrl) {
+              window.open(linkedinUrl.startsWith('http') ? linkedinUrl : `https://${linkedinUrl}`, '_blank');
+            }
+          }}
+        >
+          <div style={{
+            width: '40px',
+            height: '40px',
+            borderRadius: '12px',
+            backgroundColor: 'rgba(59, 130, 246, 0.25)',
+            border: '1px solid rgba(59, 130, 246, 0.4)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: '#60a5fa'
+          }}>
+            <FaLinkedin size={22} />
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+            <span style={{ fontSize: '10px', fontWeight: '700', color: '#60a5fa', fontFamily: 'monospace', textTransform: 'uppercase' }}>
+              LINKEDIN
+            </span>
+            <span style={{ fontSize: '13px', fontWeight: '600', color: '#ffffff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              {linkedinUrl ? linkedinUrl.replace(/^https?:\/\/(www\.)?linkedin\.com\/in\//, '') : 'Connect'}
+            </span>
+          </div>
+        </div>
+
+        {/* GitHub Tile as Part of Staggered Grid */}
+        <div
+          data-col={(techList.length + 2) % 7}
+          className="grid__item"
+          style={{
+            gridColumn: 'span 2',
+            height: '100%',
+            minHeight: '100px',
+            backgroundColor: 'rgba(88, 28, 135, 0.2)',
+            border: '1px solid rgba(168, 85, 247, 0.3)',
+            borderRadius: '18px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '12px',
+            padding: '12px 16px',
+            boxSizing: 'border-box',
+            backdropFilter: 'blur(12px)',
+            WebkitBackdropFilter: 'blur(12px)',
+            transition: 'transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), border-color 0.3s ease, background-color 0.3s ease, box-shadow 0.3s ease',
+            cursor: 'pointer',
+            position: 'relative',
+            zIndex: 10
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.transform = 'translateY(-8px) scale(1.03)';
+            e.currentTarget.style.borderColor = 'rgba(168, 85, 247, 0.6)';
+            e.currentTarget.style.boxShadow = '0 0 25px rgba(168, 85, 247, 0.4)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.transform = 'translateY(0) scale(1)';
+            e.currentTarget.style.borderColor = 'rgba(168, 85, 247, 0.3)';
+            e.currentTarget.style.boxShadow = 'none';
+          }}
+          onClick={() => {
+            if (githubUrl) {
+              window.open(githubUrl.startsWith('http') ? githubUrl : `https://${githubUrl}`, '_blank');
+            }
+          }}
+        >
+          <div style={{
+            width: '40px',
+            height: '40px',
+            borderRadius: '12px',
+            backgroundColor: 'rgba(168, 85, 247, 0.25)',
+            border: '1px solid rgba(168, 85, 247, 0.4)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: '#ffffff'
+          }}>
+            <FaGithub size={22} />
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+            <span style={{ fontSize: '10px', fontWeight: '700', color: '#c084fc', fontFamily: 'monospace', textTransform: 'uppercase' }}>
+              GITHUB
+            </span>
+            <span style={{ fontSize: '13px', fontWeight: '600', color: '#ffffff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              {githubUrl ? githubUrl.replace(/^https?:\/\/(www\.)?github\.com\//, '') : 'Connect'}
+            </span>
+          </div>
+        </div>
+
       </div>
     </div>
   );
