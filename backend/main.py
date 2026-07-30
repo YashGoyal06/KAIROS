@@ -53,5 +53,5 @@ async def root():
     return {"status": "online", "message": "KAIROS Core API"}
 
 if __name__ == "__main__":
-    port = int(os.getenv("PORT", 8000))
-    uvicorn.run("main:app", host="0.0.0.0", port=port, reload=True)
+    port = int(os.getenv("PORT", 7860))
+    uvicorn.run("backend.main:app", host="0.0.0.0", port=port, reload=True)
