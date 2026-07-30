@@ -3,6 +3,7 @@ import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import { ShieldAlert, Users, Award, Brain, RefreshCw, Plus, Check, ArrowLeft } from 'lucide-react';
 import MarkdownRenderer from '../components/MarkdownRenderer';
+import VoiceAssistantWidget from '../components/VoiceAssistantWidget';
 
 export default function Tasks() {
   const { profile, API_BASE } = useAuth();
@@ -550,6 +551,7 @@ export default function Tasks() {
           </div>
         </div>
       )}
+      <VoiceAssistantWidget sessionId={activeSessionId} />
     </div>
   );
 }

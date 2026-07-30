@@ -288,3 +288,74 @@ async def save_pitch_outline(
     session.pitch_outline = data.pitch_outline
     await db.commit()
     return {"status": "success", "pitch_outline": session.pitch_outline}
+
+@router.get("/export-submission")
+async def export_submission_package(
+    session_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db)
+):
+    sess_res = await db.execute(select(Session).where(Session.id == session_id))
+    session = sess_res.scalars().first()
+    if not session:
+        raise HTTPException(status_code=404, detail="Session not found")
+
+    milestones = session.milestones or []
+    tasks_res = await db.execute(select(Task).where(Task.session_id == session_id))
+    tasks = tasks_res.scalars().all()
+    blockers_res = await db.execute(select(Blocker).where(Blocker.session_id == session_id))
+    blockers = blockers_res.scalars().all()
+
+    pitch_raw = ""
+    if session.pitch_outline and isinstance(session.pitch_outline, dict):
+        pitch_raw = session.pitch_outline.get("full_raw", "")
+
+    # Format Devpost & GitHub Submission README
+    readme_content = f"""# {session.name}
+
+> **Autonomous Hackathon Co-Founder Submission Package**
+
+---
+
+## 🚀 Inspiration & Problem Statement
+{session.problem_statement or 'Solving complex hackathon execution bottlenecks.'}
+
+## 💡 Solution Overview
+{session.user_idea or 'Real-time AI workflow engine for rapid hackathon execution.'}
+
+## 🛠️ Architecture & How We Built It
+- **Backend**: FastAPI, Async SQLAlchemy, Supabase PostgreSQL, Multi-Model LLM Router (Claude, Gemini, Groq, Ollama)
+- **Frontend**: React 19, Lucide React, Glassmorphism CSS Design System
+- **Engine**: Real-time PPTX Engine, Multi-Agent Autonomous Roadmap & Task Planner
+
+## 📋 Hackathon Execution Milestones
+"""
+
+    for m in milestones:
+        phase = m.get('phase', 'Milestone')
+        title = m.get('title', '')
+        deliverable = m.get('deliverable', '')
+        duration = m.get('duration_estimate', '')
+        readme_content += f"- **{phase}: {title}**\n  - *Deliverable*: {deliverable}\n  - *Estimated Time*: {duration}\n"
+
+    readme_content += "\n## ✅ Completed Tasks & Progress\n"
+    for t in tasks:
+        status_icon = "✅" if t.status == "completed" else "⏳"
+        readme_content += f"- {status_icon} **{t.name}** (`{t.priority.upper()}` priority) - Status: {t.status}\n"
+
+    if blockers:
+        readme_content += "\n## ⚡ Challenges We Ran Into & Resolved\n"
+        for b in blockers:
+            readme_content += f"- **Challenge**: {b.description} (Severity: `{b.severity}` | Status: `{b.status}`)\n"
+
+    if pitch_raw:
+        readme_content += f"\n---\n\n## 🎙️ Presentation & Pitch Script\n\n{pitch_raw}\n"
+
+    readme_content += "\n---\n*Generated automatically by KAIROS AI Hackathon Co-Founder*"
+
+    filename = f"{session.name.replace(' ', '_')}_SUBMISSION_README.md"
+    return Response(
+        content=readme_content.encode('utf-8'),
+        media_type="text/markdown",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'}
+    )
+

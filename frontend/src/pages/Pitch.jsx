@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
-import { Presentation, Loader, Play, Send, RefreshCw, Layers } from 'lucide-react';
+import { Presentation, Loader, Play, Send, RefreshCw, Layers, Download } from 'lucide-react';
 import MarkdownRenderer from '../components/MarkdownRenderer';
 
 export default function Pitch() {
@@ -202,6 +202,11 @@ export default function Pitch() {
 
   const activeContent = parseSection(activeTab);
 
+  const handleExportSubmission = () => {
+    if (!activeSessionId) return;
+    window.open(`${API_BASE}/sessions/${activeSessionId}/pitch/export-submission`, '_blank');
+  };
+
   return (
     <div className="main-content">
       {!activeSessionId ? (
@@ -246,12 +251,22 @@ export default function Pitch() {
                 ← Back to Pitch Rooms
               </button>
               <div>
-                <h2 style={{ fontSize: '24px', fontWeight: 700, color: '#fff', margin: 0 }}>Pitch Studio: {activeSession?.name}</h2>
+                <h2 style={{ fontSize: '24px', fontWeight 700, color: '#fff', margin: 0 }}>Pitch Studio: {activeSession?.name}</h2>
               </div>
             </div>
-            <button onClick={fetchSessionDetails} className="btn btn-secondary" style={{ padding: '10px 16px' }}>
-              <RefreshCw size={16} /> Sync Studio
-            </button>
+            <div style={{ display: 'flex', gap: '12px' }}>
+              <button onClick={handleExportSubmission} className="btn btn-primary" style={{ padding: '10px 16px', background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', border: 'none' }}>
+                <Download size={16} /> Export Submission Package
+              </button>
+              {pitchText && (
+                <button onClick={() => handleGeneratePitch()} className="btn btn-primary" style={{ padding: '10px 16px' }}>
+                  <RefreshCw size={16} /> Regenerate Pitch
+                </button>
+              )}
+              <button onClick={fetchSessionDetails} className="btn btn-secondary" style={{ padding: '10px 16px' }}>
+                <RefreshCw size={16} /> Sync Studio
+              </button>
+            </div>
           </div>
           
           {/* Main Layout Workspace */}

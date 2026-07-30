@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { MessageSquare, Plus, Send, Check, Trash2, Calendar, FileText, Download, User, ArrowLeft, Loader } from 'lucide-react';
 import RoadmapFlowchart from '../components/RoadmapFlowchart';
 import MarkdownRenderer from '../components/MarkdownRenderer';
+import VoiceAssistantWidget from '../components/VoiceAssistantWidget';
 
 export default function Coach() {
   const { profile, API_BASE } = useAuth();
@@ -710,6 +711,7 @@ export default function Coach() {
           <span style={{ fontSize: '14px', fontWeight: '500' }}>{toast.message}</span>
         </div>
       )}
+      <VoiceAssistantWidget sessionId={activeSession?.id} />
     </div>
   );
 }
