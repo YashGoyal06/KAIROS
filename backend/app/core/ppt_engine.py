@@ -307,7 +307,21 @@ class PPTEngine:
             }
         ]
 
-        footer_patterns = ["presented by", "presented to", "website :", "date", "thynk unlimited", "fradel and spies", "+123-456-7890", "reallygreatsite"]
+        EXCLUDE_PATTERNS = [
+            'ingoude company', 'fradel and spies', 'thynk unlimited',
+            'hello@', 'www.', '+123', '25 august', '27 - 12', 'december',
+            '123 anywhere', '(001)', '(002)', '(003)', 'manager', 'staf',
+            'presented to', 'website :'
+        ]
+        
+        TITLE_KEYWORDS = [
+            'pitch deck', 'the problem', 'the solution', 'company roadmap',
+            'service overview', 'target market', 'financial projections',
+            'current investor', 'our team', 'thank you', 'intro-duction',
+            'problem statement', 'our solution', 'market research',
+            'product overview', 'unique value proposition', 'business model',
+            'traction our progress', 'pitch deck presentation', 'thank you so much!'
+        ]
 
         for slide_idx, slide in enumerate(prs.slides):
             c_data = slide_contents[slide_idx] if slide_idx < len(slide_contents) else {
@@ -318,37 +332,56 @@ class PPTEngine:
 
             text_shapes = [s for s in slide.shapes if s.has_text_frame]
 
-            title_shapes = []
+            title_shape = None
+            subtitle_shape = None
             body_shapes = []
 
             for shape in text_shapes:
-                txt = shape.text_frame.text.strip().lower()
+                txt = shape.text_frame.text.strip()
+                txt_lower = txt.lower()
 
-                if any(fp in txt for fp in footer_patterns):
-                    if "presented by" in txt:
-                        PPTEngine.fit_text_to_frame(shape.text_frame, f"Presented By : {user_name}", max_font_size=12, min_font_size=8, is_title=False)
-                    elif "presented to" in txt:
-                        PPTEngine.fit_text_to_frame(shape.text_frame, "Presented To : Hackathon Judges & Evaluators", max_font_size=12, min_font_size=8, is_title=False)
+                # Protect presenter branding name
+                if 'presented by' in txt_lower:
+                    PPTEngine.fit_text_to_frame(shape.text_frame, f"Presented By : {user_name}", max_font_size=12, min_font_size=8, is_title=False)
+                    continue
+
+                # Protect all other header/footer branding elements
+                if any(ep in txt_lower for ep in EXCLUDE_PATTERNS):
                     continue
 
                 top_pos = shape.top.inches if hasattr(shape, 'top') else 0
 
-                if (top_pos < 2.5 and len(txt) < 80) or "lorem" not in txt and len(txt) < 35 and top_pos < 3.5:
-                    title_shapes.append(shape)
+                # Match Slide Title
+                if any(tk in txt_lower for tk in TITLE_KEYWORDS) or (top_pos >= 2.5 and top_pos <= 4.5 and len(txt) < 35):
+                    if not title_shape:
+                        title_shape = shape
+                    elif not subtitle_shape:
+                        subtitle_shape = shape
+                    else:
+                        body_shapes.append(shape)
+                elif 'presentation' in txt_lower or 'pitch deck' in txt_lower or (top_pos > 4.5 and top_pos < 6.0 and len(txt) < 30):
+                    if not subtitle_shape:
+                        subtitle_shape = shape
+                    else:
+                        body_shapes.append(shape)
                 else:
                     body_shapes.append(shape)
 
-            if title_shapes:
-                PPTEngine.fit_text_to_frame(title_shapes[0].text_frame, c_data["title"], max_font_size=24, min_font_size=14, is_title=True)
-                if len(title_shapes) > 1 and c_data.get("subtitle"):
-                    PPTEngine.fit_text_to_frame(title_shapes[1].text_frame, c_data["subtitle"], max_font_size=14, min_font_size=10, is_title=False)
+            # 1. Update Title Shape cleanly
+            if title_shape:
+                PPTEngine.fit_text_to_frame(title_shape.text_frame, c_data["title"], max_font_size=24, min_font_size=14, is_title=True)
 
+            # 2. Update Subtitle Shape cleanly
+            if subtitle_shape:
+                PPTEngine.fit_text_to_frame(subtitle_shape.text_frame, c_data["subtitle"], max_font_size=14, min_font_size=10, is_title=False)
+
+            # 3. Distribute Bullets across Body / Card shapes
             if body_shapes:
+                bullets = c_data["bullets"]
                 if len(body_shapes) == 1:
-                    body_text = c_data["subtitle"] + "\n\n" + "\n".join([f"• {b}" for b in c_data["bullets"]])
-                    PPTEngine.fit_text_to_frame(body_shapes[0].text_frame, body_text, max_font_size=14, min_font_size=9, is_title=False)
+                    body_text = c_data["subtitle"] + "\n\n" + "\n".join([f"• {b}" for b in bullets])
+                    PPTEngine.fit_text_to_frame(body_shapes[0].text_frame, body_text, max_font_size=13, min_font_size=9, is_title=False)
                 else:
-                    bullets = c_data["bullets"]
                     for idx, b_shape in enumerate(body_shapes):
                         if idx < len(bullets):
                             card_text = bullets[idx]
