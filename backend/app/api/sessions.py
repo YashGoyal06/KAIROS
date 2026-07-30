@@ -265,6 +265,38 @@ async def chat_with_coach(
     if not session:
         raise HTTPException(status_code=404, detail="Session not found")
         
+    # Check if user message is requesting a task status update & execute DB mutation
+    msg_lower = data.message.lower()
+    target_status = None
+    if any(k in msg_lower for k in ["done", "complete", "completed", "finish", "mark"]):
+        target_status = "completed"
+    elif any(k in msg_lower for k in ["in_progress", "progress", "start", "working"]):
+        target_status = "in_progress"
+    elif any(k in msg_lower for k in ["block", "blocked", "stuck"]):
+        target_status = "blocked"
+    elif any(k in msg_lower for k in ["pending", "reset"]):
+        target_status = "pending"
+
+    updated_task_info = None
+    if target_status:
+        all_tasks_db = (await db.execute(select(Task).where(Task.session_id == session_id))).scalars().all()
+        matched_task = None
+        for t in all_tasks_db:
+            if t.name.lower() in msg_lower:
+                matched_task = t
+                break
+        if not matched_task and all_tasks_db:
+            if target_status == "completed":
+                matched_task = next((t for t in all_tasks_db if t.status != "completed"), all_tasks_db[0])
+            else:
+                matched_task = all_tasks_db[0]
+
+        if matched_task:
+            matched_task.status = target_status
+            await db.commit()
+            await db.refresh(matched_task)
+            updated_task_info = f"Task '{matched_task.name}' status has been updated to '{target_status}' in PostgreSQL database."
+
     # Gather tasks and blockers for deep model understanding
     tasks_res = await db.execute(select(Task).where(Task.session_id == session_id))
     tasks_list = [{"name": t.name, "status": t.status, "priority": t.priority, "milestone_id": t.milestone_id} for t in tasks_res.scalars().all()]
@@ -280,7 +312,8 @@ async def chat_with_coach(
         "milestones": session.milestones,
         "tasks": tasks_list,
         "blockers": blockers_list,
-        "status": session.status
+        "status": session.status,
+        "system_action_taken": updated_task_info
     }
     
     async def sse_generator():

@@ -108,9 +108,27 @@ export default function VoiceAssistantWidget({ sessionId = null, onCommand = nul
   const [isListening, setIsListening] = useState(false);
   const [transcript, setTranscript] = useState('');
   const [inputText, setInputText] = useState('');
-  const [messages, setMessages] = useState([
-    { role: 'assistant', content: '👋 Hi! I am Kairos 3D Robot Assistant. Ask me anything, or speak commands like *"Mark setup task as completed"* or *"Summarize blockers"*!' }
-  ]);
+  const [messages, setMessages] = useState(() => {
+    try {
+      const saved = localStorage.getItem('kairos_widget_chat_history');
+      return saved ? JSON.parse(saved) : [
+        { role: 'assistant', content: '👋 Hi! I am Kairos 3D Robot Assistant. Ask me anything, or speak commands like *"Mark setup task as completed"* or *"Summarize blockers"*!' }
+      ];
+    } catch (e) {
+      return [
+        { role: 'assistant', content: '👋 Hi! I am Kairos 3D Robot Assistant. Ask me anything, or speak commands like *"Mark setup task as completed"* or *"Summarize blockers"*!' }
+      ];
+    }
+  });
+
+  // Save chat history to localStorage whenever messages change
+  useEffect(() => {
+    try {
+      if (messages.length > 0) {
+        localStorage.setItem('kairos_widget_chat_history', JSON.stringify(messages));
+      }
+    } catch (e) {}
+  }, [messages]);
   const [isLoading, setIsLoading] = useState(false);
   const [speechSupported, setSpeechSupported] = useState(true);
 
@@ -290,6 +308,8 @@ export default function VoiceAssistantWidget({ sessionId = null, onCommand = nul
               }
             }
           }
+          // Dispatch global task update event so all pages (Dashboard, Tasks, Coach) sync real-time
+          window.dispatchEvent(new CustomEvent('kairos:task_updated'));
         }
       } else {
         setTimeout(() => {
