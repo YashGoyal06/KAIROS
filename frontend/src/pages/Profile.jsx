@@ -4,7 +4,8 @@ import { useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Check, Plus, X, User, Edit3, Sparkles } from 'lucide-react';
 import { FaLinkedin, FaGithub } from 'react-icons/fa';
-import { FloatingIconsHero } from '../components/ui/floating-icons-hero-section';
+import { getTechIconUrl } from '../utils/techIcons';
+import './Profile.css';
 
 const PREDEFINED_TECH = {
   "Languages": ["Python", "JavaScript", "TypeScript", "Rust", "Go", "C++", "HTML/CSS", "Solidity"],
@@ -101,73 +102,35 @@ export default function Profile() {
     }
   };
 
+  const userInitials = fullName
+    ? fullName.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()
+    : 'U';
+
+  const defaultTechs = ["Python", "JavaScript", "TypeScript", "React", "Next.js", "FastAPI", "PostgreSQL", "Supabase", "Docker", "Git", "PyTorch", "Tailwind", "C++"];
+  const displayTechs = selectedTech.length > 0 ? selectedTech : defaultTechs;
+
   return (
-    <div className="main-content" style={{
-      padding: '32px',
-      maxWidth: '100%',
-      margin: '0',
-      width: '100%',
-      boxSizing: 'border-box',
-      display: 'flex',
-      flexDirection: 'column',
-      gap: '24px'
-    }}>
-      {/* Header & Mode Switcher */}
-      <div style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
-        paddingBottom: '20px',
-        flexWrap: 'wrap',
-        gap: '16px'
-      }}>
+    <div className="profile-page-wrapper">
+      {/* Top Header & Mode Switcher */}
+      <div className="profile-top-header">
         <div>
-          <h1 style={{
-            fontSize: '28px',
-            fontWeight: '800',
-            color: '#ffffff',
-            margin: 0,
-            display: 'flex',
-            alignItems: 'center',
-            gap: '10px'
-          }}>
+          <h1 className="profile-title">
             <span>{isEditMode ? 'Edit Profile' : 'User Profile'}</span>
             <Sparkles size={22} style={{ color: '#c084fc' }} />
           </h1>
-          <p style={{ fontSize: '13px', color: '#9ca3af', marginTop: '4px', margin: 0 }}>
+          <p className="profile-subtitle">
             {isEditMode 
               ? 'Update your bio, tech stack, and social connections' 
-              : 'Overview of your developer identity and integrated floating tech stack'}
+              : 'Overview of your developer identity and integrated tech stack'}
           </p>
         </div>
 
         {/* Tab Switcher */}
-        <div style={{
-          display: 'flex',
-          backgroundColor: 'rgba(255, 255, 255, 0.03)',
-          border: '1px solid rgba(255, 255, 255, 0.08)',
-          borderRadius: '14px',
-          padding: '4px',
-          gap: '4px'
-        }}>
+        <div className="profile-tab-switcher">
           <button
             type="button"
             onClick={() => toggleMode(false)}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              padding: '8px 16px',
-              borderRadius: '10px',
-              border: 'none',
-              fontSize: '13px',
-              fontWeight: '600',
-              cursor: 'pointer',
-              background: !isEditMode ? 'linear-gradient(135deg, #a855f7, #ec4899)' : 'transparent',
-              color: !isEditMode ? '#ffffff' : '#9ca3af',
-              transition: 'all 0.2s ease'
-            }}
+            className={`profile-tab-btn ${!isEditMode ? 'active' : ''}`}
           >
             <User size={15} />
             <span>View Profile</span>
@@ -176,20 +139,7 @@ export default function Profile() {
           <button
             type="button"
             onClick={() => toggleMode(true)}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              padding: '8px 16px',
-              borderRadius: '10px',
-              border: 'none',
-              fontSize: '13px',
-              fontWeight: '600',
-              cursor: 'pointer',
-              background: isEditMode ? 'linear-gradient(135deg, #a855f7, #ec4899)' : 'transparent',
-              color: isEditMode ? '#ffffff' : '#9ca3af',
-              transition: 'all 0.2s ease'
-            }}
+            className={`profile-tab-btn ${isEditMode ? 'active' : ''}`}
           >
             <Edit3 size={15} />
             <span>Edit Profile</span>
@@ -197,35 +147,134 @@ export default function Profile() {
         </div>
       </div>
 
-      {/* VIEW PROFILE PAGE (Floating Icons Hero with Center Name, Role, Socials, Surrounding Tech Stack) */}
+      {/* VIEW PROFILE PAGE */}
       {!isEditMode ? (
-        <div style={{ width: '100%' }}>
-          <FloatingIconsHero
-            name={fullName}
-            role={role}
-            experience={experience}
-            linkedinUrl={linkedinUrl}
-            githubUrl={githubUrl}
-            techStack={selectedTech}
-          />
+        <div className="profile-view-container">
+          
+          {/* Center Identity Card */}
+          <div className="profile-hero-card">
+            <div className="profile-hero-line" />
+
+            {/* Avatar Circle */}
+            <div className="profile-avatar-ring">
+              <div className="profile-avatar-inner">
+                {userInitials}
+              </div>
+            </div>
+
+            {/* Name */}
+            <h2 className="profile-name">
+              {fullName || "Anonymous Hackathoner"}
+            </h2>
+
+            {/* Role & Experience Pills */}
+            <div className="profile-pills-row">
+              <span className="profile-pill-role">
+                {role}
+              </span>
+              <span className="profile-pill-exp">
+                {experience}
+              </span>
+            </div>
+
+            {/* Social Buttons Row Just Below Role */}
+            <div className="profile-socials-row">
+              {linkedinUrl ? (
+                <a
+                  href={linkedinUrl.startsWith('http') ? linkedinUrl : `https://${linkedinUrl}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="profile-social-btn linkedin"
+                >
+                  <FaLinkedin size={18} />
+                  <span>LinkedIn Profile</span>
+                </a>
+              ) : (
+                <div className="profile-social-btn disabled">
+                  <FaLinkedin size={18} />
+                  <span>LinkedIn Not Connected</span>
+                </div>
+              )}
+
+              {githubUrl ? (
+                <a
+                  href={githubUrl.startsWith('http') ? githubUrl : `https://${githubUrl}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="profile-social-btn github"
+                >
+                  <FaGithub size={18} />
+                  <span>GitHub Profile</span>
+                </a>
+              ) : (
+                <div className="profile-social-btn disabled">
+                  <FaGithub size={18} />
+                  <span>GitHub Not Connected</span>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Integrated Tech Stack Grid */}
+          <div style={{ textAlign: 'center', width: '100%' }}>
+            <h3 style={{
+              fontSize: '18px',
+              fontWeight: '800',
+              color: '#ffffff',
+              letterSpacing: '0.15em',
+              textTransform: 'uppercase',
+              fontFamily: 'monospace',
+              marginBottom: '20px',
+              textShadow: '0 0 15px rgba(168, 85, 247, 0.4)'
+            }}>
+              MY TECH STACK
+            </h3>
+
+            <div className="profile-tech-grid">
+              {displayTechs.map((tech, idx) => {
+                const iconUrl = getTechIconUrl(tech);
+                return (
+                  <div key={`${tech}-${idx}`} className="profile-tech-card" title={tech}>
+                    <img 
+                      src={iconUrl} 
+                      alt={tech} 
+                      className="profile-tech-icon"
+                      onError={(e) => {
+                        e.currentTarget.style.display = 'none';
+                        const parent = e.currentTarget.parentElement;
+                        if (parent && !parent.querySelector('.fallback-box')) {
+                          const box = document.createElement('div');
+                          box.className = 'fallback-box';
+                          box.style.width = '42px';
+                          box.style.height = '42px';
+                          box.style.borderRadius = '10px';
+                          box.style.background = 'rgba(168, 85, 247, 0.2)';
+                          box.style.border = '1px solid rgba(168, 85, 247, 0.4)';
+                          box.style.display = 'flex';
+                          box.style.alignItems = 'center';
+                          box.style.justifyContent = 'center';
+                          box.style.fontSize = '12px';
+                          box.style.fontWeight = 'bold';
+                          box.style.color = '#c084fc';
+                          box.style.fontFamily = 'monospace';
+                          box.innerText = tech.slice(0, 2).toUpperCase();
+                          parent.insertBefore(box, parent.firstChild);
+                        }
+                      }}
+                    />
+                    <span className="profile-tech-name">{tech}</span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
         </div>
       ) : (
         /* EDIT PROFILE FORM PAGE */
-        <div style={{
-          width: '100%',
-          maxWidth: '750px',
-          margin: '0 auto',
-          backgroundColor: 'rgba(18, 16, 25, 0.7)',
-          backdropFilter: 'blur(20px)',
-          WebkitBackdropFilter: 'blur(20px)',
-          border: '1px solid rgba(255, 255, 255, 0.1)',
-          borderRadius: '24px',
-          padding: '32px',
-          boxSizing: 'border-box'
-        }}>
-          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+        <div className="profile-edit-card">
+          <form onSubmit={handleSubmit} className="profile-form">
             
-            {/* Identity Header */}
             <div style={{ borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: '12px' }}>
               <span style={{ fontSize: '12px', fontWeight: '700', color: '#c084fc', fontFamily: 'monospace', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
                 /// PERSONAL IDENTITY
@@ -233,20 +282,11 @@ export default function Profile() {
             </div>
 
             {/* Full Name */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-              <label style={{ fontSize: '12px', fontWeight: '600', color: '#d4d4d8', textTransform: 'uppercase' }}>Full Name</label>
+            <div className="profile-form-group">
+              <label className="profile-form-label">Full Name</label>
               <input
                 type="text"
-                style={{
-                  width: '100%',
-                  backgroundColor: '#0c0a12',
-                  border: '1px solid rgba(255,255,255,0.12)',
-                  borderRadius: '12px',
-                  padding: '12px 16px',
-                  color: '#ffffff',
-                  fontSize: '14px',
-                  boxSizing: 'border-box'
-                }}
+                className="profile-form-input"
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
                 placeholder="e.g. Yash Goyal"
@@ -255,45 +295,27 @@ export default function Profile() {
             </div>
 
             {/* Social URLs */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '16px' }}>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                <label style={{ fontSize: '12px', fontWeight: '600', color: '#d4d4d8', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '16px' }}>
+              <div className="profile-form-group">
+                <label className="profile-form-label" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                   <FaLinkedin size={14} style={{ color: '#60a5fa' }} /> LinkedIn URL
                 </label>
                 <input
                   type="url"
-                  style={{
-                    width: '100%',
-                    backgroundColor: '#0c0a12',
-                    border: '1px solid rgba(255,255,255,0.12)',
-                    borderRadius: '12px',
-                    padding: '12px 16px',
-                    color: '#ffffff',
-                    fontSize: '14px',
-                    boxSizing: 'border-box'
-                  }}
+                  className="profile-form-input"
                   value={linkedinUrl}
                   onChange={(e) => setLinkedinUrl(e.target.value)}
                   placeholder="https://linkedin.com/in/username"
                 />
               </div>
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                <label style={{ fontSize: '12px', fontWeight: '600', color: '#d4d4d8', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <div className="profile-form-group">
+                <label className="profile-form-label" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                   <FaGithub size={14} style={{ color: '#ffffff' }} /> GitHub URL
                 </label>
                 <input
                   type="url"
-                  style={{
-                    width: '100%',
-                    backgroundColor: '#0c0a12',
-                    border: '1px solid rgba(255,255,255,0.12)',
-                    borderRadius: '12px',
-                    padding: '12px 16px',
-                    color: '#ffffff',
-                    fontSize: '14px',
-                    boxSizing: 'border-box'
-                  }}
+                  className="profile-form-input"
                   value={githubUrl}
                   onChange={(e) => setGithubUrl(e.target.value)}
                   placeholder="https://github.com/username"
@@ -308,19 +330,10 @@ export default function Profile() {
               </span>
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-              <label style={{ fontSize: '12px', fontWeight: '600', color: '#d4d4d8', textTransform: 'uppercase' }}>Primary Role</label>
+            <div className="profile-form-group">
+              <label className="profile-form-label">Primary Role</label>
               <select 
-                style={{
-                  width: '100%',
-                  backgroundColor: '#0c0a12',
-                  border: '1px solid rgba(255,255,255,0.12)',
-                  borderRadius: '12px',
-                  padding: '12px 16px',
-                  color: '#ffffff',
-                  fontSize: '14px',
-                  boxSizing: 'border-box'
-                }}
+                className="profile-form-select"
                 value={role} 
                 onChange={(e) => setRole(e.target.value)}
               >
@@ -334,19 +347,10 @@ export default function Profile() {
               </select>
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-              <label style={{ fontSize: '12px', fontWeight: '600', color: '#d4d4d8', textTransform: 'uppercase' }}>Experience Level</label>
+            <div className="profile-form-group">
+              <label className="profile-form-label">Experience Level</label>
               <select 
-                style={{
-                  width: '100%',
-                  backgroundColor: '#0c0a12',
-                  border: '1px solid rgba(255,255,255,0.12)',
-                  borderRadius: '12px',
-                  padding: '12px 16px',
-                  color: '#ffffff',
-                  fontSize: '14px',
-                  boxSizing: 'border-box'
-                }}
+                className="profile-form-select"
                 value={experience} 
                 onChange={(e) => setExperience(e.target.value)}
               >
@@ -363,20 +367,11 @@ export default function Profile() {
               </span>
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-              <label style={{ fontSize: '12px', fontWeight: '600', color: '#d4d4d8', textTransform: 'uppercase' }}>Search Technologies</label>
+            <div className="profile-form-group">
+              <label className="profile-form-label">Search Technologies</label>
               <input
                 type="text"
-                style={{
-                  width: '100%',
-                  backgroundColor: '#0c0a12',
-                  border: '1px solid rgba(255,255,255,0.12)',
-                  borderRadius: '12px',
-                  padding: '12px 16px',
-                  color: '#ffffff',
-                  fontSize: '14px',
-                  boxSizing: 'border-box'
-                }}
+                className="profile-form-input"
                 placeholder="Type technology name..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -429,21 +424,13 @@ export default function Profile() {
             </div>
 
             {/* Custom Tech */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-              <label style={{ fontSize: '12px', fontWeight: '600', color: '#d4d4d8', textTransform: 'uppercase' }}>Add Custom Technology</label>
+            <div className="profile-form-group">
+              <label className="profile-form-label">Add Custom Technology</label>
               <div style={{ display: 'flex', gap: '8px' }}>
                 <input
                   type="text"
-                  style={{
-                    flex: 1,
-                    backgroundColor: '#0c0a12',
-                    border: '1px solid rgba(255,255,255,0.12)',
-                    borderRadius: '12px',
-                    padding: '12px 16px',
-                    color: '#ffffff',
-                    fontSize: '14px',
-                    boxSizing: 'border-box'
-                  }}
+                  className="profile-form-input"
+                  style={{ flex: 1 }}
                   placeholder="e.g. Web3.js"
                   value={customTech}
                   onChange={(e) => setCustomTech(e.target.value)}
@@ -469,8 +456,8 @@ export default function Profile() {
             </div>
 
             {/* Selected Tech Chips */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-              <label style={{ fontSize: '12px', fontWeight: '600', color: '#d4d4d8', textTransform: 'uppercase' }}>
+            <div className="profile-form-group">
+              <label className="profile-form-label">
                 Selected ({selectedTech.length})
               </label>
               <div style={{
@@ -519,23 +506,7 @@ export default function Profile() {
             <button
               type="submit"
               disabled={updating}
-              style={{
-                width: '100%',
-                marginTop: '12px',
-                padding: '14px',
-                borderRadius: '14px',
-                background: 'linear-gradient(135deg, #a855f7, #ec4899)',
-                border: 'none',
-                color: '#ffffff',
-                fontSize: '14px',
-                fontWeight: '700',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '8px',
-                boxShadow: '0 10px 25px rgba(168, 85, 247, 0.3)'
-              }}
+              className="profile-submit-btn"
             >
               <Check size={18} />
               <span>{updating ? 'Saving...' : 'Save Profile Changes'}</span>
