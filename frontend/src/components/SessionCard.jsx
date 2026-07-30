@@ -11,7 +11,8 @@ export default function SessionCard({ session, onDelete, onClick, teams = [], ac
   const progressPct = milestones.length > 0 ? Math.round((completedMilestones / milestones.length) * 100) : 0;
   
   // Find team members
-  const sessionTeam = teams.find(t => t.id === session.team_id);
+  const safeTeams = Array.isArray(teams) ? teams : [];
+  const sessionTeam = safeTeams.find(t => t && t.id === session.team_id);
   const membersList = (sessionTeam && Array.isArray(sessionTeam.members)) ? sessionTeam.members : (profile ? [profile] : []);
   
   return (
