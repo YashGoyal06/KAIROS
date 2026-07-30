@@ -250,14 +250,30 @@ export default function VoiceAssistantWidget({ sessionId = null, onCommand = nul
         const tasksRes = await axios.get(`${API_BASE}/sessions/${targetSessionId}/tasks`);
         const sessionTasks = tasksRes.data || [];
         
-        let matchedTask = sessionTasks.find(t => lowerQuery.includes(t.name.toLowerCase()));
-        if (!matchedTask && sessionTasks.length > 0) {
-          if (targetStatus === 'completed') {
-            matchedTask = sessionTasks.find(t => t.status !== 'completed') || sessionTasks[0];
-          } else {
-            matchedTask = sessionTasks[0];
+        const filler = ['mark', 'as', 'completed', 'complete', 'done', 'finish', 'task', 'to', 'in', 'progress', 'blocked', 'status', 'the', 'a', 'set', 'is'];
+        const queryWords = lowerQuery.split(/\s+/).filter(w => !filler.includes(w) && w.length > 2);
+        const cleanQuery = lowerQuery.replace(/mark|as|completed|complete|done|finish|task/g, '').trim();
+
+        let bestTask = null;
+        let maxScore = 0;
+
+        for (const t of sessionTasks) {
+          const tNameLower = t.name.toLowerCase();
+          
+          if (cleanQuery && (tNameLower.includes(cleanQuery) || cleanQuery.includes(tNameLower))) {
+            bestTask = t;
+            break;
+          }
+
+          const tWords = tNameLower.split(/\s+/);
+          const score = queryWords.filter(w => tWords.some(tw => tw.includes(w) || w.includes(tw))).length;
+          if (score > maxScore) {
+            maxScore = score;
+            bestTask = t;
           }
         }
+
+        const matchedTask = bestTask || (sessionTasks.find(t => t.status !== targetStatus) || sessionTasks[0]);
 
         if (matchedTask) {
           await axios.put(`${API_BASE}/tasks/${matchedTask.id}`, { status: targetStatus });

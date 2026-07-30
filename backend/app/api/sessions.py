@@ -280,11 +280,29 @@ async def chat_with_coach(
     updated_task_info = None
     if target_status:
         all_tasks_db = (await db.execute(select(Task).where(Task.session_id == session_id))).scalars().all()
-        matched_task = None
+        
+        filler_words = {"mark", "as", "completed", "complete", "done", "finish", "task", "to", "in", "progress", "blocked", "status", "the", "a", "set", "is"}
+        query_words = [w for w in msg_lower.split() if w not in filler_words and len(w) > 2]
+
+        best_task = None
+        max_score = 0
+
         for t in all_tasks_db:
-            if t.name.lower() in msg_lower:
-                matched_task = t
+            t_name_lower = t.name.lower()
+            clean_query = msg_lower.replace("mark", "").replace("as", "").replace("completed", "").replace("complete", "").replace("done", "").replace("task", "").strip()
+            
+            # Check if any main phrase matches (e.g. "live demo preparation")
+            if clean_query and (clean_query in t_name_lower or t_name_lower in msg_lower):
+                best_task = t
                 break
+
+            t_words = t_name_lower.split()
+            score = sum(1 for w in query_words if any(w in tw for tw in t_words))
+            if score > max_score:
+                max_score = score;
+                best_task = t
+
+        matched_task = best_task
         if not matched_task and all_tasks_db:
             if target_status == "completed":
                 matched_task = next((t for t in all_tasks_db if t.status != "completed"), all_tasks_db[0])
