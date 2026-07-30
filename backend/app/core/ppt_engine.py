@@ -15,9 +15,24 @@ from reportlab.pdfgen import canvas
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, PageBreak, KeepTogether, HRFlowable
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 
+import urllib.request
+
 logger = logging.getLogger("kairos.ppt_engine")
 
 TEMPLATES_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "static", "ppt_templates")
+
+# Free high-res topic images mapped to presentation themes
+TOPIC_IMAGE_URLS = {
+    "ai": "https://images.unsplash.com/photo-1677442136019-21780efad99a?w=800&auto=format&fit=crop",
+    "problem": "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=800&auto=format&fit=crop",
+    "solution": "https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=800&auto=format&fit=crop",
+    "architecture": "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=800&auto=format&fit=crop",
+    "roadmap": "https://images.unsplash.com/photo-1507925921958-8a62f3d1a50d?w=800&auto=format&fit=crop",
+    "metrics": "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&auto=format&fit=crop",
+    "team": "https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=800&auto=format&fit=crop",
+    "showcase": "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800&auto=format&fit=crop",
+    "tech": "https://images.unsplash.com/photo-1518770660439-4636190af475?w=800&auto=format&fit=crop"
+}
 
 PREDEFINED_TEMPLATES = {
     "template-1": {
@@ -106,6 +121,18 @@ class NumberedCanvas(canvas.Canvas):
 
 
 class PPTEngine:
+
+    @staticmethod
+    def _fetch_topic_image_bytes(topic: str) -> Optional[bytes]:
+        """Fetch subject-relevant image bytes from free CDN matching topic key."""
+        url = TOPIC_IMAGE_URLS.get(topic.lower(), TOPIC_IMAGE_URLS["tech"])
+        try:
+            req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'})
+            with urllib.request.urlopen(req, timeout=4) as response:
+                return response.read()
+        except Exception as e:
+            logger.warning(f"Failed to fetch topic image for '{topic}': {e}")
+            return None
 
     @staticmethod
     def get_template_path(template_id: str) -> str:
@@ -442,51 +469,61 @@ class PPTEngine:
 
         slide_contents = [
             {
+                "topic": "ai",
                 "title": session_name or "Project Pitch",
                 "subtitle": user_idea or "AI Hackathon Execution Platform",
                 "bullets": ["AI-Driven Co-Founder Engine", "Real-Time Task Syncing", "Zero-Overflow Slide Generation"]
             },
             {
+                "topic": "problem",
                 "title": "Problem Statement & Vision",
                 "subtitle": problem_statement or "Addressing hackathon project planning and execution challenges.",
                 "bullets": ["Loss of project momentum during hackathons", "Unstructured milestone management", "Manual pitch slide design overhead"]
             },
             {
+                "topic": "solution",
                 "title": "Core Solution & Product Demo",
                 "subtitle": pitch_sections.get("demo", "Real-time AI workflow engine for execution teams."),
                 "bullets": ["Interactive AI Coach Room", "Task Board with AI Blocker Assistance", "Instant PPTX & PDF Presentation Suite"]
             },
             {
+                "topic": "architecture",
                 "title": "System Architecture & Stack",
                 "subtitle": pitch_sections.get("architecture", "FastAPI backend, Supabase DB, React 19 UI."),
                 "bullets": ["FastAPI Async Backend", "Supabase Database & Auth", "Claude LLM Broker & Agents"]
             },
             {
+                "topic": "roadmap",
                 "title": "Roadmap & Execution Plan",
                 "subtitle": "Sprint Milestones",
                 "bullets": ms_bullets if ms_bullets else ["Phase 1: Architecture & DB Setup", "Phase 2: AI Coach & Task Sync", "Phase 3: Presentation Studio Export"]
             },
             {
+                "topic": "metrics",
                 "title": "Sprint Tasks & Progress",
                 "subtitle": "Execution Metrics",
                 "bullets": task_bullets if task_bullets else ["Task 1: Supabase Setup", "Task 2: AI Scope Review", "Task 3: Slide Export Engine"]
             },
             {
+                "topic": "team",
                 "title": "Team & Technical Mastery",
                 "subtitle": f"Lead: {user_name} ({user_role})",
                 "bullets": [f"Lead: {user_name}", f"Role: {user_role}", f"Skills: {skills_str}"]
             },
             {
+                "topic": "showcase",
                 "title": "Pitch Showcase & Impact",
                 "subtitle": pitch_sections.get("showcase", "KAIROS provides an end-to-end execution co-founder."),
                 "bullets": ["Reduces pitch compilation time by 90%", "Guarantees zero text overflow across all templates", "Professional PPTX and PDF output streams"]
             },
             {
+                "topic": "tech",
                 "title": "Risk Mitigation & Support",
                 "subtitle": "Resilience Strategy",
                 "bullets": ["LLM rate-limit fallback routing", "Resilient database connection pools", "Validated slide placeholder mapping"]
             },
             {
+                "topic": "ai",
                 "title": "Conclusion & Next Steps",
                 "subtitle": "Ready for Live Execution",
                 "bullets": ["Launch local servers", "Test live presentation decks", "Submit project to judges"]
@@ -511,6 +548,7 @@ class PPTEngine:
 
         for slide_idx, slide in enumerate(prs.slides):
             c_data = slide_contents[slide_idx] if slide_idx < len(slide_contents) else {
+                "topic": "tech",
                 "title": f"Project Insight {slide_idx + 1}",
                 "subtitle": pitch_sections.get("slides", "Comprehensive pitch execution overview."),
                 "bullets": ["Key technical metric 1", "Key technical metric 2", "Key technical metric 3"]
@@ -575,10 +613,35 @@ class PPTEngine:
                             card_text = c_data["subtitle"]
                         PPTEngine.fit_text_to_frame(b_shape.text_frame, card_text, max_font_size=12, min_font_size=8, is_title=False)
 
-        output_stream = io.BytesIO()
-        prs.save(output_stream)
-        output_stream.seek(0)
-        return output_stream.getvalue()
+            # 4. Embed Free Subject-Relevant Topic Image into Slide
+            topic_key = c_data.get("topic", "tech")
+            img_bytes = PPTEngine._fetch_topic_image_bytes(topic_key)
+            if img_bytes:
+                try:
+                    img_stream = io.BytesIO(img_bytes)
+                    # Check if slide has picture shapes to replace first
+                    pic_replaced = False
+                    for shape in slide.shapes:
+                        if shape.shape_type == pptx.enum.shapes.MSO_SHAPE_TYPE.PICTURE:
+                            left, top, width, height = shape.left, shape.top, shape.width, shape.height
+                            # Remove existing template image & insert topic image at exact coordinates
+                            sp = shape._element
+                            sp.getparent().remove(sp)
+                            slide.shapes.add_picture(img_stream, left, top, width, height)
+                            pic_replaced = True
+                            break
+                    
+                    # If no template picture shape exists, place floating thumbnail in bottom right
+                    if not pic_replaced:
+                        slide_w = prs.slide_width
+                        slide_h = prs.slide_height
+                        img_w = Inches(2.8)
+                        img_h = Inches(1.8)
+                        left_pos = slide_w - img_w - Inches(0.5)
+                        top_pos = slide_h - img_h - Inches(0.5)
+                        slide.shapes.add_picture(img_stream, left_pos, top_pos, img_w, img_h)
+                except Exception as e:
+                    logger.warning(f"Error inserting topic image into slide {slide_idx + 1}: {e}")
 
         output_stream = io.BytesIO()
         prs.save(output_stream)
