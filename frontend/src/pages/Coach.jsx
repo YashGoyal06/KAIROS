@@ -390,9 +390,13 @@ export default function Coach() {
         scope_critique: critique
       });
       setActiveSession(res.data);
+      setSessions(prev => prev.map(s => s.id === res.data.id ? res.data : s));
+      window.dispatchEvent(new CustomEvent('kairos:task_updated'));
+      fetchSessions();
       showToast("Roadmap successfully locked! Tasks generated on your Task Board.", "success");
     } catch (e) {
       console.error("Error accepting roadmap:", e);
+      showToast("Failed to lock roadmap.", "error");
     }
   };
 
