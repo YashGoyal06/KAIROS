@@ -149,7 +149,7 @@ export default function Dashboard() {
   };
 
   return (
-    <div style={{ padding: '24px 32px', display: 'flex', flexDirection: 'column', gap: '24px', overflowY: 'auto', flex: 1 }}>
+    <div style={{ padding: '24px 32px', display: 'flex', flexDirection: 'column', gap: '12px', overflowY: 'auto', flex: 1 }}>
       
       {/* Top Header bar matching Mockup */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -226,7 +226,7 @@ export default function Dashboard() {
       </div>
 
       {/* 3 Top Progress Grid Cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '20px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px' }}>
         {sessions.slice(0, 3).map((s, idx) => {
           const stats = getSessionStats(s);
           return (
@@ -375,7 +375,7 @@ export default function Dashboard() {
       </div>
 
       {/* Main Grid: Left Column for Task Manager / Right Column for Widgets */}
-      <div style={{ display: 'grid', gridTemplateColumns: '7fr 3fr', gap: '24px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '7fr 3fr', gap: '12px' }}>
         
         {/* Left Column: Tasks Manager */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
@@ -528,54 +528,73 @@ export default function Dashboard() {
         </div>
 
         {/* Right Column: Widgets */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
           {/* Due Tasks Widget */}
-          <div className="kairos-card" style={{ display: 'flex', flexDirection: 'column', gap: '16px', borderRadius: '0px', border: '2px solid rgba(255, 255, 255, 0.15)' }}>
-            <div style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.1)', paddingBottom: '10px' }}>
-              <h3 style={{ fontSize: '13px', fontWeight: '800', color: '#ffffff', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Due Tasks</h3>
+          <div className="kairos-card" style={{ display: 'flex', flexDirection: 'column', gap: '16px', borderRadius: '0px', border: '2px solid rgba(255, 255, 255, 0.15)', background: 'linear-gradient(145deg, rgba(22, 19, 28, 0.8), rgba(12, 10, 15, 0.9))' }}>
+            <div style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.1)', paddingBottom: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <h3 style={{ fontSize: '14px', fontWeight: '800', color: '#ffffff', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Due Tasks</h3>
+              <span style={{ fontSize: '10px', background: 'rgba(244,114,182,0.1)', color: '#f472b6', padding: '4px 8px', borderRadius: '0px', border: '1px solid rgba(244,114,182,0.2)' }}>{allTasks.filter(t => t.status !== 'completed' && t.priority === 'high').length} PENDING</span>
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              {allTasks.filter(t => t.status !== 'completed' && t.priority === 'high').slice(0, 2).map(t => (
-                <div key={t.id} style={{ background: 'rgba(255, 255, 255, 0.02)', border: '1px solid rgba(255, 255, 255, 0.08)', padding: '12px', borderRadius: '0px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', color: '#f472b6', marginBottom: '8px' }}>
-                    <Calendar size={12} />
-                    <span>HIGH PRIORITY</span>
+              {allTasks.filter(t => t.status !== 'completed' && t.priority === 'high').slice(0, 3).map(t => (
+                <div key={t.id} style={{ background: 'rgba(255, 255, 255, 0.03)', border: '1px solid rgba(255, 255, 255, 0.08)', borderLeft: '3px solid #f472b6', padding: '16px', borderRadius: '0px', cursor: 'pointer', transition: 'all 0.2s ease' }} className="task-hover-glow">
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
+                    <h4 style={{ fontSize: '14px', fontWeight: '700', color: '#fff', margin: 0 }}>{t.name}</h4>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '10px', color: '#f472b6', background: 'rgba(244,114,182,0.1)', padding: '2px 6px', borderRadius: '0px' }}>
+                      <Calendar size={10} /> HIGH
+                    </div>
                   </div>
-                  <h4 style={{ fontSize: '12px', fontWeight: '700', color: '#fff', marginBottom: '4px' }}>{t.name}</h4>
-                  <p style={{ fontSize: '10px', color: '#71717a' }}>Phase Reference: {t.milestone_id}</p>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <p style={{ fontSize: '11px', color: '#a1a1aa', margin: 0, display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <Activity size={12} style={{ color: '#8b5cf6' }}/> Milestone ID: {t.milestone_id || 'Global'}
+                    </p>
+                    <span style={{ fontSize: '10px', color: '#34d399', border: '1px solid rgba(52,211,153,0.3)', padding: '2px 6px' }}>{t.status}</span>
+                  </div>
                 </div>
               ))}
 
               {allTasks.filter(t => t.status !== 'completed' && t.priority === 'high').length === 0 && (
-                <p style={{ fontSize: '11px', color: '#71717a', fontStyle: 'italic' }}>
-                  No urgent high-priority tasks pending. Keep it up!
-                </p>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '30px 20px', background: 'rgba(255,255,255,0.01)', border: '1px dashed rgba(255,255,255,0.1)' }}>
+                  <CheckCircle size={24} style={{ color: '#34d399', marginBottom: '8px' }} />
+                  <p style={{ fontSize: '12px', color: '#a1a1aa', fontStyle: 'italic', textAlign: 'center', margin: 0 }}>
+                    No urgent high-priority tasks pending.<br/>You're all caught up!
+                  </p>
+                </div>
               )}
             </div>
           </div>
 
           {/* Active Blockers Widget */}
-          <div className="kairos-card" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            <div style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.05)', paddingBottom: '10px' }}>
-              <h3 style={{ fontSize: '13px', fontWeight: '800', color: '#ffffff', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Open Blockers</h3>
+          <div className="kairos-card" style={{ display: 'flex', flexDirection: 'column', gap: '16px', borderRadius: '0px', background: 'linear-gradient(145deg, rgba(22, 19, 28, 0.8), rgba(12, 10, 15, 0.9))' }}>
+            <div style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.05)', paddingBottom: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <h3 style={{ fontSize: '14px', fontWeight: '800', color: '#ffffff', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Open Blockers</h3>
+              {allBlockers.length > 0 && <span style={{ fontSize: '10px', background: 'rgba(248,113,113,0.1)', color: '#f87171', padding: '4px 8px', border: '1px solid rgba(248,113,113,0.2)' }}>{allBlockers.length} ISSUES</span>}
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
               {allBlockers.slice(0, 3).map(b => (
-                <div key={b.id} style={{ display: 'flex', gap: '10px', alignItems: 'flex-start' }}>
-                  <AlertTriangle size={14} style={{ color: '#f87171', marginTop: '2px', flexShrink: 0 }} />
-                  <div>
-                    <div style={{ fontSize: '12px', color: '#ffffff', fontWeight: '600' }}>{b.description}</div>
-                    <div style={{ fontSize: '10px', color: '#71717a', marginTop: '2px' }}>Session: {b.sessionName}</div>
+                <div key={b.id} style={{ display: 'flex', gap: '12px', alignItems: 'flex-start', background: 'rgba(248,113,113,0.05)', border: '1px solid rgba(248,113,113,0.15)', padding: '14px', borderRadius: '0px' }}>
+                  <AlertTriangle size={16} style={{ color: '#f87171', marginTop: '2px', flexShrink: 0 }} />
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: '13px', color: '#ffffff', fontWeight: '600', lineHeight: '1.4' }}>{b.description}</div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '8px' }}>
+                      <div style={{ fontSize: '11px', color: '#9ca3af', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <Layout size={10} /> {b.sessionName}
+                      </div>
+                      <span style={{ fontSize: '9px', background: 'rgba(255,255,255,0.1)', padding: '2px 6px', color: '#fff' }}>BLOCKING</span>
+                    </div>
                   </div>
                 </div>
               ))}
 
               {allBlockers.length === 0 && (
-                <p style={{ fontSize: '11px', color: '#71717a', fontStyle: 'italic' }}>
-                  Clear workspace. No active roadblocks reported.
-                </p>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '30px 20px', background: 'rgba(255,255,255,0.01)', border: '1px dashed rgba(255,255,255,0.1)' }}>
+                  <Shield size={24} style={{ color: '#34d399', marginBottom: '8px' }} />
+                  <p style={{ fontSize: '12px', color: '#a1a1aa', fontStyle: 'italic', textAlign: 'center', margin: 0 }}>
+                    Workspace clear.<br/>No active roadblocks reported.
+                  </p>
+                </div>
               )}
             </div>
           </div>

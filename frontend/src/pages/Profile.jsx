@@ -90,7 +90,7 @@ export default function Profile() {
       <div className="profile-grid-kairos">
         {/* Left Column: Visual Profile Card */}
         <div className="profile-card-left">
-          <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '20px', padding: '16px 0', width: '100%', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '12px', padding: '16px 0', width: '100%', flexWrap: 'wrap' }}>
             
             {/* Cool Male/Human Adventurer Avatar */}
             <div style={{
@@ -164,7 +164,7 @@ export default function Profile() {
                     style={{
                       width: '40px',
                       height: '40px',
-                      borderRadius: '8px',
+                      borderRadius: '0px',
                       border: '1px solid rgba(255, 255, 255, 0.08)',
                       background: 'rgba(255, 255, 255, 0.02)',
                       display: 'flex',
@@ -263,7 +263,7 @@ export default function Profile() {
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
               
-              <div style={{ maxHeight: '150px', overflowY: 'auto', border: '1px solid rgba(255,255,255,0.05)', padding: '10px', borderRadius: '8px', background: 'rgba(0,0,0,0.2)', marginTop: '8px' }}>
+              <div style={{ maxHeight: '150px', overflowY: 'auto', border: '1px solid rgba(255,255,255,0.05)', padding: '10px', borderRadius: '0px', background: 'rgba(0,0,0,0.2)', marginTop: '8px' }}>
                 {Object.entries(PREDEFINED_TECH).map(([category, items]) => {
                   const filtered = items.filter(item => item.toLowerCase().includes(searchQuery.toLowerCase()));
                   if (filtered.length === 0) return null;
@@ -278,7 +278,7 @@ export default function Profile() {
                             onClick={() => handleTechSelect(tech)}
                             style={{
                               padding: '4px 10px',
-                              borderRadius: '4px',
+                              borderRadius: '0px',
                               border: '1px solid rgba(255,255,255,0.08)',
                               background: selectedTech.includes(tech) ? 'rgba(236, 72, 153, 0.2)' : 'rgba(255,255,255,0.03)',
                               color: selectedTech.includes(tech) ? '#ffffff' : '#9ca3af',

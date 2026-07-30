@@ -546,7 +546,7 @@ export default function VoiceAssistantWidget({ sessionId = null, onCommand = nul
               style={{
                 background: 'rgba(255,255,255,0.06)',
                 border: '1px solid rgba(255,255,255,0.1)',
-                borderRadius: '12px',
+                borderRadius: '0px',
                 padding: '4px 10px',
                 color: '#d1d5db',
                 fontSize: '10px',
@@ -561,7 +561,7 @@ export default function VoiceAssistantWidget({ sessionId = null, onCommand = nul
               style={{
                 background: 'rgba(255,255,255,0.06)',
                 border: '1px solid rgba(255,255,255,0.1)',
-                borderRadius: '12px',
+                borderRadius: '0px',
                 padding: '4px 10px',
                 color: '#d1d5db',
                 fontSize: '10px',
@@ -576,7 +576,7 @@ export default function VoiceAssistantWidget({ sessionId = null, onCommand = nul
               style={{
                 background: 'rgba(255,255,255,0.06)',
                 border: '1px solid rgba(255,255,255,0.1)',
-                borderRadius: '12px',
+                borderRadius: '0px',
                 padding: '4px 10px',
                 color: '#d1d5db',
                 fontSize: '10px',
@@ -602,7 +602,7 @@ export default function VoiceAssistantWidget({ sessionId = null, onCommand = nul
               style={{
                 width: '38px',
                 height: '38px',
-                borderRadius: '12px',
+                borderRadius: '0px',
                 background: isListening ? '#ef4444' : 'rgba(255, 255, 255, 0.08)',
                 border: isListening ? '1px solid #f87171' : '1px solid rgba(255, 255, 255, 0.15)',
                 color: '#fff',
@@ -625,7 +625,7 @@ export default function VoiceAssistantWidget({ sessionId = null, onCommand = nul
                 flexGrow: 1,
                 fontSize: '12px',
                 padding: '8px 12px',
-                borderRadius: '10px',
+                borderRadius: '0px',
                 background: 'rgba(255, 255, 255, 0.05)',
                 border: '1px solid rgba(255, 255, 255, 0.1)',
                 color: '#fff'
@@ -642,7 +642,7 @@ export default function VoiceAssistantWidget({ sessionId = null, onCommand = nul
               style={{
                 width: '38px',
                 height: '38px',
-                borderRadius: '12px',
+                borderRadius: '0px',
                 background: 'linear-gradient(135deg, #a855f7, #6366f1)',
                 border: 'none',
                 color: '#fff',

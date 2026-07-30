@@ -126,7 +126,7 @@ export default function Onboarding() {
               onChange={(e) => setSearchQuery(e.target.value)}
             />
             
-            <div style={{ maxHeight: '150px', overflowY: 'auto', border: '1px solid rgba(255,255,255,0.05)', padding: '10px', borderRadius: '8px', background: 'rgba(0,0,0,0.2)', marginTop: '8px' }}>
+            <div style={{ maxHeight: '150px', overflowY: 'auto', border: '1px solid rgba(255,255,255,0.05)', padding: '10px', borderRadius: '0px', background: 'rgba(0,0,0,0.2)', marginTop: '8px' }}>
               {Object.entries(PREDEFINED_TECH).map(([category, items]) => {
                 const filtered = items.filter(item => item.toLowerCase().includes(searchQuery.toLowerCase()));
                 if (filtered.length === 0) return null;
@@ -141,7 +141,7 @@ export default function Onboarding() {
                           onClick={() => handleTechSelect(tech)}
                           style={{
                             padding: '4px 10px',
-                            borderRadius: '12px',
+                            borderRadius: '0px',
                             border: '1px solid rgba(255,255,255,0.08)',
                             background: selectedTech.includes(tech) ? 'rgba(59, 130, 246, 0.2)' : 'rgba(255,255,255,0.03)',
                             color: selectedTech.includes(tech) ? '#60a5fa' : '#d1d5db',

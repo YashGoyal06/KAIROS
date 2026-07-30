@@ -147,7 +147,7 @@ export default function MarkdownRenderer({ content = '' }) {
           <code key={`code-${keyCounter++}`} style={{
             background: 'rgba(255,255,255,0.08)',
             padding: '2px 6px',
-            borderRadius: '4px',
+            borderRadius: '0px',
             fontFamily: 'monospace',
             fontSize: '90%',
             color: '#34d399'
@@ -202,7 +202,7 @@ export default function MarkdownRenderer({ content = '' }) {
             background: '#090d16',
             border: '1px solid rgba(255,255,255,0.05)',
             padding: '16px',
-            borderRadius: '8px',
+            borderRadius: '0px',
             overflowX: 'auto',
             fontFamily: 'monospace',
             fontSize: '13px',
@@ -227,7 +227,7 @@ export default function MarkdownRenderer({ content = '' }) {
         <div style={{
           background: 'rgba(139, 92, 246, 0.05)',
           border: '1px solid rgba(139, 92, 246, 0.15)',
-          borderRadius: '8px',
+          borderRadius: '0px',
           marginBottom: '20px',
           overflow: 'hidden',
           transition: 'all 0.3s ease'
