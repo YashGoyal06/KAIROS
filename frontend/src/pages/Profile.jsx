@@ -90,35 +90,58 @@ export default function Profile() {
       <div className="profile-grid-kairos">
         {/* Left Column: Visual Profile Card */}
         <div className="profile-card-left">
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', padding: '16px 0', width: '100%' }}>
-            <h2 style={{ fontSize: '22px', fontWeight: '700', color: '#fff', textShadow: '0 0 8px rgba(236, 72, 153, 0.6)', marginTop: '8px' }}>
-              {fullName || "Azhaan Ali Siddiqui"}
-            </h2>
+          <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '20px', padding: '16px 0', width: '100%', flexWrap: 'wrap' }}>
             
-            <span style={{ 
-              fontSize: '12px', 
-              color: '#00FF66', 
-              fontWeight: '700', 
-              fontFamily: 'monospace', 
-              textTransform: 'uppercase', 
-              letterSpacing: '0.05em', 
-              marginTop: '6px',
-              textShadow: '0 0 8px rgba(0, 255, 102, 0.3)'
+            {/* Cool Male/Human Adventurer Avatar */}
+            <div style={{
+              width: '90px',
+              height: '90px',
+              border: '2px solid rgba(255, 255, 255, 0.15)',
+              background: 'rgba(22, 19, 28, 0.85)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              boxShadow: '4px 4px 0px #bf85ff',
+              overflow: 'hidden',
+              flexShrink: 0
             }}>
-              {role}
-            </span>
-            
-            <span style={{ 
-              fontSize: '11px', 
-              color: '#9ca3af', 
-              marginTop: '8px', 
-              background: 'rgba(255,255,255,0.03)', 
-              border: '1px solid rgba(255,255,255,0.06)', 
-              padding: '4px 12px', 
-              borderRadius: '9999px' 
-            }}>
-              {experience.replace(/\s*\(.*\)/g, '')}
-            </span>
+              <img 
+                src={`https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(fullName || 'Yash')}`} 
+                alt="Avatar"
+                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+              />
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', textAlign: 'left' }}>
+              <h2 style={{ fontSize: '20px', fontWeight: '700', color: '#fff', textShadow: '0 0 8px rgba(236, 72, 153, 0.6)' }}>
+                {fullName || "Azhaan Ali Siddiqui"}
+              </h2>
+              
+              <span style={{ 
+                fontSize: '12px', 
+                color: '#00FF66', 
+                fontWeight: '700', 
+                fontFamily: 'monospace', 
+                textTransform: 'uppercase', 
+                letterSpacing: '0.05em', 
+                marginTop: '4px',
+                textShadow: '0 0 8px rgba(0, 255, 102, 0.3)'
+              }}>
+                {role}
+              </span>
+              
+              <span style={{ 
+                fontSize: '11px', 
+                color: '#9ca3af', 
+                marginTop: '8px', 
+                background: 'rgba(255,255,255,0.03)', 
+                border: '1px solid rgba(255,255,255,0.06)', 
+                padding: '4px 12px', 
+                borderRadius: '0px' 
+              }}>
+                {experience.replace(/\s*\(.*\)/g, '')}
+              </span>
+            </div>
           </div>
 
           <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '20px', marginTop: '10px', width: '100%' }}>
