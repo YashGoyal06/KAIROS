@@ -253,6 +253,10 @@ async def update_roadmap(
                     await db.commit()
             except Exception as e:
                 logger.error(f"Error seeding tasks on session execution: {e}")
+                await db.rollback()
+                # Re-fetch session after rollback to ensure consistent state
+                sess_result2 = await db.execute(select(Session).where(Session.id == session_id))
+                session = sess_result2.scalars().first()
             
         return SessionResponseSchema(
             id=session.id,
@@ -270,7 +274,8 @@ async def update_roadmap(
     except HTTPException:
         raise
     except Exception as exc:
-        logger.error(f"Unhandled error in update_roadmap: {exc}")
+        import traceback
+        logger.error(f"Unhandled error in update_roadmap: {exc}\n{traceback.format_exc()}")
         raise HTTPException(status_code=500, detail=str(exc))
 
 @router.post("/{session_id}/chat")

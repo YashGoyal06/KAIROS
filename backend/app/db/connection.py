@@ -22,8 +22,8 @@ engine = create_async_engine(
     future=True,
     # Disable statement caching for pgBouncer / transaction poolers compatibility
     connect_args={"statement_cache_size": 0} if "sqlite" not in DATABASE_URL else {},
-    # Sqlite does not support pool_size, check if postgres
-    **({"pool_size": 20, "max_overflow": 10} if "sqlite" not in DATABASE_URL else {})
+    # Conservative pool sizing for Supabase transaction pooler on Render free tier
+    **({"pool_size": 5, "max_overflow": 3, "pool_pre_ping": True, "pool_recycle": 300} if "sqlite" not in DATABASE_URL else {})
 )
 
 AsyncSessionLocal = sessionmaker(
@@ -56,7 +56,6 @@ async def get_db():
     async with AsyncSessionLocal() as session:
         try:
             yield session
-            await session.commit()
         except Exception:
             await session.rollback()
             raise
