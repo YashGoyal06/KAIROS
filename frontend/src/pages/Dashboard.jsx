@@ -4,7 +4,8 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { 
   RefreshCw, CheckCircle2, Clock, AlertTriangle, Calendar, Plus, 
-  Search, Bell, Grid, Settings, Moon, ChevronDown, Check, User
+  Search, Bell, Grid, Settings, Moon, ChevronDown, Check, User,
+  Shield, Layout, Activity, ShieldAlert
 } from 'lucide-react';
 import { getTechIconUrl } from '../utils/techIcons';
 
