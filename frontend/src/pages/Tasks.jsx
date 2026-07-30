@@ -551,7 +551,6 @@ export default function Tasks() {
           </div>
         </div>
       )}
-      <VoiceAssistantWidget sessionId={activeSessionId} />
     </div>
   );
 }

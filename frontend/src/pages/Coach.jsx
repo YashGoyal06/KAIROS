@@ -711,7 +711,6 @@ export default function Coach() {
           <span style={{ fontSize: '14px', fontWeight: '500' }}>{toast.message}</span>
         </div>
       )}
-      <VoiceAssistantWidget sessionId={activeSession?.id} />
     </div>
   );
 }

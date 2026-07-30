@@ -163,30 +163,45 @@ export default function VoiceAssistantWidget({ sessionId = null, onCommand = nul
 
   return (
     <div style={{ position: 'fixed', bottom: '28px', right: '28px', zIndex: 99999 }}>
-      {/* Floating Toggle Button */}
+      <style>{`
+        @keyframes floatRobot {
+          0%, 100% { transform: translateY(0px) rotate(0deg) scale(1); }
+          50% { transform: translateY(-8px) rotate(3deg) scale(1.04); }
+        }
+        @keyframes robotPulse {
+          0%, 100% { box-shadow: 0 8px 32px rgba(168, 85, 247, 0.4), 0 0 20px rgba(0, 255, 102, 0.3); }
+          50% { box-shadow: 0 12px 40px rgba(168, 85, 247, 0.7), 0 0 30px rgba(0, 255, 102, 0.6); }
+        }
+      `}</style>
+      {/* Floating Toggle Button with 3D Animated Robot */}
       {!isOpen && (
         <button
           onClick={() => setIsOpen(true)}
           style={{
-            width: '56px',
-            height: '56px',
-            borderRadius: '28px',
-            background: 'linear-gradient(135deg, #a855f7 0%, #6366f1 100%)',
-            border: '2px solid rgba(255,255,255,0.2)',
-            boxShadow: '0 8px 32px rgba(168, 85, 247, 0.4), 0 0 0 1px rgba(255,255,255,0.1)',
+            width: '64px',
+            height: '64px',
+            borderRadius: '32px',
+            background: 'linear-gradient(135deg, #16131c 0%, #2a1f42 100%)',
+            border: '2px solid rgba(168, 85, 247, 0.6)',
+            boxShadow: '0 8px 32px rgba(168, 85, 247, 0.5)',
             color: '#fff',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             cursor: 'pointer',
             overflow: 'hidden',
-            padding: '2px',
+            padding: '4px',
+            animation: 'floatRobot 3s ease-in-out infinite, robotPulse 2s ease-in-out infinite',
             transition: 'transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1)'
           }}
           className="voice-widget-btn"
-          title="Open Kairos Voice & Chat Assistant"
+          title="Open Kairos 3D Robot Companion"
         >
-          <img src="/kairos_logo.jpeg" alt="Kairos Logo" style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} />
+          <img 
+            src="https://api.dicebear.com/7.x/bottts/svg?seed=KairosRobot3D&backgroundColor=transparent" 
+            alt="Kairos 3D Robot" 
+            style={{ width: '100%', height: '100%', objectFit: 'contain' }} 
+          />
         </button>
       )}
 
@@ -216,17 +231,23 @@ export default function VoiceAssistantWidget({ sessionId = null, onCommand = nul
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
               <div style={{
-                width: '32px',
-                height: '32px',
+                width: '36px',
+                height: '36px',
                 borderRadius: '50%',
                 overflow: 'hidden',
-                border: '1px solid rgba(168, 85, 247, 0.5)',
-                boxShadow: '0 0 10px rgba(168, 85, 247, 0.5)'
+                background: 'rgba(168, 85, 247, 0.2)',
+                border: '1px solid rgba(168, 85, 247, 0.6)',
+                boxShadow: '0 0 10px rgba(168, 85, 247, 0.5)',
+                animation: 'floatRobot 3s ease-in-out infinite'
               }}>
-                <img src="/kairos_logo.jpeg" alt="Kairos Logo" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                <img 
+                  src="https://api.dicebear.com/7.x/bottts/svg?seed=KairosRobot3D&backgroundColor=transparent" 
+                  alt="3D Robot Avatar" 
+                  style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                />
               </div>
               <div>
-                <h4 style={{ margin: 0, fontSize: '14px', fontWeight: 700, color: '#fff' }}>Kairos AI Companion</h4>
+                <h4 style={{ margin: 0, fontSize: '14px', fontWeight: 700, color: '#fff' }}>Kairos 3D Robot AI</h4>
                 <span style={{ fontSize: '10px', color: '#00FF66', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px' }}>
                   <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#00FF66', display: 'inline-block' }} /> Voice & Chat Active
                 </span>

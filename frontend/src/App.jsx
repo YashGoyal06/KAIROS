@@ -37,6 +37,7 @@ const ProtectedRouteOnboarding = ({ children }) => {
 };
 
 import Aurora from './components/Aurora';
+import VoiceAssistantWidget from './components/VoiceAssistantWidget';
 
 const MainLayout = ({ children }) => (
   <div className="app-container-full" style={{ position: 'relative', overflow: 'hidden', minHeight: '100vh', display: 'flex' }}>
@@ -52,6 +53,7 @@ const MainLayout = ({ children }) => (
     <div className="app-content-wrapper-full" style={{ position: 'relative', zIndex: 1, flex: 1, display: 'flex', flexDirection: 'column' }}>
       {children}
     </div>
+    <VoiceAssistantWidget />
   </div>
 );
 
