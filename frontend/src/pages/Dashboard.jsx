@@ -257,8 +257,9 @@ export default function Dashboard() {
                 <div style={{ display: 'flex', alignItems: 'center' }}>
                   {(() => {
                     const sessionTeam = teams.find(t => t.id === s.team_id);
-                    const members = sessionTeam ? sessionTeam.members : [profile];
-                    return members.slice(0, 3).map((m, mIdx) => {
+                    const membersList = (sessionTeam && Array.isArray(sessionTeam.members)) ? sessionTeam.members : (profile ? [profile] : []);
+                    return membersList.slice(0, 3).map((m, mIdx) => {
+                      if (!m) return null;
                       const colors = ['#bf85ff', '#f472b6', '#38bdf8'];
                       const initials = (m.full_name || m.name || 'User').split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
                       return (
@@ -379,7 +380,7 @@ export default function Dashboard() {
           {sessions.length > 0 && (
             <form onSubmit={handleAddTask} style={{ display: 'flex', gap: '12px', background: 'rgba(255, 255, 255, 0.02)', border: '2px dashed rgba(255, 255, 255, 0.15)', padding: '12px', borderRadius: '0px', alignItems: 'center' }}>
               <div style={{ width: '24px', height: '24px', borderRadius: '0px', background: '#bf85ff', color: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', fontWeight: 'bold' }}>
-                {profile?.name?.slice(0, 2).toUpperCase() || 'AA'}
+                {(profile?.full_name || profile?.name || 'AA').slice(0, 2).toUpperCase()}
               </div>
               <input 
                 type="text"
@@ -513,7 +514,7 @@ export default function Dashboard() {
                       </span>
 
                       <div style={{ width: '22px', height: '22px', borderRadius: '0px', background: '#bf85ff', color: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '9px', fontWeight: 'bold' }}>
-                        {profile?.name?.slice(0, 2).toUpperCase() || 'AA'}
+                        {(profile?.full_name || profile?.name || 'AA').slice(0, 2).toUpperCase()}
                       </div>
                     </div>
                   </div>
