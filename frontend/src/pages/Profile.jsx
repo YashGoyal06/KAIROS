@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Check, Plus, X } from 'lucide-react';
+import { Check, Plus, X, User, Edit3, Sparkles } from 'lucide-react';
 import { FaLinkedin, FaGithub } from 'react-icons/fa';
-import { getTechIconUrl } from '../utils/techIcons';
+import StaggeredGrid from '../components/StaggeredGrid';
 
 const PREDEFINED_TECH = {
   "Languages": ["Python", "JavaScript", "TypeScript", "Rust", "Go", "C++", "HTML/CSS", "Solidity"],
@@ -15,7 +16,11 @@ const PREDEFINED_TECH = {
 
 export default function Profile() {
   const { profile, refreshProfile, API_BASE, user } = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
   
+  // Tab state: view profile vs edit profile
+  const [isEditMode, setIsEditMode] = useState(searchParams.get('edit') === 'true');
+
   const [fullName, setFullName] = useState('');
   const [role, setRole] = useState('Frontend Developer');
   const [experience, setExperience] = useState('Intermediate');
@@ -27,6 +32,10 @@ export default function Profile() {
   const [updating, setUpdating] = useState(false);
 
   useEffect(() => {
+    setIsEditMode(searchParams.get('edit') === 'true');
+  }, [searchParams]);
+
+  useEffect(() => {
     if (profile) {
       setFullName(profile.full_name || '');
       setRole(profile.primary_role || 'Frontend Developer');
@@ -36,6 +45,15 @@ export default function Profile() {
       setGithubUrl(profile.github_url || '');
     }
   }, [profile]);
+
+  const toggleMode = (edit) => {
+    setIsEditMode(edit);
+    if (edit) {
+      setSearchParams({ edit: 'true' });
+    } else {
+      setSearchParams({});
+    }
+  };
 
   const handleTechSelect = (tech) => {
     if (!selectedTech.includes(tech)) {
@@ -75,6 +93,7 @@ export default function Profile() {
       });
       await refreshProfile();
       alert("Profile updated successfully!");
+      toggleMode(false);
     } catch (err) {
       console.error('Error saving profile:', err);
       alert("Error updating profile.");
@@ -84,243 +103,197 @@ export default function Profile() {
   };
 
   return (
-    <div className="main-content" style={{ padding: '24px 32px', display: 'flex', flexDirection: 'column' }}>
-      <div className="dashboard-header" style={{ marginBottom: '16px', paddingBottom: '16px' }}>
+    <div className="main-content flex-1 p-6 md:p-10 flex flex-col gap-8 max-w-6xl mx-auto w-full">
+      {/* Top Header & Toggle Tabs */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-white/10 pb-6">
         <div>
-          <h1 style={{ fontSize: '30px', fontWeight: 700, color: '#fff' }}>My Profile Settings</h1>
-          <p style={{ color: '#9ca3af', fontSize: '13px', marginTop: '4px' }}>
-            Update your identity, social links, role, experience level, and tech stack.
+          <h1 className="text-3xl font-extrabold text-white tracking-tight flex items-center gap-3">
+            <span>{isEditMode ? 'Edit Profile' : 'User Profile'}</span>
+            <Sparkles className="text-purple-400 w-6 h-6 animate-pulse" />
+          </h1>
+          <p className="text-zinc-400 text-sm mt-1">
+            {isEditMode 
+              ? 'Update your bio, tech stack, and social connections' 
+              : 'Overview of your developer identity and integrated tech stack'}
           </p>
+        </div>
+
+        {/* Tab Switcher Button */}
+        <div className="flex bg-white/5 border border-white/10 rounded-2xl p-1 backdrop-blur-md">
+          <button
+            onClick={() => toggleMode(false)}
+            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-semibold transition-all duration-200 ${
+              !isEditMode 
+                ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg shadow-purple-500/25' 
+                : 'text-zinc-400 hover:text-white'
+            }`}
+          >
+            <User size={14} />
+            <span>View Profile</span>
+          </button>
+          <button
+            onClick={() => toggleMode(true)}
+            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-semibold transition-all duration-200 ${
+              isEditMode 
+                ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg shadow-purple-500/25' 
+                : 'text-zinc-400 hover:text-white'
+            }`}
+          >
+            <Edit3 size={14} />
+            <span>Edit Profile</span>
+          </button>
         </div>
       </div>
 
-      <div className="profile-grid-kairos">
-        {/* Left Column: Visual Profile Card */}
-        <div className="profile-card-left">
-          <div style={{ display: 'flex', flexDirection: 'column', padding: '16px 0', width: '100%' }}>
+      {/* VIEW PROFILE PAGE */}
+      {!isEditMode ? (
+        <div className="flex flex-col items-center gap-10 w-full animate-in fade-in zoom-in-95 duration-300">
+          
+          {/* Top Center: User Name & Role Banner */}
+          <div className="flex flex-col items-center text-center gap-3 bg-gradient-to-b from-white/[0.08] to-white/[0.02] border border-white/10 rounded-3xl p-8 w-full max-w-3xl backdrop-blur-xl shadow-2xl relative overflow-hidden">
+            <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-purple-500 via-pink-500 to-indigo-500" />
             
-            {/* Header Row: Name on Left, LinkedIn & GitHub Icons on Most Right */}
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', gap: '12px', flexWrap: 'wrap' }}>
-              <h2 style={{ fontSize: '22px', fontWeight: '700', color: '#fff', textShadow: '0 0 8px rgba(236, 72, 153, 0.6)', margin: 0 }}>
-                {fullName || "User Profile"}
-              </h2>
-              
-              {/* Most Right Social Links */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginLeft: 'auto' }}>
-                {linkedinUrl ? (
-                  <a 
-                    href={linkedinUrl.startsWith('http') ? linkedinUrl : `https://${linkedinUrl}`} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      width: '32px',
-                      height: '32px',
-                      borderRadius: '8px',
-                      background: 'rgba(0, 119, 181, 0.15)',
-                      border: '1px solid rgba(0, 119, 181, 0.4)',
-                      color: '#0077b5',
-                      transition: 'all 0.2s ease',
-                      textDecoration: 'none'
-                    }}
-                    title={`LinkedIn: ${linkedinUrl}`}
-                  >
-                    <FaLinkedin size={16} />
-                  </a>
-                ) : (
-                  <span 
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      width: '32px',
-                      height: '32px',
-                      borderRadius: '8px',
-                      background: 'rgba(255, 255, 255, 0.03)',
-                      border: '1px solid rgba(255, 255, 255, 0.08)',
-                      color: '#4b5563'
-                    }}
-                    title="No LinkedIn profile added"
-                  >
-                    <FaLinkedin size={16} />
-                  </span>
-                )}
-
-                {githubUrl ? (
-                  <a 
-                    href={githubUrl.startsWith('http') ? githubUrl : `https://${githubUrl}`} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      width: '32px',
-                      height: '32px',
-                      borderRadius: '8px',
-                      background: 'rgba(255, 255, 255, 0.1)',
-                      border: '1px solid rgba(255, 255, 255, 0.2)',
-                      color: '#ffffff',
-                      transition: 'all 0.2s ease',
-                      textDecoration: 'none'
-                    }}
-                    title={`GitHub: ${githubUrl}`}
-                  >
-                    <FaGithub size={16} />
-                  </a>
-                ) : (
-                  <span 
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      width: '32px',
-                      height: '32px',
-                      borderRadius: '8px',
-                      background: 'rgba(255, 255, 255, 0.03)',
-                      border: '1px solid rgba(255, 255, 255, 0.08)',
-                      color: '#4b5563'
-                    }}
-                    title="No GitHub profile added"
-                  >
-                    <FaGithub size={16} />
-                  </span>
-                )}
+            {/* Avatar Circle */}
+            <div className="w-24 h-24 rounded-full bg-gradient-to-tr from-purple-600 to-pink-500 p-1 shadow-[0_0_35px_rgba(168,85,247,0.4)]">
+              <div className="w-full h-full rounded-full bg-[#0d0c14] flex items-center justify-center text-2xl font-black text-white font-mono">
+                {fullName ? fullName.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() : 'U'}
               </div>
             </div>
-            
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', marginTop: '6px' }}>
-              <span style={{ 
-                fontSize: '12px', 
-                color: '#00FF66', 
-                fontWeight: '700', 
-                fontFamily: 'monospace', 
-                textTransform: 'uppercase', 
-                letterSpacing: '0.05em', 
-                textShadow: '0 0 8px rgba(0, 255, 102, 0.3)'
-              }}>
+
+            <h2 className="text-3xl sm:text-4xl font-extrabold text-white tracking-wide drop-shadow-[0_0_20px_rgba(255,255,255,0.3)]">
+              {fullName || "Anonymous Hackathoner"}
+            </h2>
+
+            <div className="flex items-center gap-3 flex-wrap justify-center mt-1">
+              <span className="px-4 py-1.5 rounded-full bg-purple-500/15 border border-purple-500/30 text-purple-300 text-xs font-bold font-mono uppercase tracking-wider shadow-[0_0_15px_rgba(168,85,247,0.2)]">
                 {role}
               </span>
-              
-              <span style={{ 
-                fontSize: '11px', 
-                color: '#9ca3af', 
-                marginTop: '8px', 
-                background: 'rgba(255,255,255,0.03)', 
-                border: '1px solid rgba(255,255,255,0.06)', 
-                padding: '4px 12px', 
-                borderRadius: '9999px' 
-              }}>
-                {experience.replace(/\s*\(.*\)/g, '')}
+              <span className="px-4 py-1.5 rounded-full bg-white/5 border border-white/10 text-zinc-300 text-xs font-medium">
+                {experience}
               </span>
             </div>
           </div>
 
-          <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '20px', marginTop: '10px', width: '100%' }}>
-            <div style={{ fontFamily: 'monospace', fontSize: '11px', fontWeight: 'bold', color: '#9ca3af', letterSpacing: '0.05em', textTransform: 'uppercase', marginBottom: '12px' }}>
-              /// SYNERGY_STACK ({selectedTech.length})
-            </div>
-            <div style={{ 
-              display: 'grid', 
-              gridTemplateColumns: 'repeat(auto-fill, minmax(40px, 1fr))', 
-              gap: '10px',
-              marginTop: '4px'
-            }}>
-              {selectedTech.length === 0 ? (
-                <span style={{ fontSize: '11px', color: '#6b7280', gridColumn: '1 / -1' }}>No skills integrated yet.</span>
-              ) : (
-                selectedTech.map(tech => (
-                  <div 
-                    key={tech} 
-                    title={tech}
-                    style={{
-                      width: '40px',
-                      height: '40px',
-                      borderRadius: '8px',
-                      border: '1px solid rgba(255, 255, 255, 0.08)',
-                      background: 'rgba(255, 255, 255, 0.02)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      transition: 'all 0.2s ease',
-                      cursor: 'pointer',
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.borderColor = 'rgba(236, 72, 153, 0.5)';
-                      e.currentTarget.style.boxShadow = '0 0 10px rgba(236, 72, 153, 0.3)';
-                      e.currentTarget.style.transform = 'translateY(-2px)';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.08)';
-                      e.currentTarget.style.boxShadow = 'none';
-                      e.currentTarget.style.transform = 'translateY(0)';
-                    }}
-                  >
-                    <img 
-                      src={getTechIconUrl(tech)} 
-                      alt={tech} 
-                      style={{ width: '22px', height: '22px', objectFit: 'contain' }}
-                      onError={(e) => {
-                        e.currentTarget.style.display = 'none';
-                        const parent = e.currentTarget.parentElement;
-                        if (parent && !parent.querySelector('.fallback-icon-text')) {
-                          const span = document.createElement('span');
-                          span.className = 'fallback-icon-text';
-                          span.style.fontSize = '10px';
-                          span.style.fontWeight = 'bold';
-                          span.style.fontFamily = 'monospace';
-                          span.style.color = '#ec4899';
-                          span.innerText = tech.slice(0, 2).toUpperCase();
-                          parent.appendChild(span);
-                        }
-                      }}
-                    />
-                  </div>
-                ))
-              )}
-            </div>
+          {/* Center: Staggered Tech Stack UI Animation */}
+          <div className="w-full">
+            <StaggeredGrid 
+              items={selectedTech} 
+              centerText="MY TECH STACK" 
+            />
           </div>
-        </div>
 
-        {/* Right Column: Settings Form */}
-        <div className="profile-card-right">
-          <form onSubmit={handleSubmit}>
-            <div className="profile-section-header">/// USER_IDENTITY & SOCIALS</div>
+          {/* Bottom Center: Social Cards (LinkedIn & GitHub) */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 w-full max-w-2xl mt-2">
             
-            <div className="form-group">
-              <label className="form-label" style={{ fontSize: '12px' }}>Full Name</label>
+            {/* LinkedIn Card */}
+            {linkedinUrl ? (
+              <a
+                href={linkedinUrl.startsWith('http') ? linkedinUrl : `https://${linkedinUrl}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="group relative flex items-center gap-4 p-5 rounded-2xl border border-blue-500/30 bg-blue-950/20 backdrop-blur-xl transition-all duration-300 hover:scale-105 hover:bg-blue-900/30 hover:border-blue-400 hover:shadow-[0_0_30px_rgba(59,130,246,0.3)] text-decoration-none"
+              >
+                <div className="w-12 h-12 rounded-xl bg-blue-600/20 border border-blue-500/40 flex items-center justify-center text-blue-400 group-hover:scale-110 transition-transform">
+                  <FaLinkedin size={26} />
+                </div>
+                <div className="flex flex-col overflow-hidden">
+                  <span className="text-xs font-bold text-blue-400 uppercase font-mono tracking-wider">LinkedIn</span>
+                  <span className="text-sm font-semibold text-white truncate group-hover:text-blue-200 transition-colors">
+                    {linkedinUrl.replace(/^https?:\/\/(www\.)?linkedin\.com\/in\//, '')}
+                  </span>
+                </div>
+              </a>
+            ) : (
+              <div className="flex items-center gap-4 p-5 rounded-2xl border border-white/5 bg-white/[0.02] backdrop-blur-md opacity-60">
+                <div className="w-12 h-12 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-zinc-500">
+                  <FaLinkedin size={26} />
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-xs font-bold text-zinc-500 uppercase font-mono tracking-wider">LinkedIn</span>
+                  <span className="text-sm text-zinc-400 italic">Not connected</span>
+                </div>
+              </div>
+            )}
+
+            {/* GitHub Card */}
+            {githubUrl ? (
+              <a
+                href={githubUrl.startsWith('http') ? githubUrl : `https://${githubUrl}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="group relative flex items-center gap-4 p-5 rounded-2xl border border-purple-500/30 bg-purple-950/20 backdrop-blur-xl transition-all duration-300 hover:scale-105 hover:bg-purple-900/30 hover:border-purple-400 hover:shadow-[0_0_30px_rgba(168,85,247,0.3)] text-decoration-none"
+              >
+                <div className="w-12 h-12 rounded-xl bg-purple-600/20 border border-purple-500/40 flex items-center justify-center text-white group-hover:scale-110 transition-transform">
+                  <FaGithub size={26} />
+                </div>
+                <div className="flex flex-col overflow-hidden">
+                  <span className="text-xs font-bold text-purple-400 uppercase font-mono tracking-wider">GitHub</span>
+                  <span className="text-sm font-semibold text-white truncate group-hover:text-purple-200 transition-colors">
+                    {githubUrl.replace(/^https?:\/\/(www\.)?github\.com\//, '')}
+                  </span>
+                </div>
+              </a>
+            ) : (
+              <div className="flex items-center gap-4 p-5 rounded-2xl border border-white/5 bg-white/[0.02] backdrop-blur-md opacity-60">
+                <div className="w-12 h-12 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-zinc-500">
+                  <FaGithub size={26} />
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-xs font-bold text-zinc-500 uppercase font-mono tracking-wider">GitHub</span>
+                  <span className="text-sm text-zinc-400 italic">Not connected</span>
+                </div>
+              </div>
+            )}
+
+          </div>
+
+        </div>
+      ) : (
+        /* EDIT PROFILE PAGE (COMPLETELY SEPARATE EDIT FORM) */
+        <div className="w-full max-w-3xl mx-auto bg-gradient-to-b from-white/[0.06] to-white/[0.02] border border-white/10 rounded-3xl p-8 backdrop-blur-xl shadow-2xl animate-in fade-in slide-in-from-bottom-4 duration-300">
+          <form onSubmit={handleSubmit} className="flex flex-col gap-6">
+            
+            <div className="border-b border-white/10 pb-4">
+              <h3 className="text-lg font-bold text-white font-mono uppercase tracking-wider text-purple-400">
+                /// PERSONAL IDENTITY
+              </h3>
+            </div>
+
+            {/* Full Name */}
+            <div className="flex flex-col gap-2">
+              <label className="text-xs font-semibold text-zinc-300 uppercase tracking-wider">Full Name</label>
               <input
                 type="text"
-                className="form-input"
+                className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-purple-500 transition-colors"
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
-                placeholder="e.g. John Doe"
+                placeholder="e.g. Parth Gupta"
                 required
               />
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
-              <div className="form-group" style={{ marginBottom: 0 }}>
-                <label className="form-label" style={{ fontSize: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <FaLinkedin size={14} style={{ color: '#0077b5' }} /> LinkedIn Profile
+            {/* Social Links */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="flex flex-col gap-2">
+                <label className="text-xs font-semibold text-zinc-300 uppercase tracking-wider flex items-center gap-2">
+                  <FaLinkedin className="text-blue-400" /> LinkedIn URL
                 </label>
                 <input
                   type="url"
-                  className="form-input"
+                  className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-blue-500 transition-colors"
                   value={linkedinUrl}
                   onChange={(e) => setLinkedinUrl(e.target.value)}
                   placeholder="https://linkedin.com/in/username"
                 />
               </div>
-              <div className="form-group" style={{ marginBottom: 0 }}>
-                <label className="form-label" style={{ fontSize: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <FaGithub size={14} style={{ color: '#fff' }} /> GitHub Profile
+
+              <div className="flex flex-col gap-2">
+                <label className="text-xs font-semibold text-zinc-300 uppercase tracking-wider flex items-center gap-2">
+                  <FaGithub className="text-white" /> GitHub URL
                 </label>
                 <input
                   type="url"
-                  className="form-input"
+                  className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-purple-500 transition-colors"
                   value={githubUrl}
                   onChange={(e) => setGithubUrl(e.target.value)}
                   placeholder="https://github.com/username"
@@ -328,11 +301,20 @@ export default function Profile() {
               </div>
             </div>
 
-            <div className="profile-section-header">/// PROFESSIONAL_LEVEL</div>
+            <div className="border-b border-white/10 pb-4 pt-4">
+              <h3 className="text-lg font-bold text-white font-mono uppercase tracking-wider text-pink-400">
+                /// ROLE & EXPERIENCE
+              </h3>
+            </div>
 
-            <div className="form-group">
-              <label className="form-label" style={{ fontSize: '12px' }}>Primary Role</label>
-              <select className="form-select" value={role} onChange={(e) => setRole(e.target.value)}>
+            {/* Primary Role */}
+            <div className="flex flex-col gap-2">
+              <label className="text-xs font-semibold text-zinc-300 uppercase tracking-wider">Primary Role</label>
+              <select 
+                className="w-full bg-black/60 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-purple-500 transition-colors"
+                value={role} 
+                onChange={(e) => setRole(e.target.value)}
+              >
                 <option value="Frontend Developer">Frontend Developer</option>
                 <option value="Backend Developer">Backend Developer</option>
                 <option value="Full Stack Developer">Full Stack Developer</option>
@@ -343,51 +325,55 @@ export default function Profile() {
               </select>
             </div>
 
-            <div className="form-group">
-              <label className="form-label" style={{ fontSize: '12px' }}>Experience Level</label>
-              <select className="form-select" value={experience} onChange={(e) => setExperience(e.target.value)}>
+            {/* Experience Level */}
+            <div className="flex flex-col gap-2">
+              <label className="text-xs font-semibold text-zinc-300 uppercase tracking-wider">Experience Level</label>
+              <select 
+                className="w-full bg-black/60 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-purple-500 transition-colors"
+                value={experience} 
+                onChange={(e) => setExperience(e.target.value)}
+              >
                 <option value="Beginner">Beginner (1st/2nd Hackathon)</option>
                 <option value="Intermediate">Intermediate (Experienced coder)</option>
                 <option value="Advanced">Advanced (Hackathon winner / Professional)</option>
               </select>
             </div>
 
-            <div className="profile-section-header">/// KERNEL_INTEGRATION</div>
+            <div className="border-b border-white/10 pb-4 pt-4">
+              <h3 className="text-lg font-bold text-white font-mono uppercase tracking-wider text-indigo-400">
+                /// TECH STACK SELECTION
+              </h3>
+            </div>
 
-            <div className="form-group">
-              <label className="form-label" style={{ fontSize: '12px' }}>Search & Select Tech Stack</label>
+            {/* Search & Select Tech */}
+            <div className="flex flex-col gap-2">
+              <label className="text-xs font-semibold text-zinc-300 uppercase tracking-wider">Search Technologies</label>
               <input
                 type="text"
-                className="form-input"
-                placeholder="Search technologies..."
+                className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-purple-500 transition-colors"
+                placeholder="Type to filter..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
-              
-              <div style={{ maxHeight: '150px', overflowY: 'auto', border: '1px solid rgba(255,255,255,0.05)', padding: '10px', borderRadius: '8px', background: 'rgba(0,0,0,0.2)', marginTop: '8px' }}>
+
+              <div className="max-h-48 overflow-y-auto border border-white/10 rounded-xl p-4 bg-black/40 flex flex-col gap-4 mt-2">
                 {Object.entries(PREDEFINED_TECH).map(([category, items]) => {
                   const filtered = items.filter(item => item.toLowerCase().includes(searchQuery.toLowerCase()));
                   if (filtered.length === 0) return null;
                   return (
-                    <div key={category} style={{ marginBottom: '12px' }}>
-                      <div style={{ fontSize: '10px', textTransform: 'uppercase', color: '#6b7280', fontWeight: 'bold', marginBottom: '6px', fontFamily: 'monospace' }}>{category}</div>
-                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                    <div key={category} className="flex flex-col gap-2">
+                      <span className="text-[10px] font-bold text-zinc-500 uppercase font-mono">{category}</span>
+                      <div className="flex flex-wrap gap-2">
                         {filtered.map(tech => (
                           <button
                             key={tech}
                             type="button"
                             onClick={() => handleTechSelect(tech)}
-                            style={{
-                              padding: '4px 10px',
-                              borderRadius: '4px',
-                              border: '1px solid rgba(255,255,255,0.08)',
-                              background: selectedTech.includes(tech) ? 'rgba(236, 72, 153, 0.2)' : 'rgba(255,255,255,0.03)',
-                              color: selectedTech.includes(tech) ? '#ffffff' : '#9ca3af',
-                              fontSize: '11px',
-                              cursor: 'pointer',
-                              transition: 'all 0.2s ease',
-                              fontFamily: 'monospace'
-                            }}
+                            className={`px-3 py-1.5 rounded-lg border text-xs font-mono transition-all duration-200 ${
+                              selectedTech.includes(tech)
+                                ? 'bg-purple-600/30 border-purple-500 text-purple-200'
+                                : 'bg-white/5 border-white/10 text-zinc-400 hover:text-white hover:bg-white/10'
+                            }`}
                           >
                             {tech}
                           </button>
@@ -399,45 +385,65 @@ export default function Profile() {
               </div>
             </div>
 
-            <div className="form-group">
-              <label className="form-label" style={{ fontSize: '12px' }}>Add Custom Technology</label>
-              <div style={{ display: 'flex', gap: '8px' }}>
+            {/* Add Custom Tech */}
+            <div className="flex flex-col gap-2">
+              <label className="text-xs font-semibold text-zinc-300 uppercase tracking-wider">Add Custom Technology</label>
+              <div className="flex gap-2">
                 <input
                   type="text"
-                  className="form-input"
-                  style={{ flexGrow: 1 }}
-                  placeholder="e.g. Web3.js"
+                  className="flex-1 bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-purple-500 transition-colors"
+                  placeholder="e.g. Web3.js, Polkadot"
                   value={customTech}
                   onChange={(e) => setCustomTech(e.target.value)}
                 />
-                <button type="button" onClick={handleAddCustom} className="btn btn-secondary" style={{ padding: '0 16px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}>
-                  <Plus size={16} />
+                <button
+                  type="button"
+                  onClick={handleAddCustom}
+                  className="px-5 py-3 rounded-xl bg-white/10 border border-white/10 text-white hover:bg-white/20 transition-colors flex items-center justify-center"
+                >
+                  <Plus size={18} />
                 </button>
               </div>
             </div>
 
-            <div className="form-group">
-              <label className="form-label" style={{ fontSize: '12px' }}>Selected Technologies</label>
-              <div className="tag-input-container" style={{ background: 'rgba(0,0,0,0.1)', border: '1px solid rgba(255,255,255,0.05)' }}>
+            {/* Selected Tech Chips */}
+            <div className="flex flex-col gap-2">
+              <label className="text-xs font-semibold text-zinc-300 uppercase tracking-wider">
+                Selected ({selectedTech.length})
+              </label>
+              <div className="flex flex-wrap gap-2 p-4 bg-black/40 border border-white/10 rounded-xl min-h-[60px] items-center">
                 {selectedTech.length === 0 ? (
-                  <span style={{ fontSize: '12px', color: '#6b7280', padding: '4px' }}>No skills integrated yet.</span>
+                  <span className="text-xs text-zinc-500 italic">No technologies selected yet.</span>
                 ) : (
                   selectedTech.map(tech => (
-                    <div key={tech} className="tag" style={{ background: 'rgba(236, 72, 153, 0.05)', borderColor: 'rgba(236, 72, 153, 0.15)', color: '#ffffff' }}>
-                      {tech}
-                      <X size={12} className="tag-remove" onClick={() => handleTechRemove(tech)} />
+                    <div
+                      key={tech}
+                      className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-purple-500/20 border border-purple-500/40 text-purple-200 text-xs font-mono"
+                    >
+                      <span>{tech}</span>
+                      <X
+                        size={14}
+                        className="cursor-pointer hover:text-white transition-colors"
+                        onClick={() => handleTechRemove(tech)}
+                      />
                     </div>
                   ))
                 )}
               </div>
             </div>
 
-            <button type="submit" className="btn btn-primary" style={{ width: '100%', marginTop: '24px' }} disabled={updating}>
-              <Check size={18} /> {updating ? 'Saving...' : 'Save Profile Changes'}
+            {/* Save Button */}
+            <button
+              type="submit"
+              disabled={updating}
+              className="w-full mt-4 py-4 rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-bold text-sm tracking-wide shadow-lg shadow-purple-500/30 transition-all duration-200 flex items-center justify-center gap-2"
+            >
+              <Check size={18} />
+              <span>{updating ? 'Saving Changes...' : 'Save Profile Changes'}</span>
             </button>
           </form>
         </div>
-      </div>
+      )}
     </div>
   );
 }

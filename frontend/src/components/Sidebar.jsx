@@ -141,9 +141,38 @@ export default function Sidebar() {
 
         {/* Footer Actions */}
         <div className="sidebar-footer-kairos">
-          {/* User Profile Avatar */}
-          <div className="sidebar-user-avatar" title={profile?.full_name || "Profile"}>
-            {userInitials}
+          {/* User Profile Avatar with Hover Dropdown */}
+          <div className="relative group flex items-center justify-center">
+            <div 
+              className="sidebar-user-avatar cursor-pointer" 
+              title={profile?.full_name || "Profile"}
+            >
+              {userInitials}
+            </div>
+
+            {/* Hover Dropdown Menu */}
+            <div className="absolute bottom-0 left-full ml-3 hidden group-hover:flex flex-col bg-[#14121e]/95 backdrop-blur-xl border border-white/10 rounded-2xl p-2 shadow-2xl z-50 min-w-[170px] transition-all duration-200 animate-in fade-in slide-in-from-left-2">
+              <div className="px-3 py-2 border-b border-white/5 mb-1">
+                <p className="text-xs font-semibold text-white truncate">{profile?.full_name || 'User'}</p>
+                <p className="text-[10px] text-zinc-400 truncate">{profile?.primary_role || 'Developer'}</p>
+              </div>
+
+              <NavLink 
+                to="/profile" 
+                className={({ isActive }) => `flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium transition-colors ${isActive ? 'bg-purple-600/20 text-purple-300 border border-purple-500/30' : 'text-zinc-300 hover:bg-white/5 hover:text-white'}`}
+              >
+                <User size={14} className="text-purple-400" />
+                <span>Profile</span>
+              </NavLink>
+
+              <NavLink 
+                to="/profile?edit=true" 
+                className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium text-zinc-300 hover:bg-white/5 hover:text-white transition-colors"
+              >
+                <User size={14} className="text-pink-400" />
+                <span>Edit Profile</span>
+              </NavLink>
+            </div>
           </div>
 
           {/* Sign Out */}

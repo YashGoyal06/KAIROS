@@ -1,238 +1,122 @@
 import React, { useEffect, useRef, useState } from 'react';
 import gsap from 'gsap';
-import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { cn } from '../lib/utils';
-
-gsap.registerPlugin(ScrollTrigger);
+import { getTechIconUrl } from '../utils/techIcons';
 
 export function StaggeredGrid({
-    images = [],
+    items = [],
     centerText = "TECH STACK",
-    credits = {
-        madeBy: { text: "@codrops", href: "https://x.com/codrops" },
-        moreDemos: { text: "More demos", href: "https://tympanus.net/codrops/demos" }
-    },
-    className,
-    showFooter = false,
-    scroller
+    className = ""
 }) {
-    const [isLoaded, setIsLoaded] = useState(false);
-    const gridFullRef = useRef(null);
+    const gridRef = useRef(null);
     const textRef = useRef(null);
+
+    useEffect(() => {
+        const ctx = gsap.context(() => {
+            // Animate Center Header Text
+            if (textRef.current) {
+                const chars = textRef.current.querySelectorAll('.char');
+                gsap.fromTo(chars,
+                    { y: 30, opacity: 0, scale: 0.8 },
+                    {
+                        y: 0,
+                        opacity: 1,
+                        scale: 1,
+                        duration: 0.8,
+                        ease: 'back.out(1.7)',
+                        stagger: 0.04
+                    }
+                );
+            }
+
+            // Animate Staggered Grid Items
+            if (gridRef.current) {
+                const gridItems = gridRef.current.querySelectorAll('.grid-item');
+                gsap.fromTo(gridItems,
+                    { y: 50, opacity: 0, scale: 0.85 },
+                    {
+                        y: 0,
+                        opacity: 1,
+                        scale: 1,
+                        duration: 0.7,
+                        ease: 'power3.out',
+                        stagger: {
+                            amount: 0.6,
+                            grid: [Math.ceil(gridItems.length / 5), 5],
+                            from: 'center'
+                        }
+                    }
+                );
+            }
+        });
+
+        return () => ctx.revert();
+    }, [items]);
 
     const splitText = (text) => {
         return text.split('').map((char, i) => (
-            <span key={i} className="char inline-block" style={{ willChange: 'transform' }}>
+            <span key={i} className="char inline-block" style={{ willChange: 'transform, opacity' }}>
                 {char === ' ' ? '\u00A0' : char}
             </span>
         ));
     };
 
-    useEffect(() => {
-        setIsLoaded(true);
-    }, []);
-
-    useEffect(() => {
-        if (!isLoaded || !gridFullRef.current) return;
-
-        const mainContent = document.querySelector('.main-content');
-        const scrollerTarget = scroller || mainContent || window;
-
-        const ctx = gsap.context(() => {
-            // Header Text Animation
-            if (textRef.current) {
-                const chars = textRef.current.querySelectorAll('.char');
-                gsap.fromTo(chars,
-                    { yPercent: 200, autoAlpha: 0 },
-                    {
-                        yPercent: 0,
-                        autoAlpha: 1,
-                        ease: 'power3.out',
-                        stagger: {
-                            each: 0.04,
-                            from: 'center'
-                        },
-                        scrollTrigger: {
-                            trigger: textRef.current,
-                            scroller: scrollerTarget,
-                            start: 'top 95%',
-                            end: 'center center',
-                            scrub: 1,
-                        }
-                    }
-                );
-            }
-
-            // Pyramidal Column Staggered Animation
-            const gridFullItems = gridFullRef.current.querySelectorAll('.grid__item');
-            const numColumns = 7;
-            const columns = Array.from({ length: numColumns }, () => []);
-
-            gridFullItems.forEach((item) => {
-                const colAttr = item.getAttribute('data-col');
-                const columnIndex = colAttr !== null ? parseInt(colAttr, 10) : 0;
-                if (columns[columnIndex]) {
-                    columns[columnIndex].push(item);
-                }
-            });
-
-            columns.forEach((columnItems, columnIndex) => {
-                if (!columnItems || columnItems.length === 0) return;
-
-                // Center column is the peak of the wave
-                const distanceFromCenter = Math.abs(columnIndex - 3);
-                const pyramidBaseY = distanceFromCenter * 35;
-
-                gsap.fromTo(columnItems,
-                    { 
-                        y: pyramidBaseY + 220, 
-                        autoAlpha: 0,
-                        scale: 0.9,
-                    },
-                    {
-                        y: pyramidBaseY,
-                        autoAlpha: 1,
-                        scale: 1,
-                        ease: 'power2.out',
-                        stagger: 0.06,
-                        scrollTrigger: {
-                            trigger: gridFullRef.current,
-                            scroller: scrollerTarget,
-                            start: 'top 85%',
-                            end: 'bottom 45%',
-                            scrub: 1.2,
-                        }
-                    }
-                );
-            });
-        }, gridFullRef);
-
-        const refreshTimer = setTimeout(() => {
-            ScrollTrigger.refresh();
-        }, 150);
-
-        return () => {
-            clearTimeout(refreshTimer);
-            ctx.revert();
-        };
-    }, [isLoaded, images, scroller]);
-
-    const techItems = (images && images.length > 0) 
-        ? images 
-        : ["Python", "JavaScript", "TypeScript", "React", "Next.js", "FastAPI", "Django", "PostgreSQL", "Supabase", "Docker", "Git", "PyTorch", "Tailwind", "C++"];
+    const techList = items.length > 0 ? items : ["React", "Python", "JavaScript", "TypeScript", "FastAPI", "PostgreSQL", "Docker"];
 
     return (
-        <div
-            className={cn("shadow relative overflow-hidden w-full bg-black/40 backdrop-blur-md rounded-3xl border border-white/10 p-6 sm:p-8", className)}
-            style={{ width: '100%', boxSizing: 'border-box' }}
-        >
+        <div className={`relative w-full max-w-5xl mx-auto rounded-3xl border border-white/10 bg-black/40 backdrop-blur-xl p-8 shadow-2xl overflow-hidden ${className}`}>
+            {/* Ambient Background Glow */}
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-purple-600/15 rounded-full blur-[100px] pointer-events-none" />
+
             {/* Header Text */}
-            <section style={{ display: 'flex', justifyContent: 'center', width: '100%', marginTop: '12px', marginBottom: '32px' }}>
-                <div 
+            <div className="flex justify-center mb-8">
+                <h3 
                     ref={textRef} 
-                    className="text font-alt uppercase flex content-center text-[clamp(2.2rem,5vw,4.5rem)] leading-none text-white tracking-widest font-black"
+                    className="text-2xl sm:text-3xl font-extrabold uppercase tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-pink-400 to-indigo-300 drop-shadow-[0_0_15px_rgba(168,85,247,0.4)]"
                 >
                     {splitText(centerText)}
-                </div>
-            </section>
+                </h3>
+            </div>
 
-            {/* Structured 7-Column Grid */}
-            <section style={{ width: '100%', display: 'flex', justifyContent: 'center', padding: '10px 0' }}>
-                <div 
-                    ref={gridFullRef} 
-                    style={{
-                        display: 'grid',
-                        gridTemplateColumns: 'repeat(7, minmax(0, 1fr))',
-                        gap: '14px',
-                        width: '100%',
-                        maxWidth: '1100px',
-                        boxSizing: 'border-box'
-                    }}
-                >
-                    {techItems.map((item, i) => {
-                        const colIdx = i % 7;
-                        let label = typeof item === 'string' ? item : item.name || item.title || "Tech";
-                        let customIconUrl = typeof item === 'string' 
-                            ? `https://cdn.simpleicons.org/${item.toLowerCase().replace(/[^a-z0-9]/g, '')}`
-                            : null;
-
-                        return (
-                            <figure 
-                                key={`tech-${i}`} 
-                                data-col={colIdx} 
-                                className="grid__item group cursor-pointer"
-                                style={{
-                                    margin: 0,
-                                    position: 'relative',
-                                    zIndex: 10,
-                                    width: '100%',
-                                    aspectRatio: '1 / 1',
-                                    boxSizing: 'border-box'
+            {/* Staggered Grid */}
+            <div 
+                ref={gridRef}
+                className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 justify-items-center"
+            >
+                {techList.map((tech, idx) => {
+                    const iconUrl = getTechIconUrl(tech);
+                    return (
+                        <div
+                            key={`${tech}-${idx}`}
+                            className="grid-item group relative w-full aspect-square max-w-[140px] rounded-2xl border border-white/10 bg-white/[0.03] backdrop-blur-md p-4 flex flex-col items-center justify-center gap-3 transition-all duration-300 hover:scale-105 hover:bg-white/[0.08] hover:border-purple-500/50 hover:shadow-[0_0_25px_rgba(168,85,247,0.3)] cursor-pointer"
+                        >
+                            {/* Glowing backdrop on hover */}
+                            <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-purple-500/10 to-pink-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                            
+                            {/* Tech Icon */}
+                            <img 
+                                src={iconUrl} 
+                                alt={tech} 
+                                className="w-10 h-10 object-contain drop-shadow-[0_0_8px_rgba(255,255,255,0.2)] transition-transform duration-300 group-hover:scale-110"
+                                onError={(e) => {
+                                    e.currentTarget.style.display = 'none';
+                                    const parent = e.currentTarget.parentElement;
+                                    if (parent && !parent.querySelector('.fallback-badge')) {
+                                        const badge = document.createElement('div');
+                                        badge.className = 'fallback-badge w-10 h-10 rounded-xl bg-purple-500/20 border border-purple-400/30 flex items-center justify-center font-bold text-xs text-purple-300 font-mono';
+                                        badge.innerText = tech.slice(0, 2).toUpperCase();
+                                        parent.insertBefore(badge, parent.firstChild);
+                                    }
                                 }}
-                            >
-                                {/* CLEAN TRANSLUCENT GLASS CARD */}
-                                <div 
-                                    className="grid__item-img"
-                                    style={{
-                                        width: '100%',
-                                        height: '100%',
-                                        borderRadius: '16px',
-                                        overflow: 'hidden',
-                                        border: '1px solid rgba(255, 255, 255, 0.08)',
-                                        background: 'rgba(255, 255, 255, 0.03)',
-                                        backdropFilter: 'blur(12px)',
-                                        WebkitBackdropFilter: 'blur(12px)',
-                                        display: 'flex',
-                                        flexDirection: 'column',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        position: 'relative',
-                                        transition: 'background 0.3s ease, border-color 0.3s ease, transform 0.2s ease'
-                                    }}
-                                    onMouseEnter={(e) => {
-                                        e.currentTarget.style.background = 'rgba(255, 255, 255, 0.07)';
-                                        e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.2)';
-                                    }}
-                                    onMouseLeave={(e) => {
-                                        e.currentTarget.style.background = 'rgba(255, 255, 255, 0.03)';
-                                        e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.08)';
-                                    }}
-                                >
-                                    {/* Content Container */}
-                                    <div style={{ position: 'relative', zIndex: 10, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '8px', padding: '10px' }}>
-                                        {customIconUrl && (
-                                            <img 
-                                                src={customIconUrl} 
-                                                alt={label} 
-                                                style={{ width: '30px', height: '30px', objectFit: 'contain' }}
-                                                onError={(e) => {
-                                                    e.currentTarget.style.display = 'none';
-                                                }}
-                                            />
-                                        )}
+                            />
 
-                                        <div style={{ textAlign: 'center' }}>
-                                            <span style={{ display: 'block', fontSize: '8px', fontWeight: '700', color: '#ec4899', textTransform: 'uppercase', letterSpacing: '0.06em', fontFamily: 'monospace' }}>
-                                                BUILD WITH
-                                            </span>
-                                            <span style={{ display: 'block', fontSize: '11px', fontWeight: '600', color: '#f3f4f6', marginTop: '1px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '90px' }}>
-                                                {label}
-                                            </span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </figure>
-                        );
-                    })}
-                </div>
-            </section>
-
-            {showFooter && (
-                <footer style={{ width: '100%', padding: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: '#9ca3af', textTransform: 'uppercase', fontSize: '11px', letterSpacing: '0.05em', borderTop: '1px solid rgba(255,255,255,0.08)', marginTop: '16px' }}>
-                    <a href={credits.madeBy.href} style={{ color: 'inherit', textDecoration: 'none' }}>{credits.madeBy.text}</a>
-                    <a href={credits.moreDemos.href} style={{ color: 'inherit', textDecoration: 'none' }}>{credits.moreDemos.text}</a>
-                </footer>
-            )}
+                            {/* Tech Name */}
+                            <span className="text-xs font-semibold text-zinc-200 group-hover:text-white tracking-wide text-center truncate max-w-full">
+                                {tech}
+                            </span>
+                        </div>
+                    );
+                })}
+            </div>
         </div>
     );
 }
