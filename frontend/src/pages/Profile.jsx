@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { Check, Plus, X, User, Edit3, Sparkles } from 'lucide-react';
 import { FaLinkedin, FaGithub } from 'react-icons/fa';
 import { getTechIconUrl } from '../utils/techIcons';
+import { FloatingIconsHero } from '../components/ui/floating-icons-hero-section';
 import './Profile.css';
 
 const PREDEFINED_TECH = {
@@ -109,6 +110,20 @@ export default function Profile() {
   const defaultTechs = ["Python", "JavaScript", "TypeScript", "React", "Next.js", "FastAPI", "PostgreSQL", "Supabase", "Docker", "Git", "PyTorch", "Tailwind", "C++"];
   const displayTechs = selectedTech.length > 0 ? selectedTech : defaultTechs;
 
+  const floatingPositions = [
+    'top-[10%] left-[8%]', 'top-[15%] right-[10%]', 'top-[35%] left-[5%]',
+    'top-[38%] right-[6%]', 'bottom-[18%] left-[8%]', 'bottom-[15%] right-[10%]',
+    'top-[8%] left-[30%]', 'top-[8%] right-[30%]', 'bottom-[10%] left-[28%]',
+    'bottom-[10%] right-[28%]', 'top-[55%] left-[12%]', 'top-[58%] right-[12%]',
+    'top-[25%] left-[20%]', 'top-[25%] right-[20%]'
+  ];
+
+  const iconsData = displayTechs.map((tech, i) => ({
+    id: i,
+    icon: getTechIconUrl(tech),
+    className: floatingPositions[i % floatingPositions.length]
+  }));
+
   return (
     <div className="profile-page-wrapper">
       {/* Top Header & Mode Switcher */}
@@ -149,8 +164,7 @@ export default function Profile() {
 
       {/* VIEW PROFILE PAGE */}
       {!isEditMode ? (
-        <div className="profile-view-container">
-          
+        <FloatingIconsHero icons={iconsData}>
           {/* Center Identity Card */}
           <div className="profile-hero-card">
             <div className="profile-hero-line" />
@@ -214,62 +228,7 @@ export default function Profile() {
               )}
             </div>
           </div>
-
-          {/* Integrated Tech Stack Grid */}
-          <div style={{ textAlign: 'center', width: '100%' }}>
-            <h3 style={{
-              fontSize: '18px',
-              fontWeight: '800',
-              color: '#ffffff',
-              letterSpacing: '0.15em',
-              textTransform: 'uppercase',
-              fontFamily: 'monospace',
-              marginBottom: '20px',
-              textShadow: '0 0 15px rgba(168, 85, 247, 0.4)'
-            }}>
-              MY TECH STACK
-            </h3>
-
-            <div className="profile-tech-grid">
-              {displayTechs.map((tech, idx) => {
-                const iconUrl = getTechIconUrl(tech);
-                return (
-                  <div key={`${tech}-${idx}`} className="profile-tech-card" title={tech}>
-                    <img 
-                      src={iconUrl} 
-                      alt={tech} 
-                      className="profile-tech-icon"
-                      onError={(e) => {
-                        e.currentTarget.style.display = 'none';
-                        const parent = e.currentTarget.parentElement;
-                        if (parent && !parent.querySelector('.fallback-box')) {
-                          const box = document.createElement('div');
-                          box.className = 'fallback-box';
-                          box.style.width = '42px';
-                          box.style.height = '42px';
-                          box.style.borderRadius = '10px';
-                          box.style.background = 'rgba(168, 85, 247, 0.2)';
-                          box.style.border = '1px solid rgba(168, 85, 247, 0.4)';
-                          box.style.display = 'flex';
-                          box.style.alignItems = 'center';
-                          box.style.justifyContent = 'center';
-                          box.style.fontSize = '12px';
-                          box.style.fontWeight = 'bold';
-                          box.style.color = '#c084fc';
-                          box.style.fontFamily = 'monospace';
-                          box.innerText = tech.slice(0, 2).toUpperCase();
-                          parent.insertBefore(box, parent.firstChild);
-                        }
-                      }}
-                    />
-                    <span className="profile-tech-name">{tech}</span>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-        </div>
+        </FloatingIconsHero>
       ) : (
         /* EDIT PROFILE FORM PAGE */
         <div className="profile-edit-card">
