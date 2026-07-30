@@ -5,8 +5,9 @@ import logging
 from typing import Dict, Any, List, Optional
 import pptx
 from pptx import Presentation
-from pptx.util import Inches, Pt
+from pptx.util import Inches, Pt, Emu
 from pptx.dml.color import RGBColor
+from pptx.enum.text import PP_ALIGN
 
 from reportlab.lib.pagesizes import letter, landscape
 from reportlab.lib import colors
@@ -205,6 +206,156 @@ class PPTEngine:
             p_extra = existing_paras[extra_i]
             for r_extra in p_extra.runs:
                 r_extra.text = ""
+
+    @staticmethod
+    def render_slides_as_images(pptx_bytes: bytes, scale: float = 1.5) -> list:
+        """
+        Convert each slide in a PPTX to a PNG image using Pillow.
+        Extracts text shapes with their exact positions, sizes, font properties
+        and renders them onto a canvas matching slide dimensions.
+        Returns list of base64-encoded PNG strings.
+        """
+        import base64
+        from PIL import Image, ImageDraw, ImageFont
+
+        prs = Presentation(io.BytesIO(pptx_bytes))
+        slide_w_px = int(prs.slide_width.inches * 96 * scale)
+        slide_h_px = int(prs.slide_height.inches * 96 * scale)
+        emu_to_px = lambda emu: int(emu / 914400 * 96 * scale)
+
+        slide_images = []
+
+        for slide in prs.slides:
+            # Create white slide canvas
+            img = Image.new('RGB', (slide_w_px, slide_h_px), (255, 255, 255))
+            draw = ImageDraw.Draw(img)
+
+            # Check slide background fill color
+            bg = slide.background
+            if bg and bg.fill and bg.fill.type is not None:
+                try:
+                    fc = bg.fill.fore_color
+                    if fc and fc.type == 1:
+                        rgb = fc.rgb
+                        bg_color = (rgb[0] if isinstance(rgb[0], int) else int(str(rgb)[:2], 16),
+                                    rgb[1] if isinstance(rgb[1], int) else int(str(rgb)[2:4], 16),
+                                    rgb[2] if isinstance(rgb[2], int) else int(str(rgb)[4:6], 16))
+                        draw.rectangle([(0, 0), (slide_w_px, slide_h_px)], fill=bg_color)
+                except Exception:
+                    pass
+
+            # Render each text shape
+            for shape in slide.shapes:
+                if not shape.has_text_frame:
+                    continue
+                tf = shape.text_frame
+                txt = tf.text.strip()
+                if not txt:
+                    continue
+
+                x = emu_to_px(shape.left)
+                y = emu_to_px(shape.top)
+                w = emu_to_px(shape.width)
+                h = emu_to_px(shape.height)
+
+                # Gather all lines with their font properties
+                for para in tf.paragraphs:
+                    line_text = ""
+                    font_size_px = 16
+                    font_color = (50, 50, 50)
+                    is_bold = False
+
+                    for run in para.runs:
+                        if not run.text:
+                            continue
+                        line_text += run.text
+
+                        # Get font size
+                        if run.font.size:
+                            raw_pt = run.font.size / 12700
+                            # Cap display size for rendering (huge title fonts)
+                            capped_pt = min(raw_pt, 72)
+                            font_size_px = int(capped_pt * scale)
+
+                        # Get font color
+                        try:
+                            if run.font.color and run.font.color.type == 1:
+                                c = run.font.color.rgb
+                                cs = str(c)
+                                font_color = (int(cs[0:2], 16), int(cs[2:4], 16), int(cs[4:6], 16))
+                        except Exception:
+                            pass
+
+                        if run.font.bold:
+                            is_bold = True
+
+                    if not line_text.strip():
+                        y += font_size_px + 4
+                        continue
+
+                    # Try to load a suitable font
+                    try:
+                        if is_bold:
+                            pil_font = ImageFont.truetype("/System/Library/Fonts/Helvetica.ttc", font_size_px)
+                        else:
+                            pil_font = ImageFont.truetype("/System/Library/Fonts/Helvetica.ttc", font_size_px)
+                    except Exception:
+                        try:
+                            pil_font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", font_size_px)
+                        except Exception:
+                            pil_font = ImageFont.load_default()
+
+                    # Word-wrap text to fit within shape width
+                    wrapped_lines = PPTEngine._word_wrap(draw, line_text.strip(), pil_font, w - 8)
+
+                    for wl in wrapped_lines:
+                        # Determine x based on paragraph alignment
+                        text_x = x + 4
+                        try:
+                            bbox = draw.textbbox((0, 0), wl, font=pil_font)
+                            text_w = bbox[2] - bbox[0]
+                            if para.alignment == PP_ALIGN.CENTER:
+                                text_x = x + (w - text_w) // 2
+                            elif para.alignment == PP_ALIGN.RIGHT:
+                                text_x = x + w - text_w - 4
+                        except Exception:
+                            pass
+
+                        if y < slide_h_px:
+                            draw.text((text_x, y), wl, fill=font_color, font=pil_font)
+                        y += font_size_px + 4
+
+            # Convert to base64 PNG
+            buf = io.BytesIO()
+            img.save(buf, format='PNG', quality=92)
+            buf.seek(0)
+            b64 = base64.b64encode(buf.getvalue()).decode('utf-8')
+            slide_images.append(b64)
+
+        return slide_images
+
+    @staticmethod
+    def _word_wrap(draw, text: str, font, max_width: int) -> list:
+        """Word-wrap text to fit within max_width pixels."""
+        words = text.split(' ')
+        lines = []
+        current_line = ""
+        for word in words:
+            test_line = f"{current_line} {word}".strip()
+            try:
+                bbox = draw.textbbox((0, 0), test_line, font=font)
+                line_w = bbox[2] - bbox[0]
+            except Exception:
+                line_w = len(test_line) * 8
+            if line_w <= max_width:
+                current_line = test_line
+            else:
+                if current_line:
+                    lines.append(current_line)
+                current_line = word
+        if current_line:
+            lines.append(current_line)
+        return lines if lines else [text]
 
     @staticmethod
     def fill_presentation(

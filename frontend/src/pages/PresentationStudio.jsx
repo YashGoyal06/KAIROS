@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import { 
   Presentation as PresentationIcon, Loader, Download, Upload, CheckCircle2, 
-  FileText, Sparkles, Layout, ChevronLeft, ChevronRight, Eye, RefreshCw, Layers
+  FileText, Layout, ChevronLeft, ChevronRight, Eye, RefreshCw, ImageIcon
 } from 'lucide-react';
 
 export default function PresentationStudio() {
@@ -13,7 +13,6 @@ export default function PresentationStudio() {
   const [activeSessionId, setActiveSessionId] = useState('');
   const [activeSession, setActiveSession] = useState(null);
   
-  const [pitchText, setPitchText] = useState('');
   const [activeSlideIndex, setActiveSlideIndex] = useState(0);
 
   // Template States
@@ -23,13 +22,17 @@ export default function PresentationStudio() {
   const [isAnalyzingCustom, setIsAnalyzingCustom] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
 
+  // Slide Preview Images from backend
+  const [slideImages, setSlideImages] = useState([]);
+  const [isLoadingPreview, setIsLoadingPreview] = useState(false);
+  const [previewError, setPreviewError] = useState(null);
+
   const builtInTemplates = [
     { 
       id: 'template-1', 
       name: 'Cyber Neon Executive (Template 1)', 
       desc: 'Dark theme with purple glow & master tech card boxes', 
       slides: 10,
-      bg: 'linear-gradient(135deg, #0d0614 0%, #170b29 50%, #0d0614 100%)',
       accentColor: '#a855f7',
       borderColor: 'rgba(168,85,247,0.4)'
     },
@@ -38,7 +41,6 @@ export default function PresentationStudio() {
       name: 'Minimalist Modern Tech (Template 2)', 
       desc: 'Clean, sleek layout with crisp typography & grid cards', 
       slides: 11,
-      bg: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
       accentColor: '#38bdf8',
       borderColor: 'rgba(56,189,248,0.4)'
     },
@@ -47,7 +49,6 @@ export default function PresentationStudio() {
       name: 'Vibrant Launchpad (Template 3)', 
       desc: 'Dynamic pitch design with prominent master metric boxes', 
       slides: 11,
-      bg: 'linear-gradient(135deg, #18002e 0%, #2e0054 100%)',
       accentColor: '#f43f5e',
       borderColor: 'rgba(244,63,94,0.4)'
     },
@@ -56,7 +57,6 @@ export default function PresentationStudio() {
       name: 'Enterprise Architecture (Template 4)', 
       desc: 'Comprehensive technical & workflow flowchart deck', 
       slides: 13,
-      bg: 'linear-gradient(135deg, #091224 0%, #111f38 100%)',
       accentColor: '#34d399',
       borderColor: 'rgba(52,211,153,0.4)'
     },
@@ -65,7 +65,6 @@ export default function PresentationStudio() {
       name: 'Futuristic AI Studio (Template 5)', 
       desc: 'Obsidian gradient style for AI presentations & showcase', 
       slides: 10,
-      bg: 'linear-gradient(135deg, #050508 0%, #12101e 100%)',
       accentColor: '#c084fc',
       borderColor: 'rgba(192,132,252,0.4)'
     }
@@ -87,30 +86,47 @@ export default function PresentationStudio() {
     }
   };
 
-  const [sessionTasks, setSessionTasks] = useState([]);
-
   const fetchSessionDetails = async () => {
     if (!activeSessionId) return;
     try {
       const res = await axios.get(`${API_BASE}/sessions/${activeSessionId}`);
       setActiveSession(res.data);
-      if (res.data.pitch_outline && res.data.pitch_outline.full_raw) {
-        setPitchText(res.data.pitch_outline.full_raw);
-      } else {
-        setPitchText('');
-      }
-
-      // Fetch tasks for task metrics slide
-      try {
-        const tasksRes = await axios.get(`${API_BASE}/tasks/session/${activeSessionId}`);
-        setSessionTasks(tasksRes.data || []);
-      } catch (tErr) {
-        setSessionTasks([]);
-      }
     } catch (e) {
       console.error("Error loading presentation details:", e);
     }
   };
+
+  // Fetch preview slide images from backend
+  const fetchPreviewSlides = useCallback(async () => {
+    if (!activeSessionId) return;
+    setIsLoadingPreview(true);
+    setPreviewError(null);
+    setActiveSlideIndex(0);
+
+    try {
+      const formData = new FormData();
+      if (selectedTemplate === 'custom' && customFile) {
+        formData.append('file', customFile);
+      } else {
+        formData.append('template_id', selectedTemplate);
+      }
+
+      const res = await axios.post(
+        `${API_BASE}/sessions/${activeSessionId}/pitch/preview-slides`,
+        formData,
+        { headers: { 'Content-Type': 'multipart/form-data' }, timeout: 30000 }
+      );
+
+      if (res.data && res.data.slides) {
+        setSlideImages(res.data.slides);
+      }
+    } catch (err) {
+      console.error("Error loading preview slides:", err);
+      setPreviewError("Failed to generate preview. Please try again.");
+    } finally {
+      setIsLoadingPreview(false);
+    }
+  }, [activeSessionId, selectedTemplate, customFile, API_BASE]);
 
   useEffect(() => {
     fetchSessions();
@@ -119,6 +135,13 @@ export default function PresentationStudio() {
   useEffect(() => {
     fetchSessionDetails();
   }, [activeSessionId]);
+
+  // Auto-fetch preview when session or template changes
+  useEffect(() => {
+    if (activeSessionId && selectedTemplate) {
+      fetchPreviewSlides();
+    }
+  }, [activeSessionId, selectedTemplate]);
 
   const handleCustomFileUpload = async (e) => {
     const file = e.target.files[0];
@@ -205,108 +228,6 @@ export default function PresentationStudio() {
     }
   };
 
-  const getSlidePreviews = () => {
-    const title = activeSession?.name || 'Project Pitch';
-    const problem = activeSession?.problem_statement || 'Addressing hackathon project planning and execution challenges.';
-    const idea = activeSession?.user_idea || 'AI Hackathon Execution Platform';
-
-    const milestones = Array.isArray(activeSession?.milestones) ? activeSession.milestones : [];
-    const msBullets = milestones.map(m => {
-      if (typeof m === 'object' && m !== null) {
-        return `${m.title || 'Milestone'}: ${m.status || 'In Progress'}`;
-      }
-      return String(m || 'Milestone: In Progress');
-    });
-
-    const taskBullets = (Array.isArray(sessionTasks) ? sessionTasks : []).slice(0, 6).map(t => {
-      if (typeof t === 'object' && t !== null) {
-        return `${t.name || 'Task'} [${t.priority || 'High'}]`;
-      }
-      return String(t || 'Task [High]');
-    });
-
-    const rawOutline = typeof activeSession?.pitch_outline?.full_raw === 'string' ? activeSession.pitch_outline.full_raw : '';
-
-    const userName = profile?.full_name || 'Innovator';
-    const userRole = (typeof profile?.tech_stack === 'string' && profile.tech_stack) ? profile.tech_stack.split(',')[0] : 'Fullstack Engineer';
-    const userSkills = profile?.tech_stack || 'Python, React, FastAPI';
-
-    return [
-      {
-        num: 1,
-        title: title,
-        subtitle: idea,
-        category: 'Title & Vision',
-        bullets: ['AI-Driven Co-Founder Engine', 'Real-Time Task Syncing', 'Zero-Overflow Slide Generation']
-      },
-      {
-        num: 2,
-        title: 'Problem Statement & Vision',
-        subtitle: problem,
-        category: 'Problem & Value',
-        bullets: ['Loss of project momentum during hackathons', 'Unstructured milestone management', 'Manual pitch slide design overhead']
-      },
-      {
-        num: 3,
-        title: 'Core Solution & Product Demo',
-        subtitle: rawOutline ? rawOutline.slice(0, 100) + '...' : 'Real-time AI workflow engine for execution teams.',
-        category: 'Product Demo',
-        bullets: ['Interactive AI Coach Room', 'Task Board with AI Blocker Assistance', 'Instant PPTX & PDF Presentation Suite']
-      },
-      {
-        num: 4,
-        title: 'System Architecture & Stack',
-        subtitle: 'FastAPI backend, Supabase DB, React 19 UI.',
-        category: 'Architecture',
-        bullets: ['FastAPI Async Backend', 'Supabase Database & Auth', 'Claude LLM Broker & Agents']
-      },
-      {
-        num: 5,
-        title: 'Roadmap & Execution Plan',
-        subtitle: 'Sprint Milestones',
-        category: 'Roadmap',
-        bullets: msBullets.length > 0 ? msBullets : ['Phase 1: Architecture & DB Setup', 'Phase 2: AI Coach & Task Sync', 'Phase 3: Presentation Studio Export']
-      },
-      {
-        num: 6,
-        title: 'Sprint Tasks & Progress',
-        subtitle: 'Execution Metrics',
-        category: 'Task Metrics',
-        bullets: taskBullets.length > 0 ? taskBullets : ['Task 1: Supabase Setup', 'Task 2: AI Scope Review', 'Task 3: Slide Export Engine']
-      },
-      {
-        num: 7,
-        title: 'Team & Technical Mastery',
-        subtitle: `Lead: ${userName} (${userRole})`,
-        category: 'Team Profile',
-        bullets: [`Lead: ${userName}`, `Role: ${userRole}`, `Skills: ${userSkills}`]
-      },
-      {
-        num: 8,
-        title: 'Pitch Showcase & Impact',
-        subtitle: rawOutline ? rawOutline.slice(0, 100) + '...' : 'KAIROS provides an end-to-end execution co-founder.',
-        category: 'Value Showcase',
-        bullets: ['Reduces pitch compilation time by 90%', 'Guarantees zero text overflow across all templates', 'Professional PPTX and PDF output streams']
-      },
-      {
-        num: 9,
-        title: 'Risk Mitigation & Support',
-        subtitle: 'Resilience Strategy',
-        category: 'Risk Management',
-        bullets: ['LLM rate-limit fallback routing', 'Resilient database connection pools', 'Validated slide placeholder mapping']
-      },
-      {
-        num: 10,
-        title: 'Conclusion & Next Steps',
-        subtitle: 'Ready for Live Execution',
-        category: 'Call to Action',
-        bullets: ['Launch local servers', 'Test live presentation decks', 'Submit project to judges']
-      }
-    ];
-  };
-
-  const slides = getSlidePreviews();
-  const currentSlide = slides[activeSlideIndex] || slides[0];
   const activeT = builtInTemplates.find(t => t.id === selectedTemplate) || builtInTemplates[0];
 
   return (
@@ -318,7 +239,7 @@ export default function PresentationStudio() {
             <PresentationIcon size={32} style={{ color: '#a855f7' }} /> Presentation Studio & Live PPTX Preview
           </h1>
           <p style={{ color: '#9ca3af', fontSize: '14px', marginTop: '4px' }}>
-            Preview slides in real-time, switch templates with zero text overflow, and export `.pptx` or `.pdf`.
+            Preview the <strong style={{ color: '#c084fc' }}>exact PPTX</strong> that will be downloaded. Switch templates and see real slide renders instantly.
           </p>
         </div>
 
@@ -359,9 +280,11 @@ export default function PresentationStudio() {
           </select>
         </div>
 
-        <button onClick={fetchSessionDetails} className="btn btn-secondary" style={{ padding: '8px 14px', fontSize: '13px' }}>
-          <RefreshCw size={14} /> Refresh Data
-        </button>
+        <div style={{ display: 'flex', gap: '8px' }}>
+          <button onClick={fetchPreviewSlides} className="btn btn-secondary" style={{ padding: '8px 14px', fontSize: '13px' }}>
+            <RefreshCw size={14} /> Refresh Preview
+          </button>
+        </div>
       </div>
 
       {/* Slide Template Selection Bar */}
@@ -372,7 +295,7 @@ export default function PresentationStudio() {
               <Layout size={18} style={{ color: '#c084fc' }} /> Slide Template Engine (Master `.pptx` Files Preserved)
             </h3>
             <p style={{ color: '#9ca3af', fontSize: '12px', margin: '4px 0 0 0' }}>
-              Replaces placeholder text directly inside your original template files (`Template-1.pptx` – `Template-5.pptx`) while retaining all background graphics, layout shapes, and vector designs intact.
+              Select a template below. The preview shows the <strong style={{ color: '#e2e8f0' }}>exact rendered PPTX</strong> — what you see is what you download.
             </p>
           </div>
 
@@ -437,68 +360,88 @@ export default function PresentationStudio() {
         </div>
       </div>
 
-      {/* Main Interactive PPT Preview Workspace */}
-      <div style={{ display: 'grid', gridTemplateColumns: '260px 1fr', gap: '24px', flexGrow: 1 }}>
+      {/* Main Slide Preview Workspace */}
+      <div style={{ display: 'grid', gridTemplateColumns: '220px 1fr', gap: '24px', flexGrow: 1 }}>
         
-        {/* Left Pane - Slide Thumbnails List */}
-        <div className="glass-card" style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '12px', maxHeight: '620px', overflowY: 'auto' }}>
-          <h4 style={{ fontSize: '13px', textTransform: 'uppercase', color: '#a1a1aa', letterSpacing: '0.05em', margin: '0 0 4px 0', fontWeight: 700 }}>
-            Slide Deck ({slides.length})
+        {/* Left Pane - Slide Thumbnails */}
+        <div className="glass-card" style={{ padding: '12px', display: 'flex', flexDirection: 'column', gap: '6px', maxHeight: '620px', overflowY: 'auto' }}>
+          <h4 style={{ fontSize: '12px', textTransform: 'uppercase', color: '#a1a1aa', letterSpacing: '0.05em', margin: '0 0 4px 0', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <ImageIcon size={13} />
+            Slides ({slideImages.length || '—'})
           </h4>
 
-          {slides.map((s, idx) => (
+          {isLoadingPreview && (
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', padding: '20px 0' }}>
+              <Loader size={20} style={{ color: '#a855f7', animation: 'spin 1s linear infinite' }} />
+              <span style={{ fontSize: '11px', color: '#9ca3af' }}>Rendering slides...</span>
+            </div>
+          )}
+
+          {!isLoadingPreview && slideImages.map((b64, idx) => (
             <div
-              key={s.num}
+              key={idx}
               onClick={() => setActiveSlideIndex(idx)}
               style={{
-                padding: '10px 12px',
-                borderRadius: '8px',
-                background: activeSlideIndex === idx ? 'rgba(168,85,247,0.2)' : 'rgba(255,255,255,0.03)',
-                border: activeSlideIndex === idx ? '1px solid #a855f7' : '1px solid rgba(255,255,255,0.05)',
+                padding: '3px',
+                borderRadius: '6px',
+                border: activeSlideIndex === idx ? '2px solid #a855f7' : '1px solid rgba(255,255,255,0.08)',
+                background: activeSlideIndex === idx ? 'rgba(168,85,247,0.12)' : 'rgba(0,0,0,0.15)',
                 cursor: 'pointer',
-                transition: 'all 0.15s ease',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '12px'
+                transition: 'all 0.15s ease'
               }}
             >
-              <div style={{ width: '24px', height: '24px', borderRadius: '50%', background: activeSlideIndex === idx ? '#a855f7' : 'rgba(255,255,255,0.1)', color: '#fff', fontSize: '11px', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                {s.num}
-              </div>
-              <div style={{ flexGrow: 1, minWidth: 0 }}>
-                <h5 style={{ fontSize: '12px', color: '#fff', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontWeight: 600 }}>
-                  {s.title}
-                </h5>
-                <span style={{ fontSize: '10px', color: '#9ca3af' }}>{s.category}</span>
+              <img
+                src={`data:image/png;base64,${b64}`}
+                alt={`Slide ${idx + 1}`}
+                style={{
+                  width: '100%',
+                  borderRadius: '4px',
+                  objectFit: 'contain',
+                  display: 'block'
+                }}
+              />
+              <div style={{ textAlign: 'center', padding: '2px 0' }}>
+                <span style={{ fontSize: '9px', color: activeSlideIndex === idx ? '#c084fc' : '#71717a', fontWeight: 600 }}>
+                  Slide {idx + 1}
+                </span>
               </div>
             </div>
           ))}
+
+          {!isLoadingPreview && slideImages.length === 0 && !previewError && (
+            <div style={{ padding: '20px 8px', textAlign: 'center' }}>
+              <p style={{ fontSize: '11px', color: '#9ca3af', margin: 0 }}>Select a session & template to preview slides.</p>
+            </div>
+          )}
         </div>
 
-        {/* Right Pane - Full 16:9 Interactive Slide Canvas Preview */}
-        <div className="glass-card" style={{ display: 'flex', flexDirection: 'column', padding: '24px', minHeight: '540px' }}>
+        {/* Right Pane - Full Slide Image Preview */}
+        <div className="glass-card" style={{ display: 'flex', flexDirection: 'column', padding: '20px', minHeight: '540px' }}>
           
           {/* Slide Navigation Header */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <Eye size={18} style={{ color: activeT.accentColor }} />
               <span style={{ fontSize: '14px', fontWeight: 600, color: '#fff' }}>
-                Slide {currentSlide.num} of {slides.length} — <span style={{ color: activeT.accentColor }}>{currentSlide.category}</span>
+                {slideImages.length > 0 
+                  ? <>Slide {activeSlideIndex + 1} of {slideImages.length} — <span style={{ color: activeT.accentColor }}>Exact PPTX Preview</span></>
+                  : <span style={{ color: '#9ca3af' }}>No Preview Available</span>
+                }
               </span>
             </div>
 
             <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
               <button 
                 onClick={() => setActiveSlideIndex(prev => Math.max(0, prev - 1))}
-                disabled={activeSlideIndex === 0}
+                disabled={activeSlideIndex === 0 || slideImages.length === 0}
                 className="btn btn-secondary"
                 style={{ padding: '6px 12px', fontSize: '12px' }}
               >
                 <ChevronLeft size={14} /> Prev
               </button>
               <button 
-                onClick={() => setActiveSlideIndex(prev => Math.min(slides.length - 1, prev + 1))}
-                disabled={activeSlideIndex === slides.length - 1}
+                onClick={() => setActiveSlideIndex(prev => Math.min(slideImages.length - 1, prev + 1))}
+                disabled={activeSlideIndex >= slideImages.length - 1 || slideImages.length === 0}
                 className="btn btn-secondary"
                 style={{ padding: '6px 12px', fontSize: '12px' }}
               >
@@ -507,197 +450,69 @@ export default function PresentationStudio() {
             </div>
           </div>
 
-          {/* 16:9 Presentation Frame Preview Box */}
+          {/* Slide Image Display */}
           <div 
             style={{
               width: '100%',
-              aspectRatio: '16/9',
-              background: activeT.bg,
+              flexGrow: 1,
+              background: '#0a0a0f',
               borderRadius: '12px',
               border: `1px solid ${activeT.borderColor}`,
-              boxShadow: `0 12px 36px rgba(0,0,0,0.6)`,
-              padding: '36px',
+              boxShadow: '0 12px 36px rgba(0,0,0,0.6)',
               display: 'flex',
-              flexDirection: 'column',
-              justify: 'space-between',
+              alignItems: 'center',
+              justifyContent: 'center',
               position: 'relative',
-              overflow: 'hidden'
+              overflow: 'hidden',
+              minHeight: '400px'
             }}
           >
-            {/* Template Glow Accent */}
-            <div style={{ position: 'absolute', top: '-40px', right: '-40px', width: '220px', height: '220px', borderRadius: '50%', background: activeT.accentColor, filter: 'blur(80px)', opacity: 0.25 }} />
-
-            {/* Slide Header & Pill Badge */}
-            <div style={{ zIndex: 2 }}>
-              <div style={{ display: 'inline-block', background: activeT.accentColor, padding: '3px 12px', borderRadius: '12px', fontSize: '10px', fontWeight: 800, color: '#fff', letterSpacing: '0.08em', marginBottom: '8px' }}>
-                {currentSlide.category?.toUpperCase() || 'KAIROS PRESENTATION'}
+            {isLoadingPreview && (
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px' }}>
+                <Loader size={36} style={{ color: '#a855f7', animation: 'spin 1s linear infinite' }} />
+                <span style={{ fontSize: '14px', color: '#9ca3af', fontWeight: 500 }}>Generating exact PPTX preview...</span>
+                <span style={{ fontSize: '11px', color: '#64748b' }}>This renders the real template with your project data</span>
               </div>
-              <h2 style={{ fontSize: '26px', color: '#fff', fontWeight: 800, margin: '2px 0 2px 0', lineHeight: 1.2 }}>
-                {currentSlide.title}
-              </h2>
-              <p style={{ fontSize: '13px', color: '#94a3b8', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                {currentSlide.subtitle}
-              </p>
-            </div>
+            )}
 
-            {/* DYNAMIC 1:1 GAMMA SLIDE CONTENT LAYOUTS */}
-            <div style={{ margin: '14px 0', zIndex: 2, flexGrow: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-              
-              {/* SLIDE 1: HERO COVER */}
-              {currentSlide.num === 1 && (
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '14px', marginTop: '10px' }}>
-                  {[
-                    { t: '01. AI Coach Engine', d: 'Real-time AI architecture & scope advisor.' },
-                    { t: '02. Task Board Sync', d: 'Automated priority task breakdown.' },
-                    { t: '03. Gamma Studio Export', d: 'Anti-overflow PPTX presentation suite.' }
-                  ].map((card, i) => (
-                    <div key={i} style={{ background: i === 0 ? 'rgba(168,85,247,0.15)' : 'rgba(18,20,30,0.8)', border: i === 0 ? '1.5px solid #a855f7' : '1px solid #2a2438', padding: '14px', borderRadius: '10px' }}>
-                      <h4 style={{ fontSize: '14px', color: i === 0 ? '#c084fc' : '#fff', fontWeight: 700, margin: '0 0 6px 0' }}>{card.t}</h4>
-                      <p style={{ fontSize: '11px', color: '#94a3b8', margin: 0, lineHeight: 1.4 }}>{card.d}</p>
-                    </div>
-                  ))}
-                </div>
-              )}
+            {previewError && !isLoadingPreview && (
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px' }}>
+                <span style={{ fontSize: '14px', color: '#f87171' }}>{previewError}</span>
+                <button onClick={fetchPreviewSlides} className="btn btn-secondary" style={{ padding: '8px 16px', fontSize: '13px' }}>
+                  <RefreshCw size={14} /> Retry Preview
+                </button>
+              </div>
+            )}
 
-              {/* SLIDE 2: PROBLEM STATEMENT (3 COLUMN CARDS) */}
-              {currentSlide.num === 2 && (
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '14px', marginTop: '10px' }}>
-                  {[
-                    { num: '01.', t: 'Loss of Momentum', d: 'Teams waste 40% time formatting slides instead of building features.' },
-                    { num: '02.', t: 'Scope Creep', d: 'Unstructured tasks lead to missed crunch deadlines.' },
-                    { num: '03.', t: 'Static Text Decks', d: 'Traditional PPT generators fail to impress hackathon judges.' }
-                  ].map((card, i) => (
-                    <div key={i} style={{ background: 'rgba(18,20,30,0.85)', border: '1px solid #2a2438', padding: '14px', borderRadius: '10px' }}>
-                      <span style={{ fontSize: '16px', color: '#38bdf8', fontWeight: 800 }}>{card.num}</span>
-                      <h4 style={{ fontSize: '14px', color: '#fff', fontWeight: 700, margin: '4px 0 6px 0' }}>{card.t}</h4>
-                      <p style={{ fontSize: '11px', color: '#94a3b8', margin: 0, lineHeight: 1.4 }}>{card.d}</p>
-                    </div>
-                  ))}
-                </div>
-              )}
+            {!isLoadingPreview && !previewError && slideImages.length > 0 && slideImages[activeSlideIndex] && (
+              <img
+                src={`data:image/png;base64,${slideImages[activeSlideIndex]}`}
+                alt={`Slide ${activeSlideIndex + 1} Preview`}
+                style={{
+                  maxWidth: '100%',
+                  maxHeight: '100%',
+                  objectFit: 'contain',
+                  borderRadius: '8px'
+                }}
+              />
+            )}
 
-              {/* SLIDE 3: CORE SOLUTION (2-COLUMN HERO SPLIT) */}
-              {currentSlide.num === 3 && (
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.4fr', gap: '16px', marginTop: '8px' }}>
-                  <div style={{ background: 'rgba(52,211,153,0.1)', border: '1.5px solid #34d399', padding: '16px', borderRadius: '10px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-                    <span style={{ fontSize: '42px', fontWeight: 900, color: '#34d399', lineHeight: 1 }}>10x</span>
-                    <h4 style={{ fontSize: '15px', color: '#fff', fontWeight: 800, margin: '6px 0' }}>Faster Deck Creation</h4>
-                    <p style={{ fontSize: '11px', color: '#94a3b8', margin: 0 }}>{currentSlide.subtitle}</p>
-                  </div>
-                  <div style={{ background: 'rgba(18,20,30,0.85)', border: '1px solid #2a2438', padding: '14px', borderRadius: '10px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                    {currentSlide.bullets.map((b, i) => (
-                      <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <Sparkles size={12} style={{ color: '#a855f7', flexShrink: 0 }} />
-                        <span style={{ fontSize: '11px', color: '#f1f5f9', fontWeight: 600 }}>{b}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
+            {!isLoadingPreview && !previewError && slideImages.length === 0 && (
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px' }}>
+                <PresentationIcon size={48} style={{ color: '#2a2438' }} />
+                <span style={{ fontSize: '14px', color: '#64748b' }}>Select a session to preview your presentation</span>
+              </div>
+            )}
+          </div>
 
-              {/* SLIDE 4: SYSTEM ARCHITECTURE (4 GRID CARDS) */}
-              {currentSlide.num === 4 && (
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginTop: '8px' }}>
-                  {[
-                    { t: 'FastAPI Backend', d: 'Async Python server with SQLAlchemy ORM & SSE.' },
-                    { t: 'Supabase DB & Auth', d: 'PostgreSQL database with real-time subscriptions.' },
-                    { t: 'LLM Orchestrator', d: 'Multi-model fallback broker routing Groq & Nvidia.' },
-                    { t: 'React 19 & Vite UI', d: 'Modern glassmorphism interface with Lenis scroll.' }
-                  ].map((card, i) => (
-                    <div key={i} style={{ background: 'rgba(18,20,30,0.85)', border: '1px solid #2a2438', padding: '10px 14px', borderRadius: '8px' }}>
-                      <h4 style={{ fontSize: '12px', color: i % 2 === 0 ? '#38bdf8' : '#c084fc', fontWeight: 700, margin: 0 }}>{card.t}</h4>
-                      <p style={{ fontSize: '10px', color: '#94a3b8', margin: '4px 0 0 0' }}>{card.d}</p>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {/* SLIDE 5: ROADMAP MILESTONES (3 STAGE CARDS) */}
-              {currentSlide.num === 5 && (
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '14px', marginTop: '10px' }}>
-                  {(Array.isArray(currentSlide.bullets) ? currentSlide.bullets : []).slice(0, 3).map((b, i) => {
-                    const bStr = String(b || '');
-                    const parts = bStr.split(':');
-                    return (
-                      <div key={i} style={{ background: 'rgba(18,20,30,0.85)', border: '1px solid #2a2438', padding: '14px', borderRadius: '10px' }}>
-                        <span style={{ fontSize: '10px', color: '#34d399', fontWeight: 800 }}>STAGE 0{i+1}</span>
-                        <h4 style={{ fontSize: '13px', color: '#fff', fontWeight: 700, margin: '6px 0' }}>{parts[0] || 'Milestone'}</h4>
-                        <span style={{ fontSize: '9px', background: 'rgba(56,189,248,0.2)', color: '#38bdf8', padding: '2px 6px', borderRadius: '4px', fontWeight: 700 }}>
-                          {parts[1] || 'IN PROGRESS'}
-                        </span>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-
-              {/* SLIDE 6: SPRINT TASK METRICS */}
-              {currentSlide.num === 6 && (
-                <div style={{ background: 'rgba(18,20,30,0.85)', border: '1px solid #2a2438', padding: '14px', borderRadius: '10px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  {currentSlide.bullets.map((b, i) => (
-                    <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(255,255,255,0.03)', padding: '6px 12px', borderRadius: '6px' }}>
-                      <span style={{ fontSize: '11px', color: '#fff', fontWeight: 600 }}>• {b}</span>
-                      <span style={{ fontSize: '9px', color: '#a855f7', background: 'rgba(168,85,247,0.2)', padding: '2px 6px', borderRadius: '4px', fontWeight: 700 }}>High Priority</span>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {/* SLIDE 7: TEAM & TECHNICAL MASTERY */}
-              {currentSlide.num === 7 && (
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px', marginTop: '8px' }}>
-                  <div style={{ background: 'rgba(18,20,30,0.85)', border: '1px solid #2a2438', padding: '14px', borderRadius: '10px' }}>
-                    <h4 style={{ fontSize: '16px', color: '#fff', fontWeight: 800, margin: 0 }}>{profile?.full_name || 'Innovator'}</h4>
-                    <span style={{ fontSize: '11px', color: '#c084fc', fontWeight: 600 }}>Lead Architect</span>
-                    <p style={{ fontSize: '10px', color: '#94a3b8', margin: '8px 0 0 0' }}>Stack: Python, FastAPI, React, Supabase</p>
-                  </div>
-                  <div style={{ background: 'rgba(18,20,30,0.85)', border: '1px solid #2a2438', padding: '14px', borderRadius: '10px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                    <span style={{ fontSize: '11px', color: '#38bdf8', fontWeight: 700 }}>✔ Fullstack Async Architecture</span>
-                    <span style={{ fontSize: '11px', color: '#38bdf8', fontWeight: 700 }}>✔ Multi-LLM Cascading Broker</span>
-                    <span style={{ fontSize: '11px', color: '#38bdf8', fontWeight: 700 }}>✔ Vector Card Bounding Engine</span>
-                  </div>
-                </div>
-              )}
-
-              {/* SLIDE 8: VALUE PROPOSITION SHOWCASE */}
-              {currentSlide.num === 8 && (
-                <div style={{ background: 'rgba(52,211,153,0.1)', border: '1.5px solid #34d399', padding: '20px', borderRadius: '10px' }}>
-                  <p style={{ fontSize: '14px', color: '#fff', fontWeight: 700, margin: 0, lineHeight: 1.5 }}>
-                    “ {currentSlide.subtitle} ”
-                  </p>
-                </div>
-              )}
-
-              {/* SLIDE 9: RISK MATRIX */}
-              {currentSlide.num === 9 && (
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px', marginTop: '8px' }}>
-                  <div style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', padding: '12px', borderRadius: '10px' }}>
-                    <h4 style={{ fontSize: '12px', color: '#f87171', fontWeight: 800, margin: '0 0 6px 0' }}>Potential Risks</h4>
-                    <p style={{ fontSize: '10px', color: '#94a3b8', margin: 0 }}>⚠ LLM rate limits & server drops</p>
-                  </div>
-                  <div style={{ background: 'rgba(52,211,153,0.1)', border: '1px solid rgba(52,211,153,0.3)', padding: '12px', borderRadius: '10px' }}>
-                    <h4 style={{ fontSize: '12px', color: '#34d399', fontWeight: 800, margin: '0 0 6px 0' }}>KAIROS Strategy</h4>
-                    <p style={{ fontSize: '10px', color: '#fff', margin: 0 }}>✔ Multi-model fallback cascade broker</p>
-                  </div>
-                </div>
-              )}
-
-              {/* SLIDE 10: CONCLUSION CTA */}
-              {currentSlide.num === 10 && (
-                <div style={{ background: 'rgba(168,85,247,0.15)', border: '1.5px solid #a855f7', padding: '24px', borderRadius: '12px', textAlign: 'center' }}>
-                  <h3 style={{ fontSize: '20px', color: '#fff', fontWeight: 900, margin: 0 }}>Ready for Production Execution</h3>
-                  <p style={{ fontSize: '12px', color: '#94a3b8', margin: '8px 0 0 0' }}>KAIROS empowers hackathon teams to ship faster, present smarter, and win bigger.</p>
-                </div>
-              )}
-
-            </div>
-
-            {/* Slide Footer */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: '10px', zIndex: 2 }}>
-              <span style={{ fontSize: '10px', color: '#64748b' }}>KAIROS Gamma 1:1 Live Canvas Engine</span>
-              <span style={{ fontSize: '10px', color: activeT.accentColor, fontWeight: 700 }}>Slide {currentSlide.num} of 10</span>
-            </div>
-
+          {/* Footer Info */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '10px' }}>
+            <span style={{ fontSize: '11px', color: '#64748b' }}>
+              ✓ Preview shows the exact PPTX that will be downloaded — same template, same content, same fonts
+            </span>
+            <span style={{ fontSize: '11px', color: activeT.accentColor, fontWeight: 600 }}>
+              {slideImages.length > 0 ? `${slideImages.length} slides rendered` : ''}
+            </span>
           </div>
 
         </div>

@@ -1,4 +1,5 @@
 import io
+import re
 import uuid
 import json
 import logging
@@ -177,6 +178,65 @@ async def export_pptx(
         media_type="application/vnd.openxmlformats-officedocument.presentationml.presentation",
         headers={"Content-Disposition": f'attachment; filename="{filename}"'}
     )
+
+@router.post("/preview-slides")
+async def preview_slides(
+    session_id: uuid.UUID,
+    file: Optional[UploadFile] = File(None),
+    template_id: str = Form("template-1"),
+    db: AsyncSession = Depends(get_db)
+):
+    """Generate the exact same PPTX as download and convert each slide to a PNG image for preview."""
+    sess_res = await db.execute(select(Session).where(Session.id == session_id))
+    session = sess_res.scalars().first()
+    if not session:
+        raise HTTPException(status_code=404, detail="Session not found")
+
+    milestones = session.milestones or []
+    tasks_res = await db.execute(select(Task).where(Task.session_id == session_id))
+    tasks = [{"name": t.name, "status": t.status, "priority": t.priority} for t in tasks_res.scalars().all()]
+
+    team_data = {}
+    if session.team_id:
+        team_res = await db.execute(select(Team).where(Team.id == session.team_id))
+        team = team_res.scalars().first()
+        if team and team.master_json:
+            team_data = team.master_json
+
+    pitch_sections = {}
+    if session.pitch_outline and isinstance(session.pitch_outline, dict):
+        raw = session.pitch_outline.get("full_raw", "")
+        cleaned_summary = re.sub(r'#+\s*', '', raw or "")
+        cleaned_summary = re.sub(r'\*+|\_+', '', cleaned_summary)
+        cleaned_summary = re.sub(r'\n+', ' ', cleaned_summary).strip()
+        cleaned_summary = cleaned_summary[:180] + "..." if len(cleaned_summary) > 180 else cleaned_summary
+        pitch_sections["showcase"] = cleaned_summary or "KAIROS provides an end-to-end execution co-founder."
+        pitch_sections["demo"] = cleaned_summary or "Real-time AI workflow engine for execution teams."
+        pitch_sections["architecture"] = "FastAPI async backend, Supabase DB, React 19 UI."
+
+    custom_bytes = await file.read() if file else None
+
+    # Generate the exact same PPTX as download
+    output_bytes = PPTEngine.fill_presentation(
+        template_source=template_id,
+        session_name=session.name,
+        problem_statement=session.problem_statement or "",
+        user_idea=session.user_idea or "",
+        pitch_sections=pitch_sections,
+        milestones=milestones,
+        tasks=tasks,
+        team_data=team_data,
+        custom_pptx_bytes=custom_bytes
+    )
+
+    # Convert to slide images
+    slide_images = PPTEngine.render_slides_as_images(output_bytes, scale=1.5)
+
+    return {
+        "status": "success",
+        "slide_count": len(slide_images),
+        "slides": slide_images  # list of base64 PNG strings
+    }
 
 @router.post("/export-pdf")
 async def export_pdf(
