@@ -24,7 +24,10 @@ export default function Dashboard() {
   const [selectedSessionId, setSelectedSessionId] = useState('');
 
   const fetchData = async () => {
-    if (!profile) return;
+    if (!profile) {
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     try {
       // 1. Fetch user teams
