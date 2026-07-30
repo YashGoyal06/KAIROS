@@ -17,13 +17,22 @@ export default function PresentationStudio() {
   const [activeSlideIndex, setActiveSlideIndex] = useState(0);
 
   // Template States
-  const [selectedTemplate, setSelectedTemplate] = useState('template-1');
+  const [selectedTemplate, setSelectedTemplate] = useState('template-gamma');
   const [customFile, setCustomFile] = useState(null);
   const [customAnalysis, setCustomAnalysis] = useState(null);
   const [isAnalyzingCustom, setIsAnalyzingCustom] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
 
   const builtInTemplates = [
+    { 
+      id: 'template-gamma', 
+      name: 'Gamma AI Ultra (Recommended)', 
+      desc: 'Gamma.app 16:9 obsidian cards with pill badges & metric blocks', 
+      slides: 10,
+      bg: 'linear-gradient(135deg, #090a0f 0%, #12141e 100%)',
+      accentColor: '#a855f7',
+      borderColor: 'rgba(168,85,247,0.6)'
+    },
     { 
       id: 'template-1', 
       name: 'Cyber Neon Executive', 
