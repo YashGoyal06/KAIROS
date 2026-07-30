@@ -4,7 +4,7 @@ import { useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Check, Plus, X, User, Edit3, Sparkles } from 'lucide-react';
 import { FaLinkedin, FaGithub } from 'react-icons/fa';
-import StaggeredGrid from '../components/StaggeredGrid';
+import { FloatingIconsHero } from '../components/ui/floating-icons-hero-section';
 
 const PREDEFINED_TECH = {
   "Languages": ["Python", "JavaScript", "TypeScript", "Rust", "Go", "C++", "HTML/CSS", "Solidity"],
@@ -101,10 +101,6 @@ export default function Profile() {
     }
   };
 
-  const userInitials = fullName
-    ? fullName.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()
-    : 'U';
-
   return (
     <div className="main-content" style={{
       padding: '32px',
@@ -114,7 +110,7 @@ export default function Profile() {
       boxSizing: 'border-box',
       display: 'flex',
       flexDirection: 'column',
-      gap: '32px'
+      gap: '24px'
     }}>
       {/* Header & Mode Switcher */}
       <div style={{
@@ -142,11 +138,11 @@ export default function Profile() {
           <p style={{ fontSize: '13px', color: '#9ca3af', marginTop: '4px', margin: 0 }}>
             {isEditMode 
               ? 'Update your bio, tech stack, and social connections' 
-              : 'Overview of your developer identity and integrated tech stack'}
+              : 'Overview of your developer identity and integrated floating tech stack'}
           </p>
         </div>
 
-        {/* Tab Buttons */}
+        {/* Tab Switcher */}
         <div style={{
           display: 'flex',
           backgroundColor: 'rgba(255, 255, 255, 0.03)',
@@ -201,111 +197,17 @@ export default function Profile() {
         </div>
       </div>
 
-      {/* VIEW PROFILE PAGE */}
+      {/* VIEW PROFILE PAGE (Floating Icons Hero with Center Name, Role, Socials, Surrounding Tech Stack) */}
       {!isEditMode ? (
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '32px', width: '100%' }}>
-          
-          {/* Top Center Identity Card */}
-          <div style={{
-            width: '100%',
-            maxWidth: '700px',
-            backgroundColor: 'rgba(18, 16, 25, 0.7)',
-            backdropFilter: 'blur(20px)',
-            WebkitBackdropFilter: 'blur(20px)',
-            border: '1px solid rgba(255, 255, 255, 0.1)',
-            borderRadius: '24px',
-            padding: '32px',
-            boxSizing: 'border-box',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            textAlign: 'center',
-            gap: '12px',
-            position: 'relative',
-            overflow: 'hidden',
-            boxShadow: '0 20px 50px rgba(0,0,0,0.5)'
-          }}>
-            {/* Gradient Top Line */}
-            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '4px', background: 'linear-gradient(90deg, #a855f7, #ec4899, #6366f1)' }} />
-
-            {/* Avatar Circle */}
-            <div style={{
-              width: '84px',
-              height: '84px',
-              borderRadius: '50%',
-              background: 'linear-gradient(135deg, #a855f7, #ec4899)',
-              padding: '3px',
-              boxShadow: '0 0 25px rgba(168, 85, 247, 0.4)'
-            }}>
-              <div style={{
-                width: '100%',
-                height: '100%',
-                borderRadius: '50%',
-                backgroundColor: '#0c0a12',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: '26px',
-                fontWeight: '900',
-                color: '#ffffff',
-                fontFamily: 'monospace'
-              }}>
-                {userInitials}
-              </div>
-            </div>
-
-            {/* Name */}
-            <h2 style={{
-              fontSize: '32px',
-              fontWeight: '800',
-              color: '#ffffff',
-              margin: 0,
-              textShadow: '0 0 20px rgba(255,255,255,0.2)'
-            }}>
-              {fullName || "Anonymous User"}
-            </h2>
-
-            {/* Role & Experience Pills */}
-            <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', justifyContent: 'center', marginTop: '4px' }}>
-              <span style={{
-                padding: '6px 16px',
-                borderRadius: '9999px',
-                backgroundColor: 'rgba(168, 85, 247, 0.15)',
-                border: '1px solid rgba(168, 85, 247, 0.3)',
-                color: '#c084fc',
-                fontSize: '12px',
-                fontWeight: '700',
-                fontFamily: 'monospace',
-                textTransform: 'uppercase',
-                letterSpacing: '0.05em'
-              }}>
-                {role}
-              </span>
-
-              <span style={{
-                padding: '6px 16px',
-                borderRadius: '9999px',
-                backgroundColor: 'rgba(255, 255, 255, 0.04)',
-                border: '1px solid rgba(255, 255, 255, 0.08)',
-                color: '#d4d4d8',
-                fontSize: '12px',
-                fontWeight: '500'
-              }}>
-                {experience}
-              </span>
-            </div>
-          </div>
-
-          {/* Unified Staggered Tech & Socials Grid (No Containers) */}
-          <div style={{ width: '100%', marginTop: '12px' }}>
-            <StaggeredGrid 
-              items={selectedTech} 
-              centerText="MY TECH STACK" 
-              linkedinUrl={linkedinUrl}
-              githubUrl={githubUrl}
-            />
-          </div>
-
+        <div style={{ width: '100%' }}>
+          <FloatingIconsHero
+            name={fullName}
+            role={role}
+            experience={experience}
+            linkedinUrl={linkedinUrl}
+            githubUrl={githubUrl}
+            techStack={selectedTech}
+          />
         </div>
       ) : (
         /* EDIT PROFILE FORM PAGE */
