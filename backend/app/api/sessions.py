@@ -218,27 +218,36 @@ async def update_roadmap(
     
     # Auto-generate tasks only when session transitions to execution phase
     if session.status == "execution":
-        task_count_res = await db.execute(select(Task).where(Task.session_id == session_id))
-        if not task_count_res.scalars().first():
-            # Seed tasks based on deliverables and duration estimate
-            for m_idx, m in enumerate(data.milestones):
-                task_id = uuid.uuid4()
-                title = m.get("title", f"Task {m_idx + 1}")
-                deliverable = m.get("deliverable", "Setup baseline code structure")
-                phase_id = m.get("phase", f"phase_{m_idx + 1}")
-                risk = m.get("risk_level", "medium")
-                
-                task = Task(
-                    id=task_id,
-                    session_id=session_id,
-                    name=f"{title} - {deliverable}",
-                    milestone_id=phase_id,
-                    priority=risk if risk in ["low", "medium", "high"] else "medium",
-                    status="pending",
-                    dependencies=[]
-                )
-                db.add(task)
-            await db.commit()
+        try:
+            task_count_res = await db.execute(select(Task).where(Task.session_id == session_id))
+            if not task_count_res.scalars().first():
+                # Seed tasks based on deliverables and duration estimate
+                for m_idx, m in enumerate(data.milestones or []):
+                    task_id = uuid.uuid4()
+                    if isinstance(m, dict):
+                        title = m.get("title") or f"Task {m_idx + 1}"
+                        deliverable = m.get("deliverable") or "Setup baseline code structure"
+                        phase_id = m.get("phase") or f"phase_{m_idx + 1}"
+                        risk = m.get("risk_level") or "medium"
+                    else:
+                        title = getattr(m, "title", None) or f"Task {m_idx + 1}"
+                        deliverable = getattr(m, "deliverable", None) or "Setup baseline code structure"
+                        phase_id = getattr(m, "phase", None) or f"phase_{m_idx + 1}"
+                        risk = getattr(m, "risk_level", None) or "medium"
+                    
+                    task = Task(
+                        id=task_id,
+                        session_id=session_id,
+                        name=f"{title} - {deliverable}",
+                        milestone_id=phase_id,
+                        priority=risk if risk in ["low", "medium", "high"] else "medium",
+                        status="pending",
+                        dependencies=[]
+                    )
+                    db.add(task)
+                await db.commit()
+        except Exception as e:
+            logger.error(f"Error seeding tasks on session execution: {e}")
         
     return SessionResponseSchema(
         id=session.id,
