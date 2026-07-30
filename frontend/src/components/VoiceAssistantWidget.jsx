@@ -1,8 +1,104 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Mic, MicOff, Send, MessageSquare, X, Sparkles, Volume2, Loader } from 'lucide-react';
-import axios from 'axios';
+import { Mic, MicOff, Send, X, Volume2, Loader } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import MarkdownRenderer from './MarkdownRenderer';
+
+// 3D Animated Cybernetic Robot Avatar Component
+function Robot3DAvatar({ size = 48, isListening = false, isSpeaking = false }) {
+  return (
+    <div style={{
+      width: `${size}px`,
+      height: `${size}px`,
+      position: 'relative',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      perspective: '600px'
+    }}>
+      <svg
+        width={size}
+        height={size}
+        viewBox="0 0 100 100"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+        style={{
+          filter: isListening 
+            ? 'drop-shadow(0 0 12px #ef4444)' 
+            : isSpeaking 
+            ? 'drop-shadow(0 0 14px #a855f7)' 
+            : 'drop-shadow(0 0 10px #6366f1)',
+          transition: 'all 0.3s ease'
+        }}
+      >
+        <defs>
+          <linearGradient id="headGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#3b2d54" />
+            <stop offset="50%" stopColor="#1e172e" />
+            <stop offset="100%" stopColor="#0f0b18" />
+          </linearGradient>
+          <linearGradient id="visorGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#0f172a" />
+            <stop offset="100%" stopColor="#020617" />
+          </linearGradient>
+          <linearGradient id="eyeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#00FF66" />
+            <stop offset="100%" stopColor="#00cc52" />
+          </linearGradient>
+          <linearGradient id="purpleEye" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#c084fc" />
+            <stop offset="100%" stopColor="#9333ea" />
+          </linearGradient>
+        </defs>
+
+        {/* Side Antennas / Ears */}
+        <rect x="12" y="38" width="8" height="24" rx="4" fill="#6366f1" opacity="0.8" />
+        <rect x="80" y="38" width="8" height="24" rx="4" fill="#6366f1" opacity="0.8" />
+        <circle cx="16" cy="36" r="3" fill={isListening ? "#ef4444" : "#00FF66"}>
+          <animate attributeName="opacity" values="0.4;1;0.4" dur="1.5s" repeatCount="indefinite" />
+        </circle>
+        <circle cx="84" cy="36" r="3" fill={isListening ? "#ef4444" : "#00FF66"}>
+          <animate attributeName="opacity" values="0.4;1;0.4" dur="1.5s" repeatCount="indefinite" />
+        </circle>
+
+        {/* Main 3D Metallic Head Structure */}
+        <rect x="20" y="16" width="60" height="68" rx="24" fill="url(#headGrad)" stroke="rgba(168, 85, 247, 0.5)" strokeWidth="2.5" />
+
+        {/* Top Forehead Sensor Gem */}
+        <polygon points="50,22 56,28 44,28" fill="#a855f7" />
+
+        {/* 3D Glass Visor Screen */}
+        <rect x="26" y="32" width="48" height="30" rx="12" fill="url(#visorGrad)" stroke="rgba(255, 255, 255, 0.15)" strokeWidth="1.5" />
+
+        {/* Glowing Robotic Eyes */}
+        <g>
+          {/* Left Eye */}
+          <circle cx="40" cy="46" r="6" fill={isSpeaking ? "url(#purpleEye)" : "url(#eyeGrad)"} />
+          <circle cx="40" cy="46" r="2.5" fill="#ffffff" />
+          
+          {/* Right Eye */}
+          <circle cx="60" cy="46" r="6" fill={isSpeaking ? "url(#purpleEye)" : "url(#eyeGrad)"} />
+          <circle cx="60" cy="46" r="2.5" fill="#ffffff" />
+        </g>
+
+        {/* Animated Speaking / Listening Equalizer Mouth */}
+        <g transform="translate(38, 68)">
+          <rect x="0" y="0" width="3" height={isListening || isSpeaking ? "10" : "4"} fill="#00FF66" rx="1.5">
+            <animate attributeName="height" values="3;10;3" dur="0.4s" repeatCount="indefinite" />
+          </rect>
+          <rect x="6" y="0" width="3" height={isListening || isSpeaking ? "14" : "6"} fill="#a855f7" rx="1.5">
+            <animate attributeName="height" values="5;14;5" dur="0.3s" repeatCount="indefinite" />
+          </rect>
+          <rect x="12" y="0" width="3" height={isListening || isSpeaking ? "16" : "8"} fill="#38bdf8" rx="1.5">
+            <animate attributeName="height" values="4;16;4" dur="0.5s" repeatCount="indefinite" />
+          </rect>
+          <rect x="18" y="0" width="3" height={isListening || isSpeaking ? "10" : "4"} fill="#00FF66" rx="1.5">
+            <animate attributeName="height" values="3;10;3" dur="0.35s" repeatCount="indefinite" />
+          </rect>
+        </g>
+      </svg>
+    </div>
+  );
+}
 
 export default function VoiceAssistantWidget({ sessionId = null, onCommand = null }) {
   const { profile, API_BASE } = useAuth();
@@ -11,7 +107,7 @@ export default function VoiceAssistantWidget({ sessionId = null, onCommand = nul
   const [transcript, setTranscript] = useState('');
   const [inputText, setInputText] = useState('');
   const [messages, setMessages] = useState([
-    { role: 'assistant', content: '👋 Hi! I am Kairos Assistant. Ask me anything or click the mic for voice commands like *"Summarize blockers"* or *"Update task status"*.' }
+    { role: 'assistant', content: '👋 Hi! I am Kairos 3D Robot Assistant. Ask me anything or click the mic for voice commands!' }
   ]);
   const [isLoading, setIsLoading] = useState(false);
   const [speechSupported, setSpeechSupported] = useState(true);
@@ -59,7 +155,7 @@ export default function VoiceAssistantWidget({ sessionId = null, onCommand = nul
 
   const toggleListening = () => {
     if (!speechSupported) {
-      alert('Speech recognition is not supported in this browser. Please use Chrome/Edge or type your prompt.');
+      alert('Speech recognition is not supported in this browser. Please type your prompt.');
       return;
     }
 
@@ -87,7 +183,6 @@ export default function VoiceAssistantWidget({ sessionId = null, onCommand = nul
     setTranscript('');
     setIsLoading(true);
 
-    // If caller provided custom command handler
     if (onCommand) {
       onCommand(query);
     }
@@ -141,7 +236,6 @@ export default function VoiceAssistantWidget({ sessionId = null, onCommand = nul
           }
         }
       } else {
-        // Fallback intelligent response if no session active
         setTimeout(() => {
           let responseText = "I'm ready! Select an active coaching session or task board to perform specific actions.";
           const q = query.toLowerCase();
@@ -164,44 +258,38 @@ export default function VoiceAssistantWidget({ sessionId = null, onCommand = nul
   return (
     <div style={{ position: 'fixed', bottom: '28px', right: '28px', zIndex: 99999 }}>
       <style>{`
-        @keyframes floatRobot {
-          0%, 100% { transform: translateY(0px) rotate(0deg) scale(1); }
-          50% { transform: translateY(-8px) rotate(3deg) scale(1.04); }
+        @keyframes float3DRobot {
+          0%, 100% { transform: translateY(0px) rotateX(8deg) rotateY(-5deg); }
+          50% { transform: translateY(-10px) rotateX(-4deg) rotateY(6deg); }
         }
-        @keyframes robotPulse {
-          0%, 100% { box-shadow: 0 8px 32px rgba(168, 85, 247, 0.4), 0 0 20px rgba(0, 255, 102, 0.3); }
-          50% { box-shadow: 0 12px 40px rgba(168, 85, 247, 0.7), 0 0 30px rgba(0, 255, 102, 0.6); }
+        @keyframes cyberGlow {
+          0%, 100% { box-shadow: 0 0 20px rgba(168, 85, 247, 0.4), 0 0 40px rgba(0, 255, 102, 0.2); }
+          50% { box-shadow: 0 0 35px rgba(168, 85, 247, 0.8), 0 0 50px rgba(0, 255, 102, 0.5); }
         }
       `}</style>
-      {/* Floating Toggle Button with 3D Animated Robot */}
+      
+      {/* Floating Toggle Button with Pure React 3D Animated Cybernetic Robot */}
       {!isOpen && (
         <button
           onClick={() => setIsOpen(true)}
           style={{
-            width: '64px',
-            height: '64px',
-            borderRadius: '32px',
-            background: 'linear-gradient(135deg, #16131c 0%, #2a1f42 100%)',
+            width: '68px',
+            height: '68px',
+            borderRadius: '34px',
+            background: 'radial-gradient(circle at 30% 30%, #2b1f48 0%, #0e0919 100%)',
             border: '2px solid rgba(168, 85, 247, 0.6)',
-            boxShadow: '0 8px 32px rgba(168, 85, 247, 0.5)',
-            color: '#fff',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             cursor: 'pointer',
-            overflow: 'hidden',
-            padding: '4px',
-            animation: 'floatRobot 3s ease-in-out infinite, robotPulse 2s ease-in-out infinite',
-            transition: 'transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1)'
+            padding: 0,
+            animation: 'float3DRobot 3s ease-in-out infinite, cyberGlow 2.5s ease-in-out infinite',
+            transition: 'transform 0.2s ease'
           }}
           className="voice-widget-btn"
-          title="Open Kairos 3D Robot Companion"
+          title="Open Kairos 3D Robot Assistant"
         >
-          <img 
-            src="https://api.dicebear.com/7.x/bottts/svg?seed=KairosRobot3D&backgroundColor=transparent" 
-            alt="Kairos 3D Robot" 
-            style={{ width: '100%', height: '100%', objectFit: 'contain' }} 
-          />
+          <Robot3DAvatar size={52} isListening={isListening} isSpeaking={isLoading} />
         </button>
       )}
 
@@ -230,22 +318,7 @@ export default function VoiceAssistantWidget({ sessionId = null, onCommand = nul
             justifyContent: 'space-between'
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <div style={{
-                width: '36px',
-                height: '36px',
-                borderRadius: '50%',
-                overflow: 'hidden',
-                background: 'rgba(168, 85, 247, 0.2)',
-                border: '1px solid rgba(168, 85, 247, 0.6)',
-                boxShadow: '0 0 10px rgba(168, 85, 247, 0.5)',
-                animation: 'floatRobot 3s ease-in-out infinite'
-              }}>
-                <img 
-                  src="https://api.dicebear.com/7.x/bottts/svg?seed=KairosRobot3D&backgroundColor=transparent" 
-                  alt="3D Robot Avatar" 
-                  style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
-                />
-              </div>
+              <Robot3DAvatar size={36} isListening={isListening} isSpeaking={isLoading} />
               <div>
                 <h4 style={{ margin: 0, fontSize: '14px', fontWeight: 700, color: '#fff' }}>Kairos 3D Robot AI</h4>
                 <span style={{ fontSize: '10px', color: '#00FF66', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px' }}>
