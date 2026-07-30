@@ -111,17 +111,18 @@ export default function Profile() {
   const displayTechs = selectedTech.length > 0 ? selectedTech : defaultTechs;
 
   const floatingPositions = [
-    'top-[10%] left-[8%]', 'top-[15%] right-[10%]', 'top-[35%] left-[5%]',
-    'top-[38%] right-[6%]', 'bottom-[18%] left-[8%]', 'bottom-[15%] right-[10%]',
-    'top-[8%] left-[30%]', 'top-[8%] right-[30%]', 'bottom-[10%] left-[28%]',
-    'bottom-[10%] right-[28%]', 'top-[55%] left-[12%]', 'top-[58%] right-[12%]',
-    'top-[25%] left-[20%]', 'top-[25%] right-[20%]'
+    { top: '10%', left: '8%' }, { top: '15%', right: '10%' }, { top: '35%', left: '5%' },
+    { top: '38%', right: '6%' }, { bottom: '18%', left: '8%' }, { bottom: '15%', right: '10%' },
+    { top: '8%', left: '30%' }, { top: '8%', right: '30%' }, { bottom: '10%', left: '28%' },
+    { bottom: '10%', right: '28%' }, { top: '55%', left: '12%' }, { top: '58%', right: '12%' },
+    { top: '25%', left: '20%' }, { top: '25%', right: '20%' }
   ];
 
   const iconsData = displayTechs.map((tech, i) => ({
     id: i,
     icon: getTechIconUrl(tech),
-    className: floatingPositions[i % floatingPositions.length]
+    className: '',
+    position: floatingPositions[i % floatingPositions.length]
   }));
 
   return (

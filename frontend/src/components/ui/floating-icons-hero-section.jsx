@@ -57,6 +57,7 @@ const Icon = ({
       style={{
         x: springX,
         y: springY,
+        ...(iconData.position || {})
       }}
       initial={{ opacity: 0, scale: 0.5 }}
       animate={{ opacity: 1, scale: 1 }}
@@ -65,11 +66,11 @@ const Icon = ({
         duration: 0.6,
         ease: [0.22, 1, 0.36, 1],
       }}
-      className={cn('absolute z-0', iconData.className)}
+      className={`absolute z-0 ${iconData.className}`}
     >
       {/* Inner wrapper for the continuous floating animation */}
       <motion.div
-        className="flex items-center justify-center w-16 h-16 md:w-20 md:h-20 p-3 rounded-3xl shadow-xl bg-[#1a1525]/80 backdrop-blur-md border border-white/10 cursor-default"
+        className="floating-icon-card"
         animate={{
           y: [0, -8, 0, 8, 0],
           x: [0, 6, 0, -6, 0],
@@ -83,9 +84,9 @@ const Icon = ({
         }}
       >
         {typeof iconData.icon === 'string' ? (
-           <img src={iconData.icon} alt="tech icon" className="w-10 h-10 md:w-12 md:h-12 object-contain" />
+           <img src={iconData.icon} alt="tech icon" className="floating-icon-img" />
         ) : (
-           <iconData.icon className="w-8 h-8 md:w-10 md:h-10" style={{ color: iconData.color || '#fff' }} />
+           <iconData.icon className="floating-icon-svg" style={{ color: iconData.color || '#fff' }} />
         )}
       </motion.div>
     </motion.div>
@@ -106,15 +107,12 @@ const FloatingIconsHero = React.forwardRef(({ className, icons, children, ...pro
     <section
       ref={ref}
       onMouseMove={handleMouseMove}
-      className={cn(
-        'relative w-full h-[600px] min-h-[600px] flex items-center justify-center overflow-hidden bg-transparent rounded-[32px]',
-        className
-      )}
+      className={`floating-hero-section ${className || ''}`}
       {...props}
     >
       {/* Container for the background floating icons */}
-      <div className="absolute inset-0 w-full h-full pointer-events-none">
-        <div className="relative w-full h-full max-w-6xl mx-auto pointer-events-auto">
+      <div className="floating-hero-bg">
+        <div className="floating-hero-bg-inner">
           {icons.map((iconData, index) => (
             <Icon
               key={iconData.id}
@@ -128,8 +126,8 @@ const FloatingIconsHero = React.forwardRef(({ className, icons, children, ...pro
       </div>
 
       {/* Container for the foreground content */}
-      <div className="relative z-10 w-full flex justify-center pointer-events-none">
-        <div className="pointer-events-auto">
+      <div className="floating-hero-fg">
+        <div className="floating-hero-fg-inner">
           {children}
         </div>
       </div>
