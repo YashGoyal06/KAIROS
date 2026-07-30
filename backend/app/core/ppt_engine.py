@@ -57,6 +57,46 @@ PREDEFINED_TEMPLATES = {
     }
 }
 
+class NumberedCanvas(canvas.Canvas):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._saved_page_states = []
+
+    def showPage(self):
+        self._saved_page_states.append(dict(self.__dict__))
+        self._startPage()
+
+    def save(self):
+        num_pages = len(self._saved_page_states)
+        for state in self._saved_page_states:
+            self.__dict__.update(state)
+            self.draw_page_decorations(num_pages)
+            super().showPage()
+        super().save()
+
+    def draw_page_decorations(self, page_count):
+        self.saveState()
+        self.setFont("Helvetica-Bold", 8)
+        self.setFillColor(colors.HexColor("#64748b"))
+        
+        # Header banner on pages after cover
+        if self._pageNumber > 1:
+            self.setStrokeColor(colors.HexColor("#e2e8f0"))
+            self.setLineWidth(0.5)
+            self.line(36, 756, 576, 756)
+            self.drawString(36, 762, "KAIROS AI EXECUTION ENGINE | HACKATHON PROJECT REPORT")
+
+        # Footer line & page numbers
+        self.setStrokeColor(colors.HexColor("#e2e8f0"))
+        self.setLineWidth(0.5)
+        self.line(36, 40, 576, 40)
+        
+        self.setFont("Helvetica", 8)
+        self.drawString(36, 26, "Generated automatically by KAIROS Execution Engine")
+        page_text = f"Page {self._pageNumber} of {page_count}"
+        self.drawRightString(576, 26, page_text)
+        self.restoreState()
+
 
 class PPTEngine:
 
@@ -532,52 +572,6 @@ class PPTEngine:
         prs.save(output_stream)
         output_stream.seek(0)
         return output_stream.getvalue()
-
-    @staticmethod
-    def generate_pdf(
-        session_name: str,
-        problem_statement: str,
-        user_idea: str,
-class NumberedCanvas(canvas.Canvas):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self._saved_page_states = []
-
-    def showPage(self):
-        self._saved_page_states.append(dict(self.__dict__))
-        self._startPage()
-
-    def save(self):
-        num_pages = len(self._saved_page_states)
-        for state in self._saved_page_states:
-            self.__dict__.update(state)
-            self.draw_page_decorations(num_pages)
-            super().showPage()
-        super().save()
-
-    def draw_page_decorations(self, page_count):
-        self.saveState()
-        self.setFont("Helvetica-Bold", 8)
-        self.setFillColor(colors.HexColor("#64748b"))
-        
-        # Header banner on pages after cover
-        if self._pageNumber > 1:
-            self.setStrokeColor(colors.HexColor("#e2e8f0"))
-            self.setLineWidth(0.5)
-            self.line(36, 756, 576, 756)
-            self.drawString(36, 762, "KAIROS AI EXECUTION ENGINE | HACKATHON PROJECT REPORT")
-
-        # Footer line & page numbers
-        self.setStrokeColor(colors.HexColor("#e2e8f0"))
-        self.setLineWidth(0.5)
-        self.line(36, 40, 576, 40)
-        
-        self.setFont("Helvetica", 8)
-        self.drawString(36, 26, "Generated automatically by KAIROS Execution Engine")
-        page_text = f"Page {self._pageNumber} of {page_count}"
-        self.drawRightString(576, 26, page_text)
-        self.restoreState()
-
 
     @staticmethod
     def generate_project_pdf(
