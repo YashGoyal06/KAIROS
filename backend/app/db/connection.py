@@ -40,10 +40,17 @@ async def init_db():
     async with engine.begin() as conn:
         # Create tables
         await conn.run_sync(Base.metadata.create_all)
-        try:
-            await conn.execute(text("ALTER TABLE sessions ADD COLUMN scope_critique TEXT;"))
-        except Exception:
-            pass
+        
+        migrations = [
+            "ALTER TABLE sessions ADD COLUMN IF NOT EXISTS scope_critique TEXT;",
+            "ALTER TABLE profiles ADD COLUMN IF NOT EXISTS linkedin_url VARCHAR;",
+            "ALTER TABLE profiles ADD COLUMN IF NOT EXISTS github_url VARCHAR;"
+        ]
+        for statement in migrations:
+            try:
+                await conn.execute(text(statement))
+            except Exception:
+                pass
 
 async def get_db():
     async with AsyncSessionLocal() as session:
