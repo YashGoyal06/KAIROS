@@ -18,7 +18,6 @@ export default function Profile() {
   const { profile, refreshProfile, API_BASE, user } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
   
-  // Tab state: view profile vs edit profile
   const [isEditMode, setIsEditMode] = useState(searchParams.get('edit') === 'true');
 
   const [fullName, setFullName] = useState('');
@@ -102,44 +101,101 @@ export default function Profile() {
     }
   };
 
+  const userInitials = fullName
+    ? fullName.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()
+    : 'U';
+
   return (
-    <div className="main-content flex-1 p-6 md:p-10 flex flex-col gap-8 max-w-6xl mx-auto w-full">
-      {/* Top Header & Toggle Tabs */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-white/10 pb-6">
+    <div className="main-content" style={{
+      padding: '32px',
+      maxWidth: '1100px',
+      margin: '0 auto',
+      width: '100%',
+      boxSizing: 'border-box',
+      display: 'flex',
+      flexDirection: 'column',
+      gap: '32px'
+    }}>
+      {/* Header & Mode Switcher */}
+      <div style={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+        paddingBottom: '20px',
+        flexWrap: 'wrap',
+        gap: '16px'
+      }}>
         <div>
-          <h1 className="text-3xl font-extrabold text-white tracking-tight flex items-center gap-3">
+          <h1 style={{
+            fontSize: '28px',
+            fontWeight: '800',
+            color: '#ffffff',
+            margin: 0,
+            display: 'flex',
+            alignItems: 'center',
+            gap: '10px'
+          }}>
             <span>{isEditMode ? 'Edit Profile' : 'User Profile'}</span>
-            <Sparkles className="text-purple-400 w-6 h-6 animate-pulse" />
+            <Sparkles size={22} style={{ color: '#c084fc' }} />
           </h1>
-          <p className="text-zinc-400 text-sm mt-1">
+          <p style={{ fontSize: '13px', color: '#9ca3af', marginTop: '4px', margin: 0 }}>
             {isEditMode 
               ? 'Update your bio, tech stack, and social connections' 
               : 'Overview of your developer identity and integrated tech stack'}
           </p>
         </div>
 
-        {/* Tab Switcher Button */}
-        <div className="flex bg-white/5 border border-white/10 rounded-2xl p-1 backdrop-blur-md">
+        {/* Tab Buttons */}
+        <div style={{
+          display: 'flex',
+          backgroundColor: 'rgba(255, 255, 255, 0.03)',
+          border: '1px solid rgba(255, 255, 255, 0.08)',
+          borderRadius: '14px',
+          padding: '4px',
+          gap: '4px'
+        }}>
           <button
+            type="button"
             onClick={() => toggleMode(false)}
-            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-semibold transition-all duration-200 ${
-              !isEditMode 
-                ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg shadow-purple-500/25' 
-                : 'text-zinc-400 hover:text-white'
-            }`}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              padding: '8px 16px',
+              borderRadius: '10px',
+              border: 'none',
+              fontSize: '13px',
+              fontWeight: '600',
+              cursor: 'pointer',
+              background: !isEditMode ? 'linear-gradient(135deg, #a855f7, #ec4899)' : 'transparent',
+              color: !isEditMode ? '#ffffff' : '#9ca3af',
+              transition: 'all 0.2s ease'
+            }}
           >
-            <User size={14} />
+            <User size={15} />
             <span>View Profile</span>
           </button>
+
           <button
+            type="button"
             onClick={() => toggleMode(true)}
-            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-semibold transition-all duration-200 ${
-              isEditMode 
-                ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg shadow-purple-500/25' 
-                : 'text-zinc-400 hover:text-white'
-            }`}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              padding: '8px 16px',
+              borderRadius: '10px',
+              border: 'none',
+              fontSize: '13px',
+              fontWeight: '600',
+              cursor: 'pointer',
+              background: isEditMode ? 'linear-gradient(135deg, #a855f7, #ec4899)' : 'transparent',
+              color: isEditMode ? '#ffffff' : '#9ca3af',
+              transition: 'all 0.2s ease'
+            }}
           >
-            <Edit3 size={14} />
+            <Edit3 size={15} />
             <span>Edit Profile</span>
           </button>
         </div>
@@ -147,70 +203,194 @@ export default function Profile() {
 
       {/* VIEW PROFILE PAGE */}
       {!isEditMode ? (
-        <div className="flex flex-col items-center gap-10 w-full animate-in fade-in zoom-in-95 duration-300">
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '32px', width: '100%' }}>
           
-          {/* Top Center: User Name & Role Banner */}
-          <div className="flex flex-col items-center text-center gap-3 bg-gradient-to-b from-white/[0.08] to-white/[0.02] border border-white/10 rounded-3xl p-8 w-full max-w-3xl backdrop-blur-xl shadow-2xl relative overflow-hidden">
-            <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-purple-500 via-pink-500 to-indigo-500" />
-            
+          {/* Top Center Identity Card */}
+          <div style={{
+            width: '100%',
+            maxWidth: '700px',
+            backgroundColor: 'rgba(18, 16, 25, 0.7)',
+            backdropFilter: 'blur(20px)',
+            WebkitBackdropFilter: 'blur(20px)',
+            border: '1px solid rgba(255, 255, 255, 0.1)',
+            borderRadius: '24px',
+            padding: '32px',
+            boxSizing: 'border-box',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            textAlign: 'center',
+            gap: '12px',
+            position: 'relative',
+            overflow: 'hidden',
+            boxShadow: '0 20px 50px rgba(0,0,0,0.5)'
+          }}>
+            {/* Gradient Top Line */}
+            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '4px', background: 'linear-gradient(90deg, #a855f7, #ec4899, #6366f1)' }} />
+
             {/* Avatar Circle */}
-            <div className="w-24 h-24 rounded-full bg-gradient-to-tr from-purple-600 to-pink-500 p-1 shadow-[0_0_35px_rgba(168,85,247,0.4)]">
-              <div className="w-full h-full rounded-full bg-[#0d0c14] flex items-center justify-center text-2xl font-black text-white font-mono">
-                {fullName ? fullName.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() : 'U'}
+            <div style={{
+              width: '84px',
+              height: '84px',
+              borderRadius: '50%',
+              background: 'linear-gradient(135deg, #a855f7, #ec4899)',
+              padding: '3px',
+              boxShadow: '0 0 25px rgba(168, 85, 247, 0.4)'
+            }}>
+              <div style={{
+                width: '100%',
+                height: '100%',
+                borderRadius: '50%',
+                backgroundColor: '#0c0a12',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '26px',
+                fontWeight: '900',
+                color: '#ffffff',
+                fontFamily: 'monospace'
+              }}>
+                {userInitials}
               </div>
             </div>
 
-            <h2 className="text-3xl sm:text-4xl font-extrabold text-white tracking-wide drop-shadow-[0_0_20px_rgba(255,255,255,0.3)]">
-              {fullName || "Anonymous Hackathoner"}
+            {/* Name */}
+            <h2 style={{
+              fontSize: '32px',
+              fontWeight: '800',
+              color: '#ffffff',
+              margin: 0,
+              textShadow: '0 0 20px rgba(255,255,255,0.2)'
+            }}>
+              {fullName || "Anonymous User"}
             </h2>
 
-            <div className="flex items-center gap-3 flex-wrap justify-center mt-1">
-              <span className="px-4 py-1.5 rounded-full bg-purple-500/15 border border-purple-500/30 text-purple-300 text-xs font-bold font-mono uppercase tracking-wider shadow-[0_0_15px_rgba(168,85,247,0.2)]">
+            {/* Role & Experience Pills */}
+            <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', justifyContent: 'center', marginTop: '4px' }}>
+              <span style={{
+                padding: '6px 16px',
+                borderRadius: '9999px',
+                backgroundColor: 'rgba(168, 85, 247, 0.15)',
+                border: '1px solid rgba(168, 85, 247, 0.3)',
+                color: '#c084fc',
+                fontSize: '12px',
+                fontWeight: '700',
+                fontFamily: 'monospace',
+                textTransform: 'uppercase',
+                letterSpacing: '0.05em'
+              }}>
                 {role}
               </span>
-              <span className="px-4 py-1.5 rounded-full bg-white/5 border border-white/10 text-zinc-300 text-xs font-medium">
+
+              <span style={{
+                padding: '6px 16px',
+                borderRadius: '9999px',
+                backgroundColor: 'rgba(255, 255, 255, 0.04)',
+                border: '1px solid rgba(255, 255, 255, 0.08)',
+                color: '#d4d4d8',
+                fontSize: '12px',
+                fontWeight: '500'
+              }}>
                 {experience}
               </span>
             </div>
           </div>
 
-          {/* Center: Staggered Tech Stack UI Animation */}
-          <div className="w-full">
-            <StaggeredGrid 
-              items={selectedTech} 
-              centerText="MY TECH STACK" 
-            />
+          {/* Staggered Tech Grid */}
+          <div style={{ width: '100%' }}>
+            <StaggeredGrid items={selectedTech} centerText="MY TECH STACK" />
           </div>
 
-          {/* Bottom Center: Social Cards (LinkedIn & GitHub) */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 w-full max-w-2xl mt-2">
-            
+          {/* Bottom Social Cards (LinkedIn & GitHub) */}
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+            gap: '20px',
+            width: '100%',
+            maxWidth: '700px'
+          }}>
             {/* LinkedIn Card */}
             {linkedinUrl ? (
               <a
                 href={linkedinUrl.startsWith('http') ? linkedinUrl : `https://${linkedinUrl}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="group relative flex items-center gap-4 p-5 rounded-2xl border border-blue-500/30 bg-blue-950/20 backdrop-blur-xl transition-all duration-300 hover:scale-105 hover:bg-blue-900/30 hover:border-blue-400 hover:shadow-[0_0_30px_rgba(59,130,246,0.3)] text-decoration-none"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '16px',
+                  padding: '20px',
+                  borderRadius: '20px',
+                  border: '1px solid rgba(59, 130, 246, 0.3)',
+                  backgroundColor: 'rgba(30, 58, 138, 0.2)',
+                  backdropFilter: 'blur(16px)',
+                  textDecoration: 'none',
+                  transition: 'all 0.2s ease',
+                  boxShadow: '0 10px 30px rgba(0,0,0,0.3)'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'translateY(-3px)';
+                  e.currentTarget.style.borderColor = 'rgba(59, 130, 246, 0.6)';
+                  e.currentTarget.style.boxShadow = '0 0 25px rgba(59, 130, 246, 0.3)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.borderColor = 'rgba(59, 130, 246, 0.3)';
+                  e.currentTarget.style.boxShadow = '0 10px 30px rgba(0,0,0,0.3)';
+                }}
               >
-                <div className="w-12 h-12 rounded-xl bg-blue-600/20 border border-blue-500/40 flex items-center justify-center text-blue-400 group-hover:scale-110 transition-transform">
+                <div style={{
+                  width: '48px',
+                  height: '48px',
+                  borderRadius: '14px',
+                  backgroundColor: 'rgba(59, 130, 246, 0.2)',
+                  border: '1px solid rgba(59, 130, 246, 0.4)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#60a5fa'
+                }}>
                   <FaLinkedin size={26} />
                 </div>
-                <div className="flex flex-col overflow-hidden">
-                  <span className="text-xs font-bold text-blue-400 uppercase font-mono tracking-wider">LinkedIn</span>
-                  <span className="text-sm font-semibold text-white truncate group-hover:text-blue-200 transition-colors">
+                <div style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+                  <span style={{ fontSize: '11px', fontWeight: '700', color: '#60a5fa', fontFamily: 'monospace', textTransform: 'uppercase' }}>
+                    LinkedIn
+                  </span>
+                  <span style={{ fontSize: '14px', fontWeight: '600', color: '#ffffff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', marginTop: '2px' }}>
                     {linkedinUrl.replace(/^https?:\/\/(www\.)?linkedin\.com\/in\//, '')}
                   </span>
                 </div>
               </a>
             ) : (
-              <div className="flex items-center gap-4 p-5 rounded-2xl border border-white/5 bg-white/[0.02] backdrop-blur-md opacity-60">
-                <div className="w-12 h-12 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-zinc-500">
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '16px',
+                padding: '20px',
+                borderRadius: '20px',
+                border: '1px solid rgba(255, 255, 255, 0.05)',
+                backgroundColor: 'rgba(255, 255, 255, 0.02)',
+                opacity: 0.5
+              }}>
+                <div style={{
+                  width: '48px',
+                  height: '48px',
+                  borderRadius: '14px',
+                  backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#6b7280'
+                }}>
                   <FaLinkedin size={26} />
                 </div>
-                <div className="flex flex-col">
-                  <span className="text-xs font-bold text-zinc-500 uppercase font-mono tracking-wider">LinkedIn</span>
-                  <span className="text-sm text-zinc-400 italic">Not connected</span>
+                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                  <span style={{ fontSize: '11px', fontWeight: '700', color: '#6b7280', fontFamily: 'monospace', textTransform: 'uppercase' }}>
+                    LinkedIn
+                  </span>
+                  <span style={{ fontSize: '13px', color: '#9ca3af', fontStyle: 'italic', marginTop: '2px' }}>
+                    Not connected
+                  </span>
                 </div>
               </div>
             )}
@@ -221,79 +401,173 @@ export default function Profile() {
                 href={githubUrl.startsWith('http') ? githubUrl : `https://${githubUrl}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="group relative flex items-center gap-4 p-5 rounded-2xl border border-purple-500/30 bg-purple-950/20 backdrop-blur-xl transition-all duration-300 hover:scale-105 hover:bg-purple-900/30 hover:border-purple-400 hover:shadow-[0_0_30px_rgba(168,85,247,0.3)] text-decoration-none"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '16px',
+                  padding: '20px',
+                  borderRadius: '20px',
+                  border: '1px solid rgba(168, 85, 247, 0.3)',
+                  backgroundColor: 'rgba(88, 28, 135, 0.2)',
+                  backdropFilter: 'blur(16px)',
+                  textDecoration: 'none',
+                  transition: 'all 0.2s ease',
+                  boxShadow: '0 10px 30px rgba(0,0,0,0.3)'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'translateY(-3px)';
+                  e.currentTarget.style.borderColor = 'rgba(168, 85, 247, 0.6)';
+                  e.currentTarget.style.boxShadow = '0 0 25px rgba(168, 85, 247, 0.3)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.borderColor = 'rgba(168, 85, 247, 0.3)';
+                  e.currentTarget.style.boxShadow = '0 10px 30px rgba(0,0,0,0.3)';
+                }}
               >
-                <div className="w-12 h-12 rounded-xl bg-purple-600/20 border border-purple-500/40 flex items-center justify-center text-white group-hover:scale-110 transition-transform">
+                <div style={{
+                  width: '48px',
+                  height: '48px',
+                  borderRadius: '14px',
+                  backgroundColor: 'rgba(168, 85, 247, 0.2)',
+                  border: '1px solid rgba(168, 85, 247, 0.4)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#ffffff'
+                }}>
                   <FaGithub size={26} />
                 </div>
-                <div className="flex flex-col overflow-hidden">
-                  <span className="text-xs font-bold text-purple-400 uppercase font-mono tracking-wider">GitHub</span>
-                  <span className="text-sm font-semibold text-white truncate group-hover:text-purple-200 transition-colors">
+                <div style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+                  <span style={{ fontSize: '11px', fontWeight: '700', color: '#c084fc', fontFamily: 'monospace', textTransform: 'uppercase' }}>
+                    GitHub
+                  </span>
+                  <span style={{ fontSize: '14px', fontWeight: '600', color: '#ffffff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', marginTop: '2px' }}>
                     {githubUrl.replace(/^https?:\/\/(www\.)?github\.com\//, '')}
                   </span>
                 </div>
               </a>
             ) : (
-              <div className="flex items-center gap-4 p-5 rounded-2xl border border-white/5 bg-white/[0.02] backdrop-blur-md opacity-60">
-                <div className="w-12 h-12 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-zinc-500">
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '16px',
+                padding: '20px',
+                borderRadius: '20px',
+                border: '1px solid rgba(255, 255, 255, 0.05)',
+                backgroundColor: 'rgba(255, 255, 255, 0.02)',
+                opacity: 0.5
+              }}>
+                <div style={{
+                  width: '48px',
+                  height: '48px',
+                  borderRadius: '14px',
+                  backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#6b7280'
+                }}>
                   <FaGithub size={26} />
                 </div>
-                <div className="flex flex-col">
-                  <span className="text-xs font-bold text-zinc-500 uppercase font-mono tracking-wider">GitHub</span>
-                  <span className="text-sm text-zinc-400 italic">Not connected</span>
+                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                  <span style={{ fontSize: '11px', fontWeight: '700', color: '#6b7280', fontFamily: 'monospace', textTransform: 'uppercase' }}>
+                    GitHub
+                  </span>
+                  <span style={{ fontSize: '13px', color: '#9ca3af', fontStyle: 'italic', marginTop: '2px' }}>
+                    Not connected
+                  </span>
                 </div>
               </div>
             )}
-
           </div>
 
         </div>
       ) : (
-        /* EDIT PROFILE PAGE (COMPLETELY SEPARATE EDIT FORM) */
-        <div className="w-full max-w-3xl mx-auto bg-gradient-to-b from-white/[0.06] to-white/[0.02] border border-white/10 rounded-3xl p-8 backdrop-blur-xl shadow-2xl animate-in fade-in slide-in-from-bottom-4 duration-300">
-          <form onSubmit={handleSubmit} className="flex flex-col gap-6">
+        /* EDIT PROFILE FORM PAGE */
+        <div style={{
+          width: '100%',
+          maxWidth: '750px',
+          margin: '0 auto',
+          backgroundColor: 'rgba(18, 16, 25, 0.7)',
+          backdropFilter: 'blur(20px)',
+          WebkitBackdropFilter: 'blur(20px)',
+          border: '1px solid rgba(255, 255, 255, 0.1)',
+          borderRadius: '24px',
+          padding: '32px',
+          boxSizing: 'border-box'
+        }}>
+          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
             
-            <div className="border-b border-white/10 pb-4">
-              <h3 className="text-lg font-bold text-white font-mono uppercase tracking-wider text-purple-400">
+            {/* Identity Header */}
+            <div style={{ borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: '12px' }}>
+              <span style={{ fontSize: '12px', fontWeight: '700', color: '#c084fc', fontFamily: 'monospace', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
                 /// PERSONAL IDENTITY
-              </h3>
+              </span>
             </div>
 
             {/* Full Name */}
-            <div className="flex flex-col gap-2">
-              <label className="text-xs font-semibold text-zinc-300 uppercase tracking-wider">Full Name</label>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              <label style={{ fontSize: '12px', fontWeight: '600', color: '#d4d4d8', textTransform: 'uppercase' }}>Full Name</label>
               <input
                 type="text"
-                className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-purple-500 transition-colors"
+                style={{
+                  width: '100%',
+                  backgroundColor: '#0c0a12',
+                  border: '1px solid rgba(255,255,255,0.12)',
+                  borderRadius: '12px',
+                  padding: '12px 16px',
+                  color: '#ffffff',
+                  fontSize: '14px',
+                  boxSizing: 'border-box'
+                }}
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
-                placeholder="e.g. Parth Gupta"
+                placeholder="e.g. Yash Goyal"
                 required
               />
             </div>
 
-            {/* Social Links */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="flex flex-col gap-2">
-                <label className="text-xs font-semibold text-zinc-300 uppercase tracking-wider flex items-center gap-2">
-                  <FaLinkedin className="text-blue-400" /> LinkedIn URL
+            {/* Social URLs */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '16px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                <label style={{ fontSize: '12px', fontWeight: '600', color: '#d4d4d8', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <FaLinkedin size={14} style={{ color: '#60a5fa' }} /> LinkedIn URL
                 </label>
                 <input
                   type="url"
-                  className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-blue-500 transition-colors"
+                  style={{
+                    width: '100%',
+                    backgroundColor: '#0c0a12',
+                    border: '1px solid rgba(255,255,255,0.12)',
+                    borderRadius: '12px',
+                    padding: '12px 16px',
+                    color: '#ffffff',
+                    fontSize: '14px',
+                    boxSizing: 'border-box'
+                  }}
                   value={linkedinUrl}
                   onChange={(e) => setLinkedinUrl(e.target.value)}
                   placeholder="https://linkedin.com/in/username"
                 />
               </div>
 
-              <div className="flex flex-col gap-2">
-                <label className="text-xs font-semibold text-zinc-300 uppercase tracking-wider flex items-center gap-2">
-                  <FaGithub className="text-white" /> GitHub URL
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                <label style={{ fontSize: '12px', fontWeight: '600', color: '#d4d4d8', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <FaGithub size={14} style={{ color: '#ffffff' }} /> GitHub URL
                 </label>
                 <input
                   type="url"
-                  className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-purple-500 transition-colors"
+                  style={{
+                    width: '100%',
+                    backgroundColor: '#0c0a12',
+                    border: '1px solid rgba(255,255,255,0.12)',
+                    borderRadius: '12px',
+                    padding: '12px 16px',
+                    color: '#ffffff',
+                    fontSize: '14px',
+                    boxSizing: 'border-box'
+                  }}
                   value={githubUrl}
                   onChange={(e) => setGithubUrl(e.target.value)}
                   placeholder="https://github.com/username"
@@ -301,17 +575,26 @@ export default function Profile() {
               </div>
             </div>
 
-            <div className="border-b border-white/10 pb-4 pt-4">
-              <h3 className="text-lg font-bold text-white font-mono uppercase tracking-wider text-pink-400">
+            {/* Role & Experience */}
+            <div style={{ borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: '12px', marginTop: '12px' }}>
+              <span style={{ fontSize: '12px', fontWeight: '700', color: '#f472b6', fontFamily: 'monospace', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
                 /// ROLE & EXPERIENCE
-              </h3>
+              </span>
             </div>
 
-            {/* Primary Role */}
-            <div className="flex flex-col gap-2">
-              <label className="text-xs font-semibold text-zinc-300 uppercase tracking-wider">Primary Role</label>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              <label style={{ fontSize: '12px', fontWeight: '600', color: '#d4d4d8', textTransform: 'uppercase' }}>Primary Role</label>
               <select 
-                className="w-full bg-black/60 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-purple-500 transition-colors"
+                style={{
+                  width: '100%',
+                  backgroundColor: '#0c0a12',
+                  border: '1px solid rgba(255,255,255,0.12)',
+                  borderRadius: '12px',
+                  padding: '12px 16px',
+                  color: '#ffffff',
+                  fontSize: '14px',
+                  boxSizing: 'border-box'
+                }}
                 value={role} 
                 onChange={(e) => setRole(e.target.value)}
               >
@@ -325,11 +608,19 @@ export default function Profile() {
               </select>
             </div>
 
-            {/* Experience Level */}
-            <div className="flex flex-col gap-2">
-              <label className="text-xs font-semibold text-zinc-300 uppercase tracking-wider">Experience Level</label>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              <label style={{ fontSize: '12px', fontWeight: '600', color: '#d4d4d8', textTransform: 'uppercase' }}>Experience Level</label>
               <select 
-                className="w-full bg-black/60 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-purple-500 transition-colors"
+                style={{
+                  width: '100%',
+                  backgroundColor: '#0c0a12',
+                  border: '1px solid rgba(255,255,255,0.12)',
+                  borderRadius: '12px',
+                  padding: '12px 16px',
+                  color: '#ffffff',
+                  fontSize: '14px',
+                  boxSizing: 'border-box'
+                }}
                 value={experience} 
                 onChange={(e) => setExperience(e.target.value)}
               >
@@ -339,41 +630,67 @@ export default function Profile() {
               </select>
             </div>
 
-            <div className="border-b border-white/10 pb-4 pt-4">
-              <h3 className="text-lg font-bold text-white font-mono uppercase tracking-wider text-indigo-400">
+            {/* Tech Stack */}
+            <div style={{ borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: '12px', marginTop: '12px' }}>
+              <span style={{ fontSize: '12px', fontWeight: '700', color: '#818cf8', fontFamily: 'monospace', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
                 /// TECH STACK SELECTION
-              </h3>
+              </span>
             </div>
 
-            {/* Search & Select Tech */}
-            <div className="flex flex-col gap-2">
-              <label className="text-xs font-semibold text-zinc-300 uppercase tracking-wider">Search Technologies</label>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              <label style={{ fontSize: '12px', fontWeight: '600', color: '#d4d4d8', textTransform: 'uppercase' }}>Search Technologies</label>
               <input
                 type="text"
-                className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-purple-500 transition-colors"
-                placeholder="Type to filter..."
+                style={{
+                  width: '100%',
+                  backgroundColor: '#0c0a12',
+                  border: '1px solid rgba(255,255,255,0.12)',
+                  borderRadius: '12px',
+                  padding: '12px 16px',
+                  color: '#ffffff',
+                  fontSize: '14px',
+                  boxSizing: 'border-box'
+                }}
+                placeholder="Type technology name..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
 
-              <div className="max-h-48 overflow-y-auto border border-white/10 rounded-xl p-4 bg-black/40 flex flex-col gap-4 mt-2">
+              <div style={{
+                maxHeight: '180px',
+                overflowY: 'auto',
+                border: '1px solid rgba(255,255,255,0.08)',
+                borderRadius: '12px',
+                padding: '12px',
+                backgroundColor: '#0c0a12',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '12px',
+                marginTop: '6px'
+              }}>
                 {Object.entries(PREDEFINED_TECH).map(([category, items]) => {
                   const filtered = items.filter(item => item.toLowerCase().includes(searchQuery.toLowerCase()));
                   if (filtered.length === 0) return null;
                   return (
-                    <div key={category} className="flex flex-col gap-2">
-                      <span className="text-[10px] font-bold text-zinc-500 uppercase font-mono">{category}</span>
-                      <div className="flex flex-wrap gap-2">
+                    <div key={category} style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                      <span style={{ fontSize: '10px', fontWeight: '700', color: '#6b7280', fontFamily: 'monospace', textTransform: 'uppercase' }}>{category}</span>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
                         {filtered.map(tech => (
                           <button
                             key={tech}
                             type="button"
                             onClick={() => handleTechSelect(tech)}
-                            className={`px-3 py-1.5 rounded-lg border text-xs font-mono transition-all duration-200 ${
-                              selectedTech.includes(tech)
-                                ? 'bg-purple-600/30 border-purple-500 text-purple-200'
-                                : 'bg-white/5 border-white/10 text-zinc-400 hover:text-white hover:bg-white/10'
-                            }`}
+                            style={{
+                              padding: '6px 12px',
+                              borderRadius: '8px',
+                              border: selectedTech.includes(tech) ? '1px solid rgba(192, 132, 252, 0.5)' : '1px solid rgba(255, 255, 255, 0.08)',
+                              backgroundColor: selectedTech.includes(tech) ? 'rgba(192, 132, 252, 0.2)' : 'rgba(255, 255, 255, 0.03)',
+                              color: selectedTech.includes(tech) ? '#ffffff' : '#9ca3af',
+                              fontSize: '11px',
+                              fontFamily: 'monospace',
+                              cursor: 'pointer',
+                              transition: 'all 0.2s ease'
+                            }}
                           >
                             {tech}
                           </button>
@@ -385,21 +702,40 @@ export default function Profile() {
               </div>
             </div>
 
-            {/* Add Custom Tech */}
-            <div className="flex flex-col gap-2">
-              <label className="text-xs font-semibold text-zinc-300 uppercase tracking-wider">Add Custom Technology</label>
-              <div className="flex gap-2">
+            {/* Custom Tech */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              <label style={{ fontSize: '12px', fontWeight: '600', color: '#d4d4d8', textTransform: 'uppercase' }}>Add Custom Technology</label>
+              <div style={{ display: 'flex', gap: '8px' }}>
                 <input
                   type="text"
-                  className="flex-1 bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-purple-500 transition-colors"
-                  placeholder="e.g. Web3.js, Polkadot"
+                  style={{
+                    flex: 1,
+                    backgroundColor: '#0c0a12',
+                    border: '1px solid rgba(255,255,255,0.12)',
+                    borderRadius: '12px',
+                    padding: '12px 16px',
+                    color: '#ffffff',
+                    fontSize: '14px',
+                    boxSizing: 'border-box'
+                  }}
+                  placeholder="e.g. Web3.js"
                   value={customTech}
                   onChange={(e) => setCustomTech(e.target.value)}
                 />
                 <button
                   type="button"
                   onClick={handleAddCustom}
-                  className="px-5 py-3 rounded-xl bg-white/10 border border-white/10 text-white hover:bg-white/20 transition-colors flex items-center justify-center"
+                  style={{
+                    padding: '0 20px',
+                    borderRadius: '12px',
+                    backgroundColor: 'rgba(255,255,255,0.08)',
+                    border: '1px solid rgba(255,255,255,0.12)',
+                    color: '#ffffff',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}
                 >
                   <Plus size={18} />
                 </button>
@@ -407,23 +743,44 @@ export default function Profile() {
             </div>
 
             {/* Selected Tech Chips */}
-            <div className="flex flex-col gap-2">
-              <label className="text-xs font-semibold text-zinc-300 uppercase tracking-wider">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              <label style={{ fontSize: '12px', fontWeight: '600', color: '#d4d4d8', textTransform: 'uppercase' }}>
                 Selected ({selectedTech.length})
               </label>
-              <div className="flex flex-wrap gap-2 p-4 bg-black/40 border border-white/10 rounded-xl min-h-[60px] items-center">
+              <div style={{
+                display: 'flex',
+                flexWrap: 'wrap',
+                gap: '8px',
+                padding: '12px',
+                backgroundColor: '#0c0a12',
+                border: '1px solid rgba(255,255,255,0.08)',
+                borderRadius: '12px',
+                minHeight: '50px',
+                alignItems: 'center'
+              }}>
                 {selectedTech.length === 0 ? (
-                  <span className="text-xs text-zinc-500 italic">No technologies selected yet.</span>
+                  <span style={{ fontSize: '12px', color: '#6b7280', fontStyle: 'italic' }}>No skills selected yet.</span>
                 ) : (
                   selectedTech.map(tech => (
                     <div
                       key={tech}
-                      className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-purple-500/20 border border-purple-500/40 text-purple-200 text-xs font-mono"
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        padding: '6px 12px',
+                        borderRadius: '8px',
+                        backgroundColor: 'rgba(192, 132, 252, 0.15)',
+                        border: '1px solid rgba(192, 132, 252, 0.3)',
+                        color: '#ffffff',
+                        fontSize: '12px',
+                        fontFamily: 'monospace'
+                      }}
                     >
                       <span>{tech}</span>
                       <X
                         size={14}
-                        className="cursor-pointer hover:text-white transition-colors"
+                        style={{ cursor: 'pointer', color: '#9ca3af' }}
                         onClick={() => handleTechRemove(tech)}
                       />
                     </div>
@@ -432,14 +789,30 @@ export default function Profile() {
               </div>
             </div>
 
-            {/* Save Button */}
+            {/* Submit Button */}
             <button
               type="submit"
               disabled={updating}
-              className="w-full mt-4 py-4 rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-bold text-sm tracking-wide shadow-lg shadow-purple-500/30 transition-all duration-200 flex items-center justify-center gap-2"
+              style={{
+                width: '100%',
+                marginTop: '12px',
+                padding: '14px',
+                borderRadius: '14px',
+                background: 'linear-gradient(135deg, #a855f7, #ec4899)',
+                border: 'none',
+                color: '#ffffff',
+                fontSize: '14px',
+                fontWeight: '700',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px',
+                boxShadow: '0 10px 25px rgba(168, 85, 247, 0.3)'
+              }}
             >
               <Check size={18} />
-              <span>{updating ? 'Saving Changes...' : 'Save Profile Changes'}</span>
+              <span>{updating ? 'Saving...' : 'Save Profile Changes'}</span>
             </button>
           </form>
         </div>
