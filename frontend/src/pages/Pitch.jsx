@@ -251,7 +251,7 @@ export default function Pitch() {
                 ← Back to Pitch Rooms
               </button>
               <div>
-                <h2 style={{ fontSize: '24px', fontWeight 700, color: '#fff', margin: 0 }}>Pitch Studio: {activeSession?.name}</h2>
+                <h2 style={{ fontSize: '24px', fontWeight: 700, color: '#fff', margin: 0 }}>Pitch Studio: {activeSession?.name}</h2>
               </div>
             </div>
             <div style={{ display: 'flex', gap: '12px' }}>
