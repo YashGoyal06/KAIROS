@@ -3,7 +3,7 @@ import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from backend.app.db.connection import init_db
-from backend.app.api import profiles, teams, sessions, tasks, pitch
+from backend.app.api import profiles, teams, sessions, tasks, pitch, voice
 
 app = FastAPI(
     title="KAIROS API",
@@ -30,6 +30,7 @@ app.include_router(teams.router, prefix="/api/v1")
 app.include_router(sessions.router, prefix="/api/v1")
 app.include_router(tasks.router, prefix="/api/v1")
 app.include_router(pitch.router, prefix="/api/v1")
+app.include_router(voice.router, prefix="/api/v1")
 
 @app.get("/")
 @app.head("/")

@@ -196,23 +196,71 @@ export default function VoiceAssistantWidget({ sessionId = null, onCommand = nul
     }
   }, [messages, isOpen]);
 
-  const toggleListening = () => {
-    if (!speechSupported) {
-      alert('Speech recognition is not supported in this browser. Please type your prompt.');
-      return;
-    }
+  const mediaRecorderRef = useRef(null);
+  const audioChunksRef = useRef([]);
 
-    if (isListening) {
-      recognitionRef.current?.stop();
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mediaRecorder = new MediaRecorder(stream);
+      audioChunksRef.current = [];
+
+      mediaRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          audioChunksRef.current.push(event.data);
+        }
+      };
+
+      mediaRecorder.onstop = async () => {
+        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+        stream.getTracks().forEach(track => track.stop());
+
+        if (audioBlob.size < 500) return;
+
+        setIsLoading(true);
+        try {
+          const formData = new FormData();
+          formData.append('file', audioBlob, 'voice.webm');
+
+          const res = await axios.post(`${API_BASE}/voice/transcribe`, formData, {
+            headers: { 'Content-Type': 'multipart/form-data' }
+          });
+
+          if (res.data && res.data.text) {
+            const transcribedText = res.data.text.trim();
+            setTranscript(transcribedText);
+            setInputText(transcribedText);
+            handleSend(transcribedText);
+          }
+        } catch (err) {
+          console.error("Groq Whisper API transcription error:", err);
+        } finally {
+          setIsLoading(false);
+        }
+      };
+
+      mediaRecorder.start();
+      mediaRecorderRef.current = mediaRecorder;
+      setIsListening(true);
+    } catch (err) {
+      console.error("Microphone access error:", err);
+      alert("Could not access microphone. Please check browser permissions.");
+    }
+  };
+
+  const stopRecording = () => {
+    if (mediaRecorderRef.current && isListening) {
+      mediaRecorderRef.current.stop();
       setIsListening(false);
+    }
+  };
+
+  const toggleListening = () => {
+    if (isListening) {
+      stopRecording();
     } else {
       setTranscript('');
-      try {
-        recognitionRef.current?.start();
-        setIsListening(true);
-      } catch (err) {
-        console.error('Failed to start speech recognition:', err);
-      }
+      startRecording();
     }
   };
 
