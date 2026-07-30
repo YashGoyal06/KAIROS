@@ -150,6 +150,8 @@ export default function VoiceAssistantWidget({ sessionId = null, onCommand = nul
     }
   }, [sessionId, profile?.id]);
 
+  const lastTranscriptRef = useRef('');
+
   useEffect(() => {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (SpeechRecognition) {
@@ -165,6 +167,7 @@ export default function VoiceAssistantWidget({ sessionId = null, onCommand = nul
         }
         setTranscript(currentTranscript);
         setInputText(currentTranscript);
+        lastTranscriptRef.current = currentTranscript;
       };
 
       recognition.onerror = (event) => {
@@ -174,13 +177,18 @@ export default function VoiceAssistantWidget({ sessionId = null, onCommand = nul
 
       recognition.onend = () => {
         setIsListening(false);
+        if (lastTranscriptRef.current && lastTranscriptRef.current.trim()) {
+          const autoSendText = lastTranscriptRef.current;
+          lastTranscriptRef.current = '';
+          handleSend(autoSendText);
+        }
       };
 
       recognitionRef.current = recognition;
     } else {
       setSpeechSupported(false);
     }
-  }, []);
+  }, [activeSessId, sessionId]);
 
   useEffect(() => {
     if (chatEndRef.current) {
