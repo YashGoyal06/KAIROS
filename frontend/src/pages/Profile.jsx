@@ -108,8 +108,8 @@ export default function Profile() {
   return (
     <div className="main-content" style={{
       padding: '32px',
-      maxWidth: '1100px',
-      margin: '0 auto',
+      maxWidth: '100%',
+      margin: '0',
       width: '100%',
       boxSizing: 'border-box',
       display: 'flex',

@@ -127,16 +127,16 @@ export function StaggeredGrid({
       gap: '32px',
       position: 'relative'
     }}>
-      {/* Header Wave Text (No Outer Box Container) */}
+      {/* Header Wave Text */}
       <div ref={textRef} style={{
         margin: 0,
-        fontSize: '24px',
+        fontSize: '28px',
         fontWeight: '900',
         color: '#ffffff',
-        letterSpacing: '0.2em',
+        letterSpacing: '0.25em',
         textTransform: 'uppercase',
         fontFamily: 'monospace',
-        textShadow: '0 0 20px rgba(168, 85, 247, 0.5)',
+        textShadow: '0 0 25px rgba(168, 85, 247, 0.6)',
         display: 'flex',
         overflow: 'hidden',
         lineHeight: 1
@@ -144,15 +144,14 @@ export function StaggeredGrid({
         {splitText(centerText)}
       </div>
 
-      {/* 7-Column Pyramid Staggered Grid Direct Page Container */}
+      {/* Full-Width 7-Column Pyramid Staggered Grid */}
       <div 
         ref={gridFullRef}
         style={{
           display: 'grid',
           gridTemplateColumns: 'repeat(7, minmax(0, 1fr))',
-          gap: '14px',
+          gap: '20px',
           width: '100%',
-          maxWidth: '1000px',
           boxSizing: 'border-box'
         }}
       >
@@ -170,16 +169,16 @@ export function StaggeredGrid({
                 aspectRatio: '1 / 1',
                 backgroundColor: 'rgba(255, 255, 255, 0.03)',
                 border: '1px solid rgba(255, 255, 255, 0.08)',
-                borderRadius: '18px',
+                borderRadius: '24px',
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
                 justifyContent: 'center',
-                gap: '8px',
-                padding: '10px',
+                gap: '12px',
+                padding: '16px',
                 boxSizing: 'border-box',
-                backdropFilter: 'blur(12px)',
-                WebkitBackdropFilter: 'blur(12px)',
+                backdropFilter: 'blur(16px)',
+                WebkitBackdropFilter: 'blur(16px)',
                 transition: 'transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), border-color 0.3s ease, background-color 0.3s ease, box-shadow 0.3s ease',
                 cursor: 'pointer',
                 position: 'relative',
@@ -189,7 +188,7 @@ export function StaggeredGrid({
                 e.currentTarget.style.transform = 'translateY(-8px) scale(1.05)';
                 e.currentTarget.style.borderColor = 'rgba(168, 85, 247, 0.6)';
                 e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.08)';
-                e.currentTarget.style.boxShadow = '0 0 25px rgba(168, 85, 247, 0.4)';
+                e.currentTarget.style.boxShadow = '0 0 30px rgba(168, 85, 247, 0.4)';
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.transform = 'translateY(0) scale(1)';
@@ -198,25 +197,26 @@ export function StaggeredGrid({
                 e.currentTarget.style.boxShadow = 'none';
               }}
             >
+              {/* Prominent Large Tech Logo */}
               <img 
                 src={iconUrl} 
                 alt={tech}
-                style={{ width: '32px', height: '32px', objectFit: 'contain', filter: 'drop-shadow(0 0 6px rgba(255,255,255,0.2))' }}
+                style={{ width: '48px', height: '48px', objectFit: 'contain', filter: 'drop-shadow(0 0 10px rgba(255,255,255,0.25))' }}
                 onError={(e) => {
                   e.currentTarget.style.display = 'none';
                   const parent = e.currentTarget.parentElement;
                   if (parent && !parent.querySelector('.fallback-box')) {
                     const box = document.createElement('div');
                     box.className = 'fallback-box';
-                    box.style.width = '32px';
-                    box.style.height = '32px';
-                    box.style.borderRadius = '8px';
+                    box.style.width = '48px';
+                    box.style.height = '48px';
+                    box.style.borderRadius = '12px';
                     box.style.background = 'rgba(168, 85, 247, 0.2)';
                     box.style.border = '1px solid rgba(168, 85, 247, 0.4)';
                     box.style.display = 'flex';
                     box.style.alignItems = 'center';
                     box.style.justifyContent = 'center';
-                    box.style.fontSize = '10px';
+                    box.style.fontSize = '14px';
                     box.style.fontWeight = 'bold';
                     box.style.color = '#c084fc';
                     box.style.fontFamily = 'monospace';
@@ -226,32 +226,20 @@ export function StaggeredGrid({
                 }}
               />
 
-              <div style={{ textAlign: 'center' }}>
-                <span style={{
-                  display: 'block',
-                  fontSize: '8px',
-                  fontWeight: '700',
-                  color: '#ec4899',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.06em',
-                  fontFamily: 'monospace'
-                }}>
-                  BUILD WITH
-                </span>
-                <span style={{
-                  display: 'block',
-                  fontSize: '11px',
-                  fontWeight: '600',
-                  color: '#f3f4f6',
-                  marginTop: '1px',
-                  whiteSpace: 'nowrap',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  maxWidth: '85px'
-                }}>
-                  {tech}
-                </span>
-              </div>
+              {/* Technology Name Only (No 'BUILD WITH' text) */}
+              <span style={{
+                display: 'block',
+                fontSize: '13px',
+                fontWeight: '700',
+                color: '#f3f4f6',
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                maxWidth: '120px',
+                textAlign: 'center'
+              }}>
+                {tech}
+              </span>
             </div>
           );
         })}
@@ -263,17 +251,17 @@ export function StaggeredGrid({
           style={{
             gridColumn: 'span 2',
             height: '100%',
-            minHeight: '100px',
+            minHeight: '120px',
             backgroundColor: 'rgba(30, 58, 138, 0.2)',
             border: '1px solid rgba(59, 130, 246, 0.3)',
-            borderRadius: '18px',
+            borderRadius: '24px',
             display: 'flex',
             alignItems: 'center',
-            gap: '12px',
-            padding: '12px 16px',
+            gap: '16px',
+            padding: '16px 20px',
             boxSizing: 'border-box',
-            backdropFilter: 'blur(12px)',
-            WebkitBackdropFilter: 'blur(12px)',
+            backdropFilter: 'blur(16px)',
+            WebkitBackdropFilter: 'blur(16px)',
             transition: 'transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), border-color 0.3s ease, background-color 0.3s ease, box-shadow 0.3s ease',
             cursor: 'pointer',
             position: 'relative',
@@ -282,7 +270,7 @@ export function StaggeredGrid({
           onMouseEnter={(e) => {
             e.currentTarget.style.transform = 'translateY(-8px) scale(1.03)';
             e.currentTarget.style.borderColor = 'rgba(59, 130, 246, 0.6)';
-            e.currentTarget.style.boxShadow = '0 0 25px rgba(59, 130, 246, 0.4)';
+            e.currentTarget.style.boxShadow = '0 0 30px rgba(59, 130, 246, 0.4)';
           }}
           onMouseLeave={(e) => {
             e.currentTarget.style.transform = 'translateY(0) scale(1)';
@@ -296,9 +284,9 @@ export function StaggeredGrid({
           }}
         >
           <div style={{
-            width: '40px',
-            height: '40px',
-            borderRadius: '12px',
+            width: '46px',
+            height: '46px',
+            borderRadius: '14px',
             backgroundColor: 'rgba(59, 130, 246, 0.25)',
             border: '1px solid rgba(59, 130, 246, 0.4)',
             display: 'flex',
@@ -306,13 +294,13 @@ export function StaggeredGrid({
             justifyContent: 'center',
             color: '#60a5fa'
           }}>
-            <FaLinkedin size={22} />
+            <FaLinkedin size={26} />
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-            <span style={{ fontSize: '10px', fontWeight: '700', color: '#60a5fa', fontFamily: 'monospace', textTransform: 'uppercase' }}>
+            <span style={{ fontSize: '11px', fontWeight: '700', color: '#60a5fa', fontFamily: 'monospace', textTransform: 'uppercase' }}>
               LINKEDIN
             </span>
-            <span style={{ fontSize: '13px', fontWeight: '600', color: '#ffffff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            <span style={{ fontSize: '14px', fontWeight: '600', color: '#ffffff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
               {linkedinUrl ? linkedinUrl.replace(/^https?:\/\/(www\.)?linkedin\.com\/in\//, '') : 'Connect'}
             </span>
           </div>
@@ -325,17 +313,17 @@ export function StaggeredGrid({
           style={{
             gridColumn: 'span 2',
             height: '100%',
-            minHeight: '100px',
+            minHeight: '120px',
             backgroundColor: 'rgba(88, 28, 135, 0.2)',
             border: '1px solid rgba(168, 85, 247, 0.3)',
-            borderRadius: '18px',
+            borderRadius: '24px',
             display: 'flex',
             alignItems: 'center',
-            gap: '12px',
-            padding: '12px 16px',
+            gap: '16px',
+            padding: '16px 20px',
             boxSizing: 'border-box',
-            backdropFilter: 'blur(12px)',
-            WebkitBackdropFilter: 'blur(12px)',
+            backdropFilter: 'blur(16px)',
+            WebkitBackdropFilter: 'blur(16px)',
             transition: 'transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), border-color 0.3s ease, background-color 0.3s ease, box-shadow 0.3s ease',
             cursor: 'pointer',
             position: 'relative',
@@ -344,7 +332,7 @@ export function StaggeredGrid({
           onMouseEnter={(e) => {
             e.currentTarget.style.transform = 'translateY(-8px) scale(1.03)';
             e.currentTarget.style.borderColor = 'rgba(168, 85, 247, 0.6)';
-            e.currentTarget.style.boxShadow = '0 0 25px rgba(168, 85, 247, 0.4)';
+            e.currentTarget.style.boxShadow = '0 0 30px rgba(168, 85, 247, 0.4)';
           }}
           onMouseLeave={(e) => {
             e.currentTarget.style.transform = 'translateY(0) scale(1)';
@@ -358,9 +346,9 @@ export function StaggeredGrid({
           }}
         >
           <div style={{
-            width: '40px',
-            height: '40px',
-            borderRadius: '12px',
+            width: '46px',
+            height: '46px',
+            borderRadius: '14px',
             backgroundColor: 'rgba(168, 85, 247, 0.25)',
             border: '1px solid rgba(168, 85, 247, 0.4)',
             display: 'flex',
@@ -368,13 +356,13 @@ export function StaggeredGrid({
             justifyContent: 'center',
             color: '#ffffff'
           }}>
-            <FaGithub size={22} />
+            <FaGithub size={26} />
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-            <span style={{ fontSize: '10px', fontWeight: '700', color: '#c084fc', fontFamily: 'monospace', textTransform: 'uppercase' }}>
+            <span style={{ fontSize: '11px', fontWeight: '700', color: '#c084fc', fontFamily: 'monospace', textTransform: 'uppercase' }}>
               GITHUB
             </span>
-            <span style={{ fontSize: '13px', fontWeight: '600', color: '#ffffff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            <span style={{ fontSize: '14px', fontWeight: '600', color: '#ffffff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
               {githubUrl ? githubUrl.replace(/^https?:\/\/(www\.)?github\.com\//, '') : 'Connect'}
             </span>
           </div>
