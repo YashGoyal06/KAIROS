@@ -23,7 +23,7 @@ TEMPLATES_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "static
 
 # Free high-res topic images mapped to presentation themes
 TOPIC_IMAGE_URLS = {
-    "ai": "https://images.unsplash.com/photo-1677442136019-21780efad99a?w=800&auto=format&fit=crop",
+    "ai": "https://images.unsplash.com/photo-1620712943543-bcc4688e7485?w=800&auto=format&fit=crop",
     "problem": "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=800&auto=format&fit=crop",
     "solution": "https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=800&auto=format&fit=crop",
     "architecture": "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=800&auto=format&fit=crop",
@@ -319,8 +319,24 @@ class PPTEngine:
                 except Exception:
                     pass
 
-            # Render each text shape
+            # Render shape elements (pictures & text)
             for shape in slide.shapes:
+                # Render Picture Shapes onto preview canvas
+                if shape.shape_type == pptx.enum.shapes.MSO_SHAPE_TYPE.PICTURE:
+                    try:
+                        x = emu_to_px(shape.left)
+                        y = emu_to_px(shape.top)
+                        w = emu_to_px(shape.width)
+                        h = emu_to_px(shape.height)
+                        if w > 0 and h > 0:
+                            pic_bytes = shape.image.blob
+                            pic_img = Image.open(io.BytesIO(pic_bytes)).convert("RGBA")
+                            pic_img = pic_img.resize((w, h), Image.Resampling.LANCZOS)
+                            img.paste(pic_img, (x, y), pic_img)
+                    except Exception as e:
+                        logger.warning(f"Failed to render slide picture shape in preview: {e}")
+                    continue
+
                 if not shape.has_text_frame:
                     continue
                 tf = shape.text_frame
@@ -613,33 +629,37 @@ class PPTEngine:
                             card_text = c_data["subtitle"]
                         PPTEngine.fit_text_to_frame(b_shape.text_frame, card_text, max_font_size=12, min_font_size=8, is_title=False)
 
-            # 4. Embed Free Subject-Relevant Topic Image into Slide
+            # 4. Embed Free Subject-Relevant Topic Image & Create Split-Screen Layout (Full Right Half Image)
             topic_key = c_data.get("topic", "tech")
             img_bytes = PPTEngine._fetch_topic_image_bytes(topic_key)
             if img_bytes:
                 try:
                     img_stream = io.BytesIO(img_bytes)
-                    # Check if slide has picture shapes to replace first
-                    pic_replaced = False
+                    slide_w = prs.slide_width
+                    slide_h = prs.slide_height
+
+                    # 1. Restrict all text shapes to the left half of the slide
                     for shape in slide.shapes:
+                        if shape.has_text_frame:
+                            txt = shape.text_frame.text.strip().lower()
+                            if not any(ep in txt for ep in EXCLUDE_PATTERNS) and 'presented by' not in txt:
+                                shape.left = Inches(0.8)
+                                shape.width = Inches(slide_w.inches * 0.45)
+
+                    # 2. Check if slide has picture shapes to replace first
+                    pic_replaced = False
+                    for shape in list(slide.shapes):
                         if shape.shape_type == pptx.enum.shapes.MSO_SHAPE_TYPE.PICTURE:
-                            left, top, width, height = shape.left, shape.top, shape.width, shape.height
-                            # Remove existing template image & insert topic image at exact coordinates
                             sp = shape._element
                             sp.getparent().remove(sp)
-                            slide.shapes.add_picture(img_stream, left, top, width, height)
                             pic_replaced = True
-                            break
                     
-                    # If no template picture shape exists, place floating thumbnail in bottom right
-                    if not pic_replaced:
-                        slide_w = prs.slide_width
-                        slide_h = prs.slide_height
-                        img_w = Inches(2.8)
-                        img_h = Inches(1.8)
-                        left_pos = slide_w - img_w - Inches(0.5)
-                        top_pos = slide_h - img_h - Inches(0.5)
-                        slide.shapes.add_picture(img_stream, left_pos, top_pos, img_w, img_h)
+                    # 3. Add large high-impact image covering the full right side of slide
+                    img_left = Inches(slide_w.inches * 0.52)
+                    img_top = Inches(0.8)
+                    img_w = Inches(slide_w.inches * 0.43)
+                    img_h = Inches(slide_h.inches - 1.4)
+                    slide.shapes.add_picture(img_stream, img_left, img_top, img_w, img_h)
                 except Exception as e:
                     logger.warning(f"Error inserting topic image into slide {slide_idx + 1}: {e}")
 
