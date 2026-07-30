@@ -219,15 +219,25 @@ export default function PresentationStudio() {
     const problem = activeSession?.problem_statement || 'Addressing hackathon project planning and execution challenges.';
     const idea = activeSession?.user_idea || 'AI Hackathon Execution Platform';
 
-    const milestones = activeSession?.milestones || [];
-    const msBullets = milestones.map(m => `${m.title || 'Milestone'}: ${m.status || 'In Progress'}`);
+    const milestones = Array.isArray(activeSession?.milestones) ? activeSession.milestones : [];
+    const msBullets = milestones.map(m => {
+      if (typeof m === 'object' && m !== null) {
+        return `${m.title || 'Milestone'}: ${m.status || 'In Progress'}`;
+      }
+      return String(m || 'Milestone: In Progress');
+    });
 
-    const taskBullets = sessionTasks.slice(0, 6).map(t => `${t.name || 'Task'} [${t.priority || 'High'}]`);
+    const taskBullets = (Array.isArray(sessionTasks) ? sessionTasks : []).slice(0, 6).map(t => {
+      if (typeof t === 'object' && t !== null) {
+        return `${t.name || 'Task'} [${t.priority || 'High'}]`;
+      }
+      return String(t || 'Task [High]');
+    });
 
-    const rawOutline = activeSession?.pitch_outline?.full_raw || '';
+    const rawOutline = typeof activeSession?.pitch_outline?.full_raw === 'string' ? activeSession.pitch_outline.full_raw : '';
 
     const userName = profile?.full_name || 'Innovator';
-    const userRole = profile?.tech_stack ? profile.tech_stack.split(',')[0] : 'Fullstack Engineer';
+    const userRole = (typeof profile?.tech_stack === 'string' && profile.tech_stack) ? profile.tech_stack.split(',')[0] : 'Fullstack Engineer';
     const userSkills = profile?.tech_stack || 'Python, React, FastAPI';
 
     return [
@@ -614,15 +624,19 @@ export default function PresentationStudio() {
               {/* SLIDE 5: ROADMAP MILESTONES (3 STAGE CARDS) */}
               {currentSlide.num === 5 && (
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '14px', marginTop: '10px' }}>
-                  {currentSlide.bullets.slice(0, 3).map((b, i) => (
-                    <div key={i} style={{ background: 'rgba(18,20,30,0.85)', border: '1px solid #2a2438', padding: '14px', borderRadius: '10px' }}>
-                      <span style={{ fontSize: '10px', color: '#34d399', fontWeight: 800 }}>STAGE 0{i+1}</span>
-                      <h4 style={{ fontSize: '13px', color: '#fff', fontWeight: 700, margin: '6px 0' }}>{b.split(':')[0]}</h4>
-                      <span style={{ fontSize: '9px', background: 'rgba(56,189,248,0.2)', color: '#38bdf8', padding: '2px 6px', borderRadius: '4px', fontWeight: 700 }}>
-                        {b.split(':')[1] || 'IN PROGRESS'}
-                      </span>
-                    </div>
-                  ))}
+                  {(Array.isArray(currentSlide.bullets) ? currentSlide.bullets : []).slice(0, 3).map((b, i) => {
+                    const bStr = String(b || '');
+                    const parts = bStr.split(':');
+                    return (
+                      <div key={i} style={{ background: 'rgba(18,20,30,0.85)', border: '1px solid #2a2438', padding: '14px', borderRadius: '10px' }}>
+                        <span style={{ fontSize: '10px', color: '#34d399', fontWeight: 800 }}>STAGE 0{i+1}</span>
+                        <h4 style={{ fontSize: '13px', color: '#fff', fontWeight: 700, margin: '6px 0' }}>{parts[0] || 'Milestone'}</h4>
+                        <span style={{ fontSize: '9px', background: 'rgba(56,189,248,0.2)', color: '#38bdf8', padding: '2px 6px', borderRadius: '4px', fontWeight: 700 }}>
+                          {parts[1] || 'IN PROGRESS'}
+                        </span>
+                      </div>
+                    );
+                  })}
                 </div>
               )}
 
