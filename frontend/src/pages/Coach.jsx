@@ -324,6 +324,13 @@ export default function Coach() {
         })
       });
 
+      if (!response.ok) {
+        const errText = await response.text();
+        setMessages(prev => [...prev, { role: 'assistant', content: `⚠️ Backend error (${response.status}): ${errText || 'Failed to connect to Coach API.'}` }]);
+        setIsGenerating(false);
+        return;
+      }
+
       if (!response.body) return;
 
       const reader = response.body.getReader();
@@ -353,6 +360,13 @@ export default function Coach() {
                   updated[updated.length - 1] = { role: 'assistant', content: botResponse };
                   return updated;
                 });
+              } else if (payload.type === 'error') {
+                botResponse += `\n⚠️ ${payload.content}`;
+                setMessages(prev => {
+                  const updated = [...prev];
+                  updated[updated.length - 1] = { role: 'assistant', content: botResponse };
+                  return updated;
+                });
               }
             } catch (err) {}
           }
@@ -362,6 +376,7 @@ export default function Coach() {
 
     } catch (err) {
       console.error("Chat error:", err);
+      setMessages(prev => [...prev, { role: 'assistant', content: "⚠️ Network error. Please check your internet or backend status." }]);
       setIsGenerating(false);
     }
   };

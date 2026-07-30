@@ -56,11 +56,11 @@ class LLMOrchestrator:
         task = task_preference.lower()
         
         if "chat" in task:
-            # Route: Local Ollama -> Groq
-            chain = [("ollama", self._stream_ollama), ("groq_chat", self._stream_groq)]
+            # Route: Local Ollama -> Groq -> Hugging Face
+            chain = [("ollama", self._stream_ollama), ("groq_chat", self._stream_groq), ("huggingface", self._stream_hf)]
         elif "pitch" in task:
-            # Route: Nvidia NIM -> Hugging Face
-            chain = [("nvidia", self._stream_nvidia), ("huggingface", self._stream_hf)]
+            # Route: Nvidia NIM -> Hugging Face -> Groq
+            chain = [("nvidia", self._stream_nvidia), ("huggingface", self._stream_hf), ("groq_heavy", self._stream_groq)]
         else:
             # critique / roadmap / reflection / refinement
             # Route: Groq -> Hugging Face
@@ -79,14 +79,14 @@ class LLMOrchestrator:
             except Exception as e:
                 last_error = e
                 logger.warning(f"Orchestrator: Engine '{engine_name}' failed. Error: {str(e)}")
-                await asyncio.sleep(0.3)
+                await asyncio.sleep(0.1)
 
         if not success:
             logger.critical("Orchestrator: All engines in cascade chain failed.")
             yield f"data: {json.dumps({'type': 'error', 'content': f'All LLM backends are currently unavailable. Last error: {str(last_error)}'})}\n\n"
 
     async def _stream_ollama(self, system_prompt: str, prompt: str, max_tokens: int) -> AsyncGenerator[str, None]:
-        async with httpx.AsyncClient(timeout=60.0) as client:
+        async with httpx.AsyncClient(timeout=3.0) as client:
             async with client.stream(
                 "POST",
                 f"{self.ollama_url}/api/chat",
