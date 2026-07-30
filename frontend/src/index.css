@@ -1498,8 +1498,8 @@ select:focus {
   }
 
   /* Stack grid layouts on mobile */
-  div[style*="gridTemplateColumns"],
-  div[style*="grid-template-columns"] {
+  div[style*="gridTemplateColumns"]:not(.grid--full),
+  div[style*="grid-template-columns"]:not(.grid--full) {
     grid-template-columns: 1fr !important;
   }
 
