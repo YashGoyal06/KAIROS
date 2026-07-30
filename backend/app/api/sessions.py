@@ -195,73 +195,83 @@ async def submit_concept(
             
     return StreamingResponse(sse_generator(), media_type="text/event-stream")
 
+from sqlalchemy.orm.attributes import flag_modified
+
 @router.put("/{session_id}/roadmap", response_model=SessionResponseSchema)
 async def update_roadmap(
     session_id: uuid.UUID,
     data: RoadmapUpdateSchema,
     db: AsyncSession = Depends(get_db)
 ):
-    sess_result = await db.execute(select(Session).where(Session.id == session_id))
-    session = sess_result.scalars().first()
-    if not session:
-        raise HTTPException(status_code=404, detail="Session not found")
+    try:
+        sess_result = await db.execute(select(Session).where(Session.id == session_id))
+        session = sess_result.scalars().first()
+        if not session:
+            raise HTTPException(status_code=404, detail="Session not found")
+            
+        # Update milestones JSON
+        session.milestones = data.milestones
+        flag_modified(session, "milestones")
         
-    # Update milestones JSON
-    session.milestones = data.milestones
-    if data.status:
-        session.status = data.status
-    if data.scope_critique is not None:
-        session.scope_critique = data.scope_critique
+        if data.status:
+            session.status = data.status
+        if data.scope_critique is not None:
+            session.scope_critique = data.scope_critique
+            
+        await db.commit()
+        await db.refresh(session)
         
-    await db.commit()
-    await db.refresh(session)
-    
-    # Auto-generate tasks only when session transitions to execution phase
-    if session.status == "execution":
-        try:
-            task_count_res = await db.execute(select(Task).where(Task.session_id == session_id))
-            if not task_count_res.scalars().first():
-                # Seed tasks based on deliverables and duration estimate
-                for m_idx, m in enumerate(data.milestones or []):
-                    task_id = uuid.uuid4()
-                    if isinstance(m, dict):
-                        title = m.get("title") or f"Task {m_idx + 1}"
-                        deliverable = m.get("deliverable") or "Setup baseline code structure"
-                        phase_id = m.get("phase") or f"phase_{m_idx + 1}"
-                        risk = m.get("risk_level") or "medium"
-                    else:
-                        title = getattr(m, "title", None) or f"Task {m_idx + 1}"
-                        deliverable = getattr(m, "deliverable", None) or "Setup baseline code structure"
-                        phase_id = getattr(m, "phase", None) or f"phase_{m_idx + 1}"
-                        risk = getattr(m, "risk_level", None) or "medium"
-                    
-                    task = Task(
-                        id=task_id,
-                        session_id=session_id,
-                        name=f"{title} - {deliverable}",
-                        milestone_id=phase_id,
-                        priority=risk if risk in ["low", "medium", "high"] else "medium",
-                        status="pending",
-                        dependencies=[]
-                    )
-                    db.add(task)
-                await db.commit()
-        except Exception as e:
-            logger.error(f"Error seeding tasks on session execution: {e}")
-        
-    return SessionResponseSchema(
-        id=session.id,
-        name=session.name,
-        creator_id=session.creator_id,
-        team_id=session.team_id,
-        problem_statement=session.problem_statement,
-        user_idea=session.user_idea,
-        milestones=session.milestones,
-        pitch_outline=session.pitch_outline,
-        scope_critique=session.scope_critique,
-        status=session.status,
-        created_at=str(session.created_at)
-    )
+        # Auto-generate tasks only when session transitions to execution phase
+        if session.status == "execution":
+            try:
+                task_count_res = await db.execute(select(Task).where(Task.session_id == session_id))
+                if not task_count_res.scalars().first():
+                    # Seed tasks based on deliverables and duration estimate
+                    for m_idx, m in enumerate(data.milestones or []):
+                        task_id = uuid.uuid4()
+                        if isinstance(m, dict):
+                            title = m.get("title") or f"Task {m_idx + 1}"
+                            deliverable = m.get("deliverable") or "Setup baseline code structure"
+                            phase_id = m.get("phase") or f"phase_{m_idx + 1}"
+                            risk = m.get("risk_level") or "medium"
+                        else:
+                            title = getattr(m, "title", None) or f"Task {m_idx + 1}"
+                            deliverable = getattr(m, "deliverable", None) or "Setup baseline code structure"
+                            phase_id = getattr(m, "phase", None) or f"phase_{m_idx + 1}"
+                            risk = getattr(m, "risk_level", None) or "medium"
+                        
+                        task = Task(
+                            id=task_id,
+                            session_id=session_id,
+                            name=f"{title} - {deliverable}",
+                            milestone_id=phase_id,
+                            priority=risk if risk in ["low", "medium", "high"] else "medium",
+                            status="pending",
+                            dependencies=[]
+                        )
+                        db.add(task)
+                    await db.commit()
+            except Exception as e:
+                logger.error(f"Error seeding tasks on session execution: {e}")
+            
+        return SessionResponseSchema(
+            id=session.id,
+            name=session.name,
+            creator_id=session.creator_id,
+            team_id=session.team_id,
+            problem_statement=session.problem_statement,
+            user_idea=session.user_idea,
+            milestones=session.milestones or [],
+            pitch_outline=session.pitch_outline or {},
+            scope_critique=session.scope_critique,
+            status=session.status,
+            created_at=str(session.created_at) if session.created_at else ""
+        )
+    except HTTPException:
+        raise
+    except Exception as exc:
+        logger.error(f"Unhandled error in update_roadmap: {exc}")
+        raise HTTPException(status_code=500, detail=str(exc))
 
 @router.post("/{session_id}/chat")
 async def chat_with_coach(
