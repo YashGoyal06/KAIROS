@@ -265,12 +265,21 @@ async def chat_with_coach(
     if not session:
         raise HTTPException(status_code=404, detail="Session not found")
         
+    # Gather tasks and blockers for deep model understanding
+    tasks_res = await db.execute(select(Task).where(Task.session_id == session_id))
+    tasks_list = [{"name": t.name, "status": t.status, "priority": t.priority, "milestone_id": t.milestone_id} for t in tasks_res.scalars().all()]
+    
+    blockers_res = await db.execute(select(Blocker).where(Blocker.session_id == session_id))
+    blockers_list = [{"description": b.description, "severity": b.severity, "status": b.status} for b in blockers_res.scalars().all()]
+
     # Gather project context
     context = {
         "project_name": session.name,
         "problem_statement": session.problem_statement,
         "user_idea": session.user_idea,
         "milestones": session.milestones,
+        "tasks": tasks_list,
+        "blockers": blockers_list,
         "status": session.status
     }
     

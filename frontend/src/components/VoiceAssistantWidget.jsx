@@ -102,6 +102,7 @@ function Robot3DAvatar({ size = 48, isListening = false, isSpeaking = false }) {
 
 export default function VoiceAssistantWidget({ sessionId = null, onCommand = null }) {
   const { profile, API_BASE } = useAuth();
+  const [activeSessId, setActiveSessId] = useState(sessionId);
   const [isOpen, setIsOpen] = useState(false);
   const [isListening, setIsListening] = useState(false);
   const [transcript, setTranscript] = useState('');
@@ -114,6 +115,21 @@ export default function VoiceAssistantWidget({ sessionId = null, onCommand = nul
 
   const recognitionRef = useRef(null);
   const chatEndRef = useRef(null);
+
+  // Auto-fetch active session if not explicitly passed
+  useEffect(() => {
+    if (sessionId) {
+      setActiveSessId(sessionId);
+    } else if (profile?.id) {
+      axios.get(`${API_BASE}/sessions`, { params: { profile_id: profile.id } })
+        .then(res => {
+          if (res.data && res.data.length > 0) {
+            setActiveSessId(res.data[0].id);
+          }
+        })
+        .catch(err => console.error("Widget session fetch error:", err));
+    }
+  }, [sessionId, profile?.id]);
 
   useEffect(() => {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -187,12 +203,14 @@ export default function VoiceAssistantWidget({ sessionId = null, onCommand = nul
       onCommand(query);
     }
 
+    const targetSessionId = activeSessId || sessionId;
+
     try {
-      if (sessionId) {
+      if (targetSessionId) {
         const history = messages.map(m => ({ role: m.role, content: m.content }));
         history.push(userMsg);
 
-        const response = await fetch(`${API_BASE}/sessions/${sessionId}/chat`, {
+        const response = await fetch(`${API_BASE}/sessions/${targetSessionId}/chat`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -237,19 +255,15 @@ export default function VoiceAssistantWidget({ sessionId = null, onCommand = nul
         }
       } else {
         setTimeout(() => {
-          let responseText = "I'm ready! Select an active coaching session or task board to perform specific actions.";
-          const q = query.toLowerCase();
-          if (q.includes('blocker') || q.includes('summary')) {
-            responseText = "⚡ **Blocker Summary**: No critical blockers currently logged in active workspace. Keep pushing!";
-          } else if (q.includes('task') || q.includes('done') || q.includes('update')) {
-            responseText = "✅ Voice command received: *\"" + query + "\"*. Go to your Tasks page to verify status updates.";
-          }
-          setMessages(prev => [...prev, { role: 'assistant', content: responseText }]);
-        }, 600);
+          setMessages(prev => [...prev, { 
+            role: 'assistant', 
+            content: "⚠️ **No Active Session Found**: Please create or open a coaching session first so I can analyze your specific project tasks and blockers!" 
+          }]);
+        }, 400);
       }
     } catch (err) {
       console.error('Widget voice chat error:', err);
-      setMessages(prev => [...prev, { role: 'assistant', content: '⚠️ Could not process request. Please try again.' }]);
+      setMessages(prev => [...prev, { role: 'assistant', content: '⚠️ Could not process request. Please check backend connection.' }]);
     } finally {
       setIsLoading(false);
     }
