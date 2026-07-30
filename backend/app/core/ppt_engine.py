@@ -102,39 +102,24 @@ class PPTEngine:
     @staticmethod
     def fit_text_to_frame(text_frame, text: str, max_font_size: int = 16, min_font_size: int = 9, is_title: bool = False):
         """
-        PRESERVES PERFECT ALIGNMENT & TYPOGRAPHY:
-        Does NOT call text_frame.clear()! Direct run-level text replacement preserves:
-        - Frame Margins (Top, Bottom, Left, Right)
-        - Vertical Alignment Anchor (Top, Middle, Bottom)
-        - Paragraph Alignment (Left, Center, Right, Justify)
+        ZERO-OVERRIDE Text Replacement:
+        Replaces text content ONLY. Never touches:
+        - Font Size (keeps original 124.8pt, 25pt, 20pt, 15pt etc. from template)
+        - Font Name (keeps Poppins Bold, Aileron, Aileron Bold, etc.)
+        - Font Bold / Italic state
+        - Font Color RGB
+        - Paragraph Alignment (LEFT, CENTER, RIGHT, JUSTIFY)
         - Paragraph Spacing (space_before, space_after, line_spacing)
-        - Run Font Name, Color RGB, Bold, Italic
+        - Frame Margins & Vertical Anchor
         """
         text_frame.word_wrap = True
         cleaned = text.strip()
         if not cleaned:
             return
 
-        char_len = len(cleaned)
-        
-        if is_title:
-            if char_len > 80:
-                font_size = max(14, max_font_size - 6)
-                cleaned = cleaned[:100] + "..." if char_len > 100 else cleaned
-            elif char_len > 40:
-                font_size = max(16, max_font_size - 4)
-            else:
-                font_size = max_font_size
-        else:
-            if char_len > 400:
-                font_size = min_font_size
-                cleaned = cleaned[:450] + "..."
-            elif char_len > 250:
-                font_size = max(min_font_size, max_font_size - 5)
-            elif char_len > 140:
-                font_size = max(min_font_size + 1, max_font_size - 3)
-            else:
-                font_size = max_font_size
+        # Truncate if text is way too long for slide boxes
+        if len(cleaned) > 500:
+            cleaned = cleaned[:500] + "..."
 
         lines = [line.strip() for line in cleaned.split("\n") if line.strip()]
         if not lines:
@@ -142,38 +127,57 @@ class PPTEngine:
 
         existing_paras = list(text_frame.paragraphs)
         if len(existing_paras) == 0:
-            p0 = text_frame.add_paragraph()
-            existing_paras = [p0]
+            return
 
-        ref_p = existing_paras[0]
-        ref_alignment = ref_p.alignment
-        ref_space_before = ref_p.space_before
-        ref_space_after = ref_p.space_after
-        ref_line_spacing = ref_p.line_spacing
-
+        # Snapshot reference font properties from first run of first paragraph
+        ref_size = None
         ref_color = None
         ref_name = None
         ref_bold = None
         ref_italic = None
+        ref_alignment = existing_paras[0].alignment
+        ref_space_before = existing_paras[0].space_before
+        ref_space_after = existing_paras[0].space_after
+        ref_line_spacing = existing_paras[0].line_spacing
 
-        if len(ref_p.runs) > 0:
-            r0 = ref_p.runs[0]
-            if r0.font and r0.font.color and r0.font.color.type == 1:
+        if len(existing_paras[0].runs) > 0:
+            r0 = existing_paras[0].runs[0]
+            ref_size = r0.font.size  # KEEP EXACT ORIGINAL SIZE (e.g. 124.8pt, 15pt)
+            if r0.font.color and r0.font.color.type == 1:
                 ref_color = r0.font.color.rgb
-            if r0.font and r0.font.name:
-                ref_name = r0.font.name
-            if r0.font and r0.font.bold is not None:
+            ref_name = r0.font.name
+            if r0.font.bold is not None:
                 ref_bold = r0.font.bold
-            if r0.font and r0.font.italic is not None:
+            if r0.font.italic is not None:
                 ref_italic = r0.font.italic
 
-        # Update existing paragraphs or add new ones without clearing frame
+        # Replace text in existing paragraphs run-by-run
         for i, line in enumerate(lines):
             line_txt = line[2:].strip() if line.startswith(("- ", "* ", "• ")) else line
 
             if i < len(existing_paras):
                 p = existing_paras[i]
+                # Replace text in first run, blank extra runs
+                if len(p.runs) > 0:
+                    p.runs[0].text = line_txt
+                    for extra_r in p.runs[1:]:
+                        extra_r.text = ""
+                else:
+                    # No runs exist, add one with reference font props
+                    r = p.add_run()
+                    r.text = line_txt
+                    if ref_size:
+                        r.font.size = ref_size
+                    if ref_color:
+                        r.font.color.rgb = ref_color
+                    if ref_name:
+                        r.font.name = ref_name
+                    if ref_bold is not None:
+                        r.font.bold = ref_bold
+                    if ref_italic is not None:
+                        r.font.italic = ref_italic
             else:
+                # Need a new paragraph beyond what template has
                 p = text_frame.add_paragraph()
                 if ref_alignment is not None:
                     p.alignment = ref_alignment
@@ -183,27 +187,10 @@ class PPTEngine:
                     p.space_after = ref_space_after
                 if ref_line_spacing is not None:
                     p.line_spacing = ref_line_spacing
-
-            # Update runs directly inside paragraph
-            if len(p.runs) > 0:
-                p.runs[0].text = line_txt
-                p.runs[0].font.size = Pt(font_size)
-                if ref_color:
-                    p.runs[0].font.color.rgb = ref_color
-                if ref_name:
-                    p.runs[0].font.name = ref_name
-                if ref_bold is not None:
-                    p.runs[0].font.bold = ref_bold
-                if ref_italic is not None:
-                    p.runs[0].font.italic = ref_italic
-
-                # Blank out any extra runs in paragraph
-                for extra_r in p.runs[1:]:
-                    extra_r.text = ""
-            else:
                 r = p.add_run()
                 r.text = line_txt
-                r.font.size = Pt(font_size)
+                if ref_size:
+                    r.font.size = ref_size
                 if ref_color:
                     r.font.color.rgb = ref_color
                 if ref_name:
@@ -213,7 +200,7 @@ class PPTEngine:
                 if ref_italic is not None:
                     r.font.italic = ref_italic
 
-        # Empty out any unused extra paragraphs in the template shape
+        # Blank out unused extra paragraphs
         for extra_i in range(len(lines), len(existing_paras)):
             p_extra = existing_paras[extra_i]
             for r_extra in p_extra.runs:
