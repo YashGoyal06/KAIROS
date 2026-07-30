@@ -17,7 +17,7 @@ export default function PresentationStudio() {
   const [activeSlideIndex, setActiveSlideIndex] = useState(0);
 
   // Template States
-  const [selectedTemplate, setSelectedTemplate] = useState('template-gamma');
+  const [selectedTemplate, setSelectedTemplate] = useState('template-1');
   const [customFile, setCustomFile] = useState(null);
   const [customAnalysis, setCustomAnalysis] = useState(null);
   const [isAnalyzingCustom, setIsAnalyzingCustom] = useState(false);
@@ -25,58 +25,49 @@ export default function PresentationStudio() {
 
   const builtInTemplates = [
     { 
-      id: 'template-gamma', 
-      name: 'Gamma AI Ultra (Recommended)', 
-      desc: 'Gamma.app 16:9 obsidian cards with pill badges & metric blocks', 
-      slides: 10,
-      bg: 'linear-gradient(135deg, #090a0f 0%, #12141e 100%)',
-      accentColor: '#a855f7',
-      borderColor: 'rgba(168,85,247,0.6)'
-    },
-    { 
       id: 'template-1', 
-      name: 'Cyber Neon Executive', 
-      desc: 'Dark theme with purple glow & tech boxes', 
+      name: 'Cyber Neon Executive (Template 1)', 
+      desc: 'Dark theme with purple glow & master tech card boxes', 
       slides: 10,
       bg: 'linear-gradient(135deg, #0d0614 0%, #170b29 50%, #0d0614 100%)',
       accentColor: '#a855f7',
-      borderColor: 'rgba(168,85,247,0.3)'
+      borderColor: 'rgba(168,85,247,0.4)'
     },
     { 
       id: 'template-2', 
-      name: 'Minimalist Modern Tech', 
-      desc: 'Clean, sleek layout with crisp typography', 
+      name: 'Minimalist Modern Tech (Template 2)', 
+      desc: 'Clean, sleek layout with crisp typography & grid cards', 
       slides: 11,
       bg: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
       accentColor: '#38bdf8',
-      borderColor: 'rgba(56,189,248,0.3)'
+      borderColor: 'rgba(56,189,248,0.4)'
     },
     { 
       id: 'template-3', 
-      name: 'Vibrant Launchpad', 
-      desc: 'Dynamic pitch design with metric cards', 
+      name: 'Vibrant Launchpad (Template 3)', 
+      desc: 'Dynamic pitch design with prominent master metric boxes', 
       slides: 11,
       bg: 'linear-gradient(135deg, #18002e 0%, #2e0054 100%)',
       accentColor: '#f43f5e',
-      borderColor: 'rgba(244,63,94,0.3)'
+      borderColor: 'rgba(244,63,94,0.4)'
     },
     { 
       id: 'template-4', 
-      name: 'Enterprise Architecture', 
-      desc: 'Comprehensive technical & workflow deck', 
+      name: 'Enterprise Architecture (Template 4)', 
+      desc: 'Comprehensive technical & workflow flowchart deck', 
       slides: 13,
       bg: 'linear-gradient(135deg, #091224 0%, #111f38 100%)',
       accentColor: '#34d399',
-      borderColor: 'rgba(52,211,153,0.3)'
+      borderColor: 'rgba(52,211,153,0.4)'
     },
     { 
       id: 'template-5', 
-      name: 'Futuristic AI Studio', 
-      desc: 'Obsidian gradient style for AI presentations', 
+      name: 'Futuristic AI Studio (Template 5)', 
+      desc: 'Obsidian gradient style for AI presentations & showcase', 
       slides: 10,
       bg: 'linear-gradient(135deg, #050508 0%, #12101e 100%)',
       accentColor: '#c084fc',
-      borderColor: 'rgba(192,132,252,0.3)'
+      borderColor: 'rgba(192,132,252,0.4)'
     }
   ];
 
