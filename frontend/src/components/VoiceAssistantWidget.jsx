@@ -179,12 +179,14 @@ export default function VoiceAssistantWidget({ sessionId = null, onCommand = nul
             alignItems: 'center',
             justifyContent: 'center',
             cursor: 'pointer',
+            overflow: 'hidden',
+            padding: '2px',
             transition: 'transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1)'
           }}
           className="voice-widget-btn"
           title="Open Kairos Voice & Chat Assistant"
         >
-          <Sparkles size={24} />
+          <img src="/kairos_logo.jpeg" alt="Kairos Logo" style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} />
         </button>
       )}
 
@@ -214,16 +216,14 @@ export default function VoiceAssistantWidget({ sessionId = null, onCommand = nul
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
               <div style={{
-                width: '30px',
-                height: '30px',
+                width: '32px',
+                height: '32px',
                 borderRadius: '50%',
-                background: 'linear-gradient(135deg, #a855f7, #6366f1)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
+                overflow: 'hidden',
+                border: '1px solid rgba(168, 85, 247, 0.5)',
                 boxShadow: '0 0 10px rgba(168, 85, 247, 0.5)'
               }}>
-                <Sparkles size={16} style={{ color: '#fff' }} />
+                <img src="/kairos_logo.jpeg" alt="Kairos Logo" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
               </div>
               <div>
                 <h4 style={{ margin: 0, fontSize: '14px', fontWeight: 700, color: '#fff' }}>Kairos AI Companion</h4>
