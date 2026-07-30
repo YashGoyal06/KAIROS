@@ -207,6 +207,29 @@ export default function Pitch() {
     window.open(`${API_BASE}/sessions/${activeSessionId}/pitch/export-submission`, '_blank');
   };
 
+  const handleDownloadProjectPDF = async () => {
+    if (!activeSessionId) return;
+    try {
+      showToast("Generating Executive Project PDF...", "info");
+      const response = await axios.get(`${API_BASE}/sessions/${activeSessionId}/pitch/export-pdf`, {
+        responseType: 'blob'
+      });
+      const blob = new Blob([response.data], { type: 'application/pdf' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `${activeSession?.name?.replace(/\s+/g, '_') || 'Project'}_Execution_Blueprint.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      showToast("Executive PDF Blueprint downloaded successfully!", "success");
+    } catch (e) {
+      console.error("PDF Export error:", e);
+      showToast("Failed to download PDF report.", "error");
+    }
+  };
+
   return (
     <div className="main-content">
       {!activeSessionId ? (
@@ -255,6 +278,9 @@ export default function Pitch() {
               </div>
             </div>
             <div style={{ display: 'flex', gap: '12px' }}>
+              <button onClick={handleDownloadProjectPDF} className="btn btn-primary" style={{ padding: '10px 16px', background: 'linear-gradient(135deg, #7c3aed 0%, #a855f7 100%)', border: 'none' }}>
+                <Download size={16} /> 📄 Export Full PDF Report
+              </button>
               <button onClick={handleExportSubmission} className="btn btn-primary" style={{ padding: '10px 16px', background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', border: 'none' }}>
                 <Download size={16} /> Export Submission Package
               </button>

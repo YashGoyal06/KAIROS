@@ -238,7 +238,7 @@ async def preview_slides(
         "slides": slide_images  # list of base64 PNG strings
     }
 
-@router.post("/export-pdf")
+@router.api_route("/export-pdf", methods=["GET", "POST"])
 async def export_pdf(
     session_id: uuid.UUID,
     db: AsyncSession = Depends(get_db)
@@ -252,22 +252,42 @@ async def export_pdf(
     tasks_res = await db.execute(select(Task).where(Task.session_id == session_id))
     tasks = [{"name": t.name, "status": t.status, "priority": t.priority} for t in tasks_res.scalars().all()]
 
-    pitch_sections = {}
-    if session.pitch_outline and "full_raw" in session.pitch_outline:
-        raw = session.pitch_outline["full_raw"]
-        pitch_sections["showcase"] = raw
-        pitch_sections["demo"] = raw
+    blockers_res = await db.execute(select(Blocker).where(Blocker.session_id == session_id))
+    blockers = [{"description": b.description, "severity": b.severity, "status": b.status} for b in blockers_res.scalars().all()]
 
-    pdf_bytes = PPTEngine.generate_pdf(
+    team_data = {}
+    if session.team_id:
+        team_res = await db.execute(select(Team).where(Team.id == session.team_id))
+        team = team_res.scalars().first()
+        if team and team.master_json:
+            team_data = team.master_json
+    else:
+        prof_res = await db.execute(select(Profile).where(Profile.id == session.creator_id))
+        prof = prof_res.scalars().first()
+        if prof:
+            team_data = {
+                "name": prof.full_name,
+                "role": prof.primary_role,
+                "level": prof.experience_level,
+                "skills": prof.tech_stack
+            }
+
+    pitch_sections = {}
+    if session.pitch_outline and isinstance(session.pitch_outline, dict):
+        pitch_sections = session.pitch_outline
+
+    pdf_bytes = PPTEngine.generate_project_pdf(
         session_name=session.name,
         problem_statement=session.problem_statement or "",
         user_idea=session.user_idea or "",
-        pitch_sections=pitch_sections,
         milestones=milestones,
-        tasks=tasks
+        tasks=tasks,
+        blockers=blockers,
+        team_data=team_data,
+        pitch_sections=pitch_sections
     )
 
-    filename = f"{session.name.replace(' ', '_')}_Pitch.pdf"
+    filename = f"{session.name.replace(' ', '_')}_Execution_Blueprint.pdf"
     return Response(
         content=pdf_bytes,
         media_type="application/pdf",

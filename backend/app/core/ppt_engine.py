@@ -11,7 +11,8 @@ from pptx.enum.text import PP_ALIGN
 
 from reportlab.lib.pagesizes import letter, landscape
 from reportlab.lib import colors
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, PageBreak
+from reportlab.pdfgen import canvas
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, PageBreak, KeepTogether, HRFlowable
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 
 logger = logging.getLogger("kairos.ppt_engine")
@@ -537,106 +538,351 @@ class PPTEngine:
         session_name: str,
         problem_statement: str,
         user_idea: str,
-        pitch_sections: Dict[str, str],
+class NumberedCanvas(canvas.Canvas):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._saved_page_states = []
+
+    def showPage(self):
+        self._saved_page_states.append(dict(self.__dict__))
+        self._startPage()
+
+    def save(self):
+        num_pages = len(self._saved_page_states)
+        for state in self._saved_page_states:
+            self.__dict__.update(state)
+            self.draw_page_decorations(num_pages)
+            super().showPage()
+        super().save()
+
+    def draw_page_decorations(self, page_count):
+        self.saveState()
+        self.setFont("Helvetica-Bold", 8)
+        self.setFillColor(colors.HexColor("#64748b"))
+        
+        # Header banner on pages after cover
+        if self._pageNumber > 1:
+            self.setStrokeColor(colors.HexColor("#e2e8f0"))
+            self.setLineWidth(0.5)
+            self.line(36, 756, 576, 756)
+            self.drawString(36, 762, "KAIROS AI EXECUTION ENGINE | HACKATHON PROJECT REPORT")
+
+        # Footer line & page numbers
+        self.setStrokeColor(colors.HexColor("#e2e8f0"))
+        self.setLineWidth(0.5)
+        self.line(36, 40, 576, 40)
+        
+        self.setFont("Helvetica", 8)
+        self.drawString(36, 26, "Generated automatically by KAIROS Execution Engine")
+        page_text = f"Page {self._pageNumber} of {page_count}"
+        self.drawRightString(576, 26, page_text)
+        self.restoreState()
+
+
+    @staticmethod
+    def generate_project_pdf(
+        session_name: str,
+        problem_statement: str = "",
+        user_idea: str = "",
         milestones: List[Dict[str, Any]] = None,
-        tasks: List[Dict[str, Any]] = None
+        tasks: List[Dict[str, Any]] = None,
+        blockers: List[Dict[str, Any]] = None,
+        team_data: Dict[str, Any] = None,
+        pitch_sections: Dict[str, str] = None,
+        created_at: str = None
     ) -> bytes:
+        milestones = milestones or []
+        tasks = tasks or []
+        blockers = blockers or []
+        team_data = team_data or {}
+        pitch_sections = pitch_sections or {}
+
         buffer = io.BytesIO()
         doc = SimpleDocTemplate(
             buffer,
-            pagesize=landscape(letter),
+            pagesize=letter,
             rightMargin=36,
             leftMargin=36,
-            topMargin=36,
-            bottomMargin=36
+            topMargin=54,
+            bottomMargin=54
         )
 
         styles = getSampleStyleSheet()
         
+        # Custom Typography Styles
         title_style = ParagraphStyle(
-            'SlideTitle',
+            'ReportTitle',
             parent=styles['Heading1'],
+            fontName='Helvetica-Bold',
             fontSize=22,
             leading=26,
-            textColor=colors.HexColor('#a855f7'),
-            spaceAfter=12
+            textColor=colors.HexColor('#6d28d9'),
+            spaceAfter=6
         )
-        
+
+        section_title_style = ParagraphStyle(
+            'SectionTitle',
+            parent=styles['Heading2'],
+            fontName='Helvetica-Bold',
+            fontSize=13,
+            leading=17,
+            textColor=colors.HexColor('#1e1b4b'),
+            spaceBefore=14,
+            spaceAfter=6,
+            keepWithNext=True
+        )
+
         body_style = ParagraphStyle(
-            'SlideBody',
+            'ReportBody',
             parent=styles['BodyText'],
-            fontSize=11,
-            leading=16,
+            fontName='Helvetica',
+            fontSize=9.5,
+            leading=13.5,
             textColor=colors.HexColor('#334155'),
+            spaceAfter=6
+        )
+
+        callout_style = ParagraphStyle(
+            'ReportCallout',
+            parent=body_style,
+            fontName='Helvetica-Oblique',
+            fontSize=9.5,
+            leading=13.5,
+            textColor=colors.HexColor('#1e293b'),
+            backColor=colors.HexColor('#f8fafc'),
+            borderColor=colors.HexColor('#7c3aed'),
+            borderWidth=1,
+            borderPadding=8,
             spaceAfter=10
         )
-        
-        bullet_style = ParagraphStyle(
-            'SlideBullet',
-            parent=body_style,
-            leftIndent=15,
-            firstLineIndent=-10
+
+        table_cell_style = ParagraphStyle(
+            'TableCell',
+            parent=styles['Normal'],
+            fontName='Helvetica',
+            fontSize=8.5,
+            leading=11.5,
+            textColor=colors.HexColor('#1e293b')
+        )
+
+        table_header_style = ParagraphStyle(
+            'TableHeader',
+            parent=styles['Normal'],
+            fontName='Helvetica-Bold',
+            fontSize=8.5,
+            leading=11.5,
+            textColor=colors.white
         )
 
         story = []
 
-        # Slide 1: Cover
-        story.append(Paragraph(f"<b>{session_name or 'Project Presentation'}</b>", title_style))
-        story.append(Spacer(1, 15))
-        story.append(Paragraph(f"<b>Vision:</b> {user_idea or 'AI-Powered Project Co-Founder & Execution Engine'}", body_style))
-        story.append(Spacer(1, 20))
-        story.append(Paragraph("Generated by KAIROS Pitch Studio", body_style))
-        story.append(PageBreak())
+        # Document Header Banner
+        header_table = Table(
+            [[Paragraph(f"<b>KAIROS EXECUTION BLUEPRINT</b>", ParagraphStyle('H1', parent=table_header_style, fontSize=15, leading=18)),
+              Paragraph(f"Project: <b>{session_name}</b>", ParagraphStyle('H2', parent=table_header_style, fontSize=10, alignment=2))]],
+            colWidths=[300, 240]
+        )
+        header_table.setStyle(TableStyle([
+            ('BACKGROUND', (0,0), (-1,-1), colors.HexColor('#6d28d9')),
+            ('PADDING', (0,0), (-1,-1), 10),
+            ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
+        ]))
+        story.append(header_table)
+        story.append(Spacer(1, 12))
 
-        # Slide 2: Problem Statement
-        story.append(Paragraph("<b>Problem Statement & Core Value</b>", title_style))
-        story.append(Spacer(1, 10))
-        story.append(Paragraph(problem_statement or "Addressing hackathon project planning and execution challenges.", body_style))
-        story.append(PageBreak())
+        # KPI Summary Cards Table
+        total_tasks = len(tasks)
+        completed_tasks = sum(1 for t in tasks if t.get('status') == 'completed')
+        pct = int((completed_tasks / total_tasks * 100)) if total_tasks > 0 else 0
+        open_blockers = sum(1 for b in blockers if b.get('status') == 'open')
 
-        # Slide 3: Demo Flow
-        story.append(Paragraph("<b>Demo Flow & Core User Experience</b>", title_style))
-        story.append(Spacer(1, 10))
-        demo_text = pitch_sections.get("demo", "Step 1: Onboarding\nStep 2: AI Coach Roadmap\nStep 3: Execution Task Board\nStep 4: Pitch Studio Export")
-        for line in demo_text.split("\n"):
-            if line.strip():
-                story.append(Paragraph(f"• {line.strip()}", bullet_style))
-        story.append(PageBreak())
+        kpi_data = [
+            [
+                Paragraph(f"<font size=7.5 color='#64748b'>MILESTONES</font><br/><font size=15 color='#6d28d9'><b>{len(milestones)}</b></font>", table_cell_style),
+                Paragraph(f"<font size=7.5 color='#64748b'>COMPLETED TASKS</font><br/><font size=15 color='#059669'><b>{completed_tasks}/{total_tasks}</b></font>", table_cell_style),
+                Paragraph(f"<font size=7.5 color='#64748b'>PROGRESS</font><br/><font size=15 color='#2563eb'><b>{pct}%</b></font>", table_cell_style),
+                Paragraph(f"<font size=7.5 color='#64748b'>OPEN BLOCKERS</font><br/><font size=15 color='#dc2626'><b>{open_blockers}</b></font>", table_cell_style)
+            ]
+        ]
+        kpi_table = Table(kpi_data, colWidths=[135, 135, 135, 135])
+        kpi_table.setStyle(TableStyle([
+            ('BACKGROUND', (0,0), (-1,-1), colors.HexColor('#f8fafc')),
+            ('BOX', (0,0), (-1,-1), 1, colors.HexColor('#e2e8f0')),
+            ('INNERGRID', (0,0), (-1,-1), 0.5, colors.HexColor('#cbd5e1')),
+            ('PADDING', (0,0), (-1,-1), 6),
+            ('ALIGN', (0,0), (-1,-1), 'CENTER'),
+        ]))
+        story.append(kpi_table)
+        story.append(Spacer(1, 14))
 
-        # Slide 4: Milestones & Roadmap
-        story.append(Paragraph("<b>Roadmap & Milestones</b>", title_style))
+        # Section 1: Executive Summary & Project Vision
+        story.append(Paragraph("1. Executive Summary & Project Vision", section_title_style))
+        story.append(HRFlowable(width="100%", thickness=1, color=colors.HexColor("#7c3aed"), spaceAfter=8))
+
+        if problem_statement:
+            story.append(Paragraph(f"<b>Problem Statement:</b><br/>{problem_statement}", callout_style))
+        
+        if user_idea:
+            story.append(Paragraph(f"<b>Proposed Solution & Architecture:</b><br/>{user_idea}", body_style))
+
+        # Section 2: Team Roster & Skill Matrix
+        if team_data:
+            story.append(Spacer(1, 8))
+            story.append(Paragraph("2. Team Structure & Skill Alignment", section_title_style))
+            story.append(HRFlowable(width="100%", thickness=1, color=colors.HexColor("#7c3aed"), spaceAfter=6))
+            
+            members = team_data.get("members", [])
+            if not members and "name" in team_data:
+                members = [team_data]
+                
+            if members:
+                t_rows = [[
+                    Paragraph("<b>Member Name</b>", table_header_style),
+                    Paragraph("<b>Role</b>", table_header_style),
+                    Paragraph("<b>Level</b>", table_header_style),
+                    Paragraph("<b>Tech Stack Skills</b>", table_header_style)
+                ]]
+                for m in members:
+                    skills_str = ", ".join(m.get("skills", [])) if isinstance(m.get("skills"), list) else str(m.get("skills", "N/A"))
+                    t_rows.append([
+                        Paragraph(m.get("full_name") or m.get("name") or "User", table_cell_style),
+                        Paragraph(m.get("role") or m.get("primary_role") or "Developer", table_cell_style),
+                        Paragraph(m.get("level") or m.get("experience_level") or "Mid", table_cell_style),
+                        Paragraph(skills_str or "Fullstack", table_cell_style)
+                    ])
+                t_team = Table(t_rows, colWidths=[120, 100, 80, 240])
+                t_team.setStyle(TableStyle([
+                    ('BACKGROUND', (0,0), (-1,0), colors.HexColor('#1e1b4b')),
+                    ('PADDING', (0,0), (-1,-1), 5),
+                    ('GRID', (0,0), (-1,-1), 0.5, colors.HexColor('#e2e8f0')),
+                ]))
+                story.append(t_team)
+
+        # Section 3: Strategic Roadmap & Execution Milestones
         story.append(Spacer(1, 10))
+        story.append(Paragraph("3. Strategic Roadmap & Execution Milestones", section_title_style))
+        story.append(HRFlowable(width="100%", thickness=1, color=colors.HexColor("#7c3aed"), spaceAfter=6))
+
         if milestones:
-            table_data = [["Milestone", "Status", "Target Output"]]
+            m_rows = [[
+                Paragraph("<b>Phase</b>", table_header_style),
+                Paragraph("<b>Milestone Title</b>", table_header_style),
+                Paragraph("<b>Key Deliverable</b>", table_header_style),
+                Paragraph("<b>Est. Duration</b>", table_header_style)
+            ]]
             for m in milestones:
-                table_data.append([
-                    m.get('title', 'Milestone'),
-                    m.get('status', 'Planning'),
-                    m.get('deliverable', 'Code & Demo')
+                m_rows.append([
+                    Paragraph(m.get('phase', 'Phase'), table_cell_style),
+                    Paragraph(f"<b>{m.get('title', '')}</b>", table_cell_style),
+                    Paragraph(m.get('deliverable', 'Code & Architecture'), table_cell_style),
+                    Paragraph(m.get('duration_estimate', '2-4 hrs'), table_cell_style)
                 ])
-            t = Table(table_data, colWidths=[250, 150, 250])
-            t.setStyle(TableStyle([
-                ('BACKGROUND', (0,0), (-1,0), colors.HexColor('#6b21a8')),
-                ('TEXTCOLOR', (0,0), (-1,0), colors.white),
-                ('ALIGN', (0,0), (-1,-1), 'LEFT'),
-                ('FONTNAME', (0,0), (-1,0), 'Helvetica-Bold'),
-                ('BOTTOMPADDING', (0,0), (-1,0), 8),
-                ('GRID', (0,0), (-1,-1), 0.5, colors.HexColor('#cbd5e1')),
+            m_table = Table(m_rows, colWidths=[80, 180, 200, 80])
+            m_table.setStyle(TableStyle([
+                ('BACKGROUND', (0,0), (-1,0), colors.HexColor('#6d28d9')),
+                ('PADDING', (0,0), (-1,-1), 5),
+                ('GRID', (0,0), (-1,-1), 0.5, colors.HexColor('#e2e8f0')),
             ]))
-            story.append(t)
-        else:
-            story.append(Paragraph("1. Phase 1: MVP Architecture & Database Setup", bullet_style))
-            story.append(Paragraph("2. Phase 2: AI Execution Coach Integration", bullet_style))
-            story.append(Paragraph("3. Phase 3: Final Pitch Suite & Showcase", bullet_style))
+            story.append(m_table)
 
-        story.append(PageBreak())
-
-        # Slide 5: Pitch Showcase Script
-        story.append(Paragraph("<b>Final Pitch Script & Call to Action</b>", title_style))
+        # Section 4: Complete Task Execution Log
         story.append(Spacer(1, 10))
-        showcase_text = pitch_sections.get("showcase", "KAIROS empowers teams to turn hackathon ideas into functional products efficiently.")
-        story.append(Paragraph(showcase_text, body_style))
+        story.append(Paragraph("4. Comprehensive Task Execution Matrix", section_title_style))
+        story.append(HRFlowable(width="100%", thickness=1, color=colors.HexColor("#7c3aed"), spaceAfter=6))
 
-        doc.build(story)
+        if tasks:
+            task_rows = [[
+                Paragraph("<b>Task Name</b>", table_header_style),
+                Paragraph("<b>Priority</b>", table_header_style),
+                Paragraph("<b>Status</b>", table_header_style)
+            ]]
+            for idx, t in enumerate(tasks):
+                status_val = (t.get('status') or 'pending').lower()
+                status_color = '#059669' if status_val == 'completed' else '#dc2626' if status_val == 'blocked' else '#d97706' if status_val == 'in_progress' else '#2563eb'
+                status_text = f"<font color='{status_color}'><b>{status_val.upper()}</b></font>"
+
+                prio_val = (t.get('priority') or 'medium').upper()
+                prio_color = '#dc2626' if prio_val == 'HIGH' else '#7c3aed' if prio_val == 'MEDIUM' else '#0284c7'
+                prio_text = f"<font color='{prio_color}'><b>{prio_val}</b></font>"
+
+                task_rows.append([
+                    Paragraph(t.get('name', 'Task'), table_cell_style),
+                    Paragraph(prio_text, table_cell_style),
+                    Paragraph(status_text, table_cell_style)
+                ])
+            task_table = Table(task_rows, colWidths=[340, 100, 100])
+            task_table.setStyle(TableStyle([
+                ('BACKGROUND', (0,0), (-1,0), colors.HexColor('#1e1b4b')),
+                ('PADDING', (0,0), (-1,-1), 4),
+                ('GRID', (0,0), (-1,-1), 0.5, colors.HexColor('#e2e8f0')),
+                ('ROWBACKGROUNDS', (0,1), (-1,-1), [colors.HexColor('#ffffff'), colors.HexColor('#f8fafc')])
+            ]))
+            story.append(task_table)
+
+        # Section 5: Blockers & Mitigation Log
+        if blockers:
+            story.append(Spacer(1, 10))
+            story.append(Paragraph("5. Technical Blockers & Mitigation Strategies", section_title_style))
+            story.append(HRFlowable(width="100%", thickness=1, color=colors.HexColor("#7c3aed"), spaceAfter=6))
+
+            b_rows = [[
+                Paragraph("<b>Blocker Description</b>", table_header_style),
+                Paragraph("<b>Severity</b>", table_header_style),
+                Paragraph("<b>Status</b>", table_header_style)
+            ]]
+            for b in blockers:
+                b_rows.append([
+                    Paragraph(b.get('description', ''), table_cell_style),
+                    Paragraph(b.get('severity', 'medium').upper(), table_cell_style),
+                    Paragraph(b.get('status', 'open').upper(), table_cell_style)
+                ])
+            b_table = Table(b_rows, colWidths=[360, 90, 90])
+            b_table.setStyle(TableStyle([
+                ('BACKGROUND', (0,0), (-1,0), colors.HexColor('#991b1b')),
+                ('PADDING', (0,0), (-1,-1), 5),
+                ('GRID', (0,0), (-1,-1), 0.5, colors.HexColor('#fee2e2')),
+            ]))
+            story.append(b_table)
+
+        # Section 6: Presentation Suite & Stage Script
+        raw_pitch = pitch_sections.get("full_raw") or pitch_sections.get("showcase") or ""
+        if raw_pitch:
+            story.append(PageBreak())
+            story.append(Paragraph("6. Presentation Suite & Verbal Stage Script", section_title_style))
+            story.append(HRFlowable(width="100%", thickness=1, color=colors.HexColor("#7c3aed"), spaceAfter=8))
+
+            lines = raw_pitch.split("\n")
+            for line in lines:
+                l_str = line.strip()
+                if not l_str:
+                    story.append(Spacer(1, 3))
+                elif l_str.startswith("#"):
+                    clean_h = re.sub(r'#+\s*', '', l_str)
+                    story.append(Paragraph(f"<b>{clean_h}</b>", ParagraphStyle('PitchH', parent=section_title_style, fontSize=11, leading=15, spaceBefore=6, spaceAfter=3)))
+                elif l_str.startswith("-") or l_str.startswith("*"):
+                    clean_bullet = l_str[1:].strip()
+                    story.append(Paragraph(f"• {clean_bullet}", ParagraphStyle('PitchBullet', parent=body_style, leftIndent=12, firstLineIndent=-8)))
+                else:
+                    story.append(Paragraph(l_str, body_style))
+
+        doc.build(story, canvasmaker=NumberedCanvas)
         buffer.seek(0)
         return buffer.getvalue()
+
+    @staticmethod
+    def generate_pdf(
+        session_name: str,
+        problem_statement: str = "",
+        user_idea: str = "",
+        pitch_sections: Dict[str, str] = None,
+        milestones: List[Dict[str, Any]] = None,
+        tasks: List[Dict[str, Any]] = None
+    ) -> bytes:
+        return PPTEngine.generate_project_pdf(
+            session_name=session_name,
+            problem_statement=problem_statement,
+            user_idea=user_idea,
+            milestones=milestones,
+            tasks=tasks,
+            pitch_sections=pitch_sections
+        )

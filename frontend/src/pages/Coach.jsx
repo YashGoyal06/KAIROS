@@ -381,6 +381,29 @@ export default function Coach() {
     }
   };
 
+  const handleDownloadProjectPDF = async () => {
+    if (!activeSession) return;
+    try {
+      showToast("Generating Executive Project PDF...", "info");
+      const response = await axios.get(`${API_BASE}/sessions/${activeSession.id}/pitch/export-pdf`, {
+        responseType: 'blob'
+      });
+      const blob = new Blob([response.data], { type: 'application/pdf' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `${activeSession.name.replace(/\s+/g, '_')}_Blueprint.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      showToast("Executive PDF Blueprint downloaded successfully!", "success");
+    } catch (e) {
+      console.error("PDF Export error:", e);
+      showToast("Failed to download PDF report.", "error");
+    }
+  };
+
   const handleDownloadRoadmap = (format) => {
     if (!activeSession) return;
     let content = `# KAIROS Project Roadmap: ${activeSession.name}\n\n`;
@@ -388,7 +411,7 @@ export default function Coach() {
       content += `## ${m.phase}: ${m.title}\n`;
       content += `- Deliverable: ${m.deliverable}\n`;
       content += `- Duration: ${m.duration_estimate}\n`;
-      content += `- Risk: ${m.risk_level.toUpperCase()}\n\n`;
+      content += `- Risk: ${(m.risk_level || 'medium').toUpperCase()}\n\n`;
     });
 
     if (format === 'md') {
@@ -399,7 +422,6 @@ export default function Coach() {
       a.download = `roadmap_${activeSession.name}.md`;
       a.click();
     } else {
-      // General print/pdf fallback
       window.print();
     }
   };
@@ -574,6 +596,9 @@ export default function Coach() {
             </div>
             {roadmap.length > 0 && (
               <div style={{ display: 'flex', gap: '12px' }}>
+                <button onClick={handleDownloadProjectPDF} className="btn btn-primary" style={{ background: 'linear-gradient(135deg, #7c3aed, #a855f7)' }}>
+                  <Download size={14} /> 📄 Export Project PDF
+                </button>
                 <button onClick={() => handleDownloadRoadmap('md')} className="btn btn-secondary">
                   <Download size={14} /> Export MD
                 </button>
