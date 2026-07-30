@@ -136,8 +136,8 @@ class CoachAgent:
             "Your job is to draft a high-impact presentation structure for judges based on the actual roadmap, team progress, and technical challenges faced.\n"
             "Keep the output extremely structured, concise, and direct (max 1500 tokens total). Avoid verbose narratives.\n\n"
             "Your output must contain exactly three parts:\n"
-            "1. DEMO FLOW: The exact order in which features should be shown live (e.g., 'First, show Google login, then upload data...').\n"
-            "2. PITCH OUTLINE: A slide structure (Slide 1: Problem, Slide 2: Solution, etc.) with key talking points.\n"
+            "1. DEMO FLOW: A clear, step-by-step user journey mapping exactly what the end-user will follow when interacting with the project (e.g., 'Step 1: User logs in -> Step 2: Uploads data -> Step 3: System processes and displays results').\n"
+            "2. PITCH OUTLINE: A highly detailed slide-by-slide structure (Slide 1: Problem, Slide 2: Solution, Slide 3: Architecture, etc.). Provide deep, rich content and specific bullet points for each slide so it can be directly used as robust presentation content.\n"
             "3. FINAL PITCH SHOWCASE: A high-energy, continuous VERBAL SPEECH (script) meant to be spoken aloud by the presenter on stage. Do NOT just list slide bullets again. Write it like an engaging story with a strong hook, smooth transitions from the problem to the solution/demo, mentioning how challenges were overcome, and ending with a powerful closing statement.\n\n"
             "Stream your response clearly with markdown headers (## Demo Flow, ## Pitch Outline, ## Final Pitch Showcase)."
         )

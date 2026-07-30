@@ -143,7 +143,9 @@ export default function Coach() {
       setIsGenerating(true);
       setCritique('');
       setRoadmap([]);
-      setMessages([]);
+      setMessages([
+        { role: 'assistant', content: `Hello! I'm KAIROS, your AI Coach. I'm currently analyzing your project idea to draft a roadmap and scope critique. Once it's ready, we can refine it together.` }
+      ]);
 
       // 2. Build form data for streaming concept analysis
       const formData = new FormData();
