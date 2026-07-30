@@ -138,7 +138,7 @@ class CoachAgent:
             "Your output must contain exactly three parts:\n"
             "1. DEMO FLOW: The exact order in which features should be shown live (e.g., 'First, show Google login, then upload data...').\n"
             "2. PITCH OUTLINE: A slide structure (Slide 1: Problem, Slide 2: Solution, etc.) with key talking points.\n"
-            "3. FINAL PITCH SHOWCASE: A full presentation script detailing the problem statement, solution, technical architecture (milestones), implementation challenges (incorporate the blocker challenges faced by the team and how they resolved them), future scope, and team contributions (reference team members and their completed tasks).\n\n"
+            "3. FINAL PITCH SHOWCASE: A high-energy, continuous VERBAL SPEECH (script) meant to be spoken aloud by the presenter on stage. Do NOT just list slide bullets again. Write it like an engaging story with a strong hook, smooth transitions from the problem to the solution/demo, mentioning how challenges were overcome, and ending with a powerful closing statement.\n\n"
             "Stream your response clearly with markdown headers (## Demo Flow, ## Pitch Outline, ## Final Pitch Showcase)."
         )
         
