@@ -1,81 +1,70 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import './FooterCTA.css';
 
 export default function FooterCTA() {
   const navigate = useNavigate();
   const { user, loginWithGoogle } = useAuth();
 
   return (
-    <footer style={{
-      width: '100%',
-      background: '#010101',
-      color: '#ffffff',
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-      padding: '8rem 2rem 4rem 2rem',
-      position: 'relative',
-      zIndex: 20,
-      borderTop: '1px solid rgba(255,255,255,0.05)'
-    }}>
-      <div style={{ maxWidth: '800px', width: '100%', textAlign: 'center', marginBottom: '6rem' }}>
-        <h2 className="geist-heading" style={{ fontSize: 'clamp(2.5rem, 5vw, 4rem)', letterSpacing: '-0.02em', marginBottom: '2rem' }}>
-          Ready to Orchestrate?
-        </h2>
-        <p style={{ fontSize: '1.25rem', color: 'rgba(255,255,255,0.6)', marginBottom: '3rem', fontWeight: 300 }}>
-          Initialize your architecture with the KAIROS kernel today.
-        </p>
-        <button
-          onClick={() => user ? navigate('/dashboard') : loginWithGoogle()}
-          style={{
-            background: 'transparent',
-            color: '#C679A8',
-            border: '1px solid #C679A8',
-            padding: '1rem 3rem',
-            fontSize: '1rem',
-            letterSpacing: '0.1em',
-            textTransform: 'uppercase',
-            cursor: 'pointer',
-            borderRadius: '4px',
-            transition: 'all 0.3s ease',
-            boxShadow: '0 0 20px rgba(198,121,168,0.2)'
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.background = 'rgba(198,121,168,0.1)';
-            e.currentTarget.style.boxShadow = '0 0 40px rgba(198,121,168,0.4)';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.background = 'transparent';
-            e.currentTarget.style.boxShadow = '0 0 20px rgba(198,121,168,0.2)';
-          }}
-        >
-          Initialize Sequence
-        </button>
+    <footer className="kairos-footer">
+      {/* ── Aurora Background ── */}
+      <div className="footer-aurora">
+        <div className="footer-aurora-blob footer-aurora-1"></div>
+        <div className="footer-aurora-blob footer-aurora-2"></div>
+        <div className="footer-aurora-blob footer-aurora-3"></div>
       </div>
 
-      <div style={{
-        width: '100%',
-        maxWidth: '1200px',
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        paddingTop: '2rem',
-        borderTop: '1px solid rgba(255,255,255,0.1)',
-        flexWrap: 'wrap',
-        gap: '2rem'
-      }}>
-        <div className="geist-heading" style={{ fontSize: '1.5rem', letterSpacing: '-0.04em' }}>
+      {/* ── Top Nav Grid ── */}
+      <div className="footer-nav">
+        <div className="footer-nav-group">
+          <span className="footer-nav-heading">Product</span>
+          <a href="#" className="footer-nav-link">Dashboard</a>
+          <a href="#" className="footer-nav-link">Pitch Deck</a>
+          <a href="#" className="footer-nav-link">Kanban Board</a>
+          <a href="#" className="footer-nav-link">AI Engine</a>
+        </div>
+        <div className="footer-nav-group">
+          <span className="footer-nav-heading">Resources</span>
+          <a href="#" className="footer-nav-link">Documentation</a>
+          <a href="#" className="footer-nav-link">Architecture</a>
+          <a href="#" className="footer-nav-link">System Status</a>
+          <a href="#" className="footer-nav-link">Changelog</a>
+        </div>
+        <div className="footer-nav-group">
+          <span className="footer-nav-heading">Company</span>
+          <a href="#" className="footer-nav-link">About</a>
+          <a href="#" className="footer-nav-link">Contact</a>
+          <a href="#" className="footer-nav-link">GitHub</a>
+        </div>
+        <div className="footer-nav-cta">
+          <p className="footer-tagline">Orchestrate your vision.</p>
+          <p className="footer-copyright">
+            © {new Date().getFullYear()} KAIROS. All rights reserved.
+          </p>
+          <button
+            className="footer-start-btn"
+            onClick={() => user ? navigate('/dashboard') : loginWithGoogle()}
+          >
+            Get Started →
+          </button>
+        </div>
+      </div>
+
+      {/* ── Divider ── */}
+      <div className="footer-divider" />
+
+      {/* ── Giant Wordmark ── */}
+      <div className="footer-wordmark-wrapper">
+        <span className="footer-wordmark">
           KAIROS
-        </div>
-        <div className="geist-micro" style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.8rem', display: 'flex', gap: '2rem' }}>
-          <span style={{ cursor: 'pointer' }}>KERNEL DOCS</span>
-          <span style={{ cursor: 'pointer' }}>ARCHITECTURE</span>
-          <span style={{ cursor: 'pointer' }}>SYSTEM STATUS</span>
-        </div>
-        <div className="geist-micro" style={{ color: 'rgba(255,255,255,0.2)', fontSize: '0.75rem' }}>
-          © 2026 KAIROS ORCHESTRATION. ALL RIGHTS RESERVED.
-        </div>
+          <span className="wordmark-dots">
+            <span className="wordmark-dot"></span>
+            <span className="wordmark-dot"></span>
+            <span className="wordmark-dot"></span>
+          </span>
+        </span>
       </div>
     </footer>
   );
