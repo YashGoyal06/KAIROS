@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Mic, MicOff, Send, X, Volume2, Loader } from 'lucide-react';
+import { Mic, MicOff, Send, X, Volume2, Loader, Check, AlertTriangle, Clock, ListTodo } from 'lucide-react';
+import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import MarkdownRenderer from './MarkdownRenderer';
-import axios from 'axios';
 
 // 3D Animated Cybernetic Robot Avatar Component
 function Robot3DAvatar({ size = 48, isListening = false, isSpeaking = false }) {
@@ -105,11 +105,13 @@ export default function VoiceAssistantWidget({ sessionId = null, onCommand = nul
   const { profile, API_BASE } = useAuth();
   const [activeSessId, setActiveSessId] = useState(sessionId);
   const [isOpen, setIsOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState('chat'); // 'chat' | 'tasks'
+  const [tasks, setTasks] = useState([]);
   const [isListening, setIsListening] = useState(false);
   const [transcript, setTranscript] = useState('');
   const [inputText, setInputText] = useState('');
   const [messages, setMessages] = useState([
-    { role: 'assistant', content: '👋 Hi! I am Kairos 3D Robot Assistant. Ask me anything or click the mic for voice commands!' }
+    { role: 'assistant', content: '👋 Hi! I am Kairos 3D Robot Assistant. Ask me anything, change task statuses below, or click the mic for voice commands!' }
   ]);
   const [isLoading, setIsLoading] = useState(false);
   const [speechSupported, setSpeechSupported] = useState(true);
@@ -121,16 +123,50 @@ export default function VoiceAssistantWidget({ sessionId = null, onCommand = nul
   useEffect(() => {
     if (sessionId) {
       setActiveSessId(sessionId);
+      fetchWidgetTasks(sessionId);
     } else if (profile?.id) {
       axios.get(`${API_BASE}/sessions`, { params: { profile_id: profile.id } })
         .then(res => {
           if (res.data && res.data.length > 0) {
             setActiveSessId(res.data[0].id);
+            fetchWidgetTasks(res.data[0].id);
           }
         })
         .catch(err => console.error("Widget session fetch error:", err));
     }
   }, [sessionId, profile?.id]);
+
+  const fetchWidgetTasks = async (targetId) => {
+    const idToUse = targetId || activeSessId || sessionId;
+    if (!idToUse) return;
+    try {
+      const res = await axios.get(`${API_BASE}/sessions/${idToUse}/tasks`);
+      setTasks(res.data || []);
+    } catch (e) {
+      console.error("Error loading tasks in Voice Widget:", e);
+    }
+  };
+
+  const handleTaskStatusChange = async (taskId, newStatus) => {
+    try {
+      await axios.put(`${API_BASE}/tasks/${taskId}`, { status: newStatus });
+      setTasks(prev => prev.map(t => t.id === taskId ? { ...t, status: newStatus } : t));
+      
+      // Dispatch global window event so Dashboard, Tasks page, and Coach room sync instantly
+      window.dispatchEvent(new CustomEvent('kairos:task_updated', { detail: { taskId, status: newStatus } }));
+    } catch (e) {
+      console.error("Error updating task status from Voice Widget:", e);
+    }
+  };
+
+  // Listen for global task updates from other pages
+  useEffect(() => {
+    const handleGlobalUpdate = () => {
+      if (activeSessId) fetchWidgetTasks(activeSessId);
+    };
+    window.addEventListener('kairos:task_updated', handleGlobalUpdate);
+    return () => window.removeEventListener('kairos:task_updated', handleGlobalUpdate);
+  }, [activeSessId]);
 
   useEffect(() => {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -168,7 +204,7 @@ export default function VoiceAssistantWidget({ sessionId = null, onCommand = nul
     if (chatEndRef.current) {
       chatEndRef.current.scrollIntoView({ behavior: 'smooth' });
     }
-  }, [messages, isOpen]);
+  }, [messages, isOpen, activeTab]);
 
   const toggleListening = () => {
     if (!speechSupported) {
@@ -253,6 +289,8 @@ export default function VoiceAssistantWidget({ sessionId = null, onCommand = nul
               }
             }
           }
+          // Refetch tasks after chat command finishes
+          fetchWidgetTasks(targetSessionId);
         }
       } else {
         setTimeout(() => {
@@ -286,7 +324,7 @@ export default function VoiceAssistantWidget({ sessionId = null, onCommand = nul
       {/* Floating Toggle Button with Pure React 3D Animated Cybernetic Robot */}
       {!isOpen && (
         <button
-          onClick={() => setIsOpen(true)}
+          onClick={() => { setIsOpen(true); if (activeSessId) fetchWidgetTasks(activeSessId); }}
           style={{
             width: '68px',
             height: '68px',
@@ -311,8 +349,8 @@ export default function VoiceAssistantWidget({ sessionId = null, onCommand = nul
       {/* Popover Assistant Window */}
       {isOpen && (
         <div style={{
-          width: '360px',
-          height: '480px',
+          width: '380px',
+          height: '520px',
           background: 'rgba(15, 13, 24, 0.95)',
           backdropFilter: 'blur(20px)',
           border: '1px solid rgba(168, 85, 247, 0.3)',
@@ -325,7 +363,7 @@ export default function VoiceAssistantWidget({ sessionId = null, onCommand = nul
         }}>
           {/* Header */}
           <div style={{
-            padding: '14px 18px',
+            padding: '12px 18px',
             background: 'rgba(255, 255, 255, 0.03)',
             borderBottom: '1px solid rgba(255, 255, 255, 0.06)',
             display: 'flex',
@@ -349,59 +387,199 @@ export default function VoiceAssistantWidget({ sessionId = null, onCommand = nul
             </button>
           </div>
 
-          {/* Messages Container */}
-          <div style={{
-            flexGrow: 1,
-            padding: '16px',
-            overflowY: 'auto',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '12px'
-          }}>
-            {messages.map((m, idx) => (
-              <div
-                key={idx}
-                style={{
-                  alignSelf: m.role === 'user' ? 'flex-end' : 'flex-start',
-                  maxWidth: '85%',
-                  background: m.role === 'user' ? 'linear-gradient(135deg, rgba(168, 85, 247, 0.3), rgba(99, 102, 241, 0.3))' : 'rgba(255, 255, 255, 0.05)',
-                  border: m.role === 'user' ? '1px solid rgba(168, 85, 247, 0.4)' : '1px solid rgba(255, 255, 255, 0.08)',
-                  padding: '10px 14px',
-                  borderRadius: '14px',
-                  fontSize: '12px',
-                  lineHeight: '1.4',
-                  color: '#fff'
-                }}
-              >
-                <MarkdownRenderer content={m.content} />
-              </div>
-            ))}
-
-            {isListening && (
-              <div style={{
-                alignSelf: 'center',
-                padding: '8px 16px',
-                background: 'rgba(239, 68, 68, 0.15)',
-                border: '1px solid rgba(239, 68, 68, 0.3)',
-                borderRadius: '20px',
-                color: '#f87171',
+          {/* Sub Navigation Bar: Chat vs Live Tasks */}
+          <div style={{ display: 'flex', borderBottom: '1px solid rgba(255, 255, 255, 0.08)', background: 'rgba(0,0,0,0.3)' }}>
+            <button
+              onClick={() => setActiveTab('chat')}
+              style={{
+                flex: 1,
+                padding: '8px 12px',
                 fontSize: '11px',
+                fontWeight: '700',
+                color: activeTab === 'chat' ? '#bf85ff' : '#9ca3af',
+                background: activeTab === 'chat' ? 'rgba(191, 133, 255, 0.12)' : 'transparent',
+                border: 'none',
+                borderBottom: activeTab === 'chat' ? '2px solid #bf85ff' : 'none',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease'
+              }}
+            >
+              💬 AI Voice & Chat
+            </button>
+            <button
+              onClick={() => { setActiveTab('tasks'); if (activeSessId) fetchWidgetTasks(activeSessId); }}
+              style={{
+                flex: 1,
+                padding: '8px 12px',
+                fontSize: '11px',
+                fontWeight: '700',
+                color: activeTab === 'tasks' ? '#bf85ff' : '#9ca3af',
+                background: activeTab === 'tasks' ? 'rgba(191, 133, 255, 0.12)' : 'transparent',
+                border: 'none',
+                borderBottom: activeTab === 'tasks' ? '2px solid #bf85ff' : 'none',
+                cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '8px',
-                animation: 'pulse 1.5s infinite'
-              }}>
-                <Volume2 size={14} /> Listening... {transcript ? `"${transcript}"` : 'Speak now'}
-              </div>
-            )}
-
-            {isLoading && (
-              <div style={{ alignSelf: 'flex-start', padding: '8px 12px', color: '#a855f7', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px' }}>
-                <Loader size={14} style={{ animation: 'spin 1s linear infinite' }} /> Kairos is typing...
-              </div>
-            )}
-            <div ref={chatEndRef} />
+                justifyContent: 'center',
+                gap: '6px',
+                transition: 'all 0.2s ease'
+              }}
+            >
+              <ListTodo size={13} />
+              <span>Tasks & State ({tasks.length})</span>
+            </button>
           </div>
+
+          {/* TAB 1: Chat Container */}
+          {activeTab === 'chat' && (
+            <div style={{
+              flexGrow: 1,
+              padding: '14px',
+              overflowY: 'auto',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '12px'
+            }}>
+              {messages.map((m, idx) => (
+                <div
+                  key={idx}
+                  style={{
+                    alignSelf: m.role === 'user' ? 'flex-end' : 'flex-start',
+                    maxWidth: '88%',
+                    background: m.role === 'user' ? 'linear-gradient(135deg, rgba(168, 85, 247, 0.3), rgba(99, 102, 241, 0.3))' : 'rgba(255, 255, 255, 0.05)',
+                    border: m.role === 'user' ? '1px solid rgba(168, 85, 247, 0.4)' : '1px solid rgba(255, 255, 255, 0.08)',
+                    padding: '10px 14px',
+                    borderRadius: '14px',
+                    fontSize: '12px',
+                    lineHeight: '1.4',
+                    color: '#fff'
+                  }}
+                >
+                  <MarkdownRenderer content={m.content} />
+                </div>
+              ))}
+
+              {isListening && (
+                <div style={{
+                  alignSelf: 'center',
+                  padding: '8px 16px',
+                  background: 'rgba(239, 68, 68, 0.15)',
+                  border: '1px solid rgba(239, 68, 68, 0.3)',
+                  borderRadius: '20px',
+                  color: '#f87171',
+                  fontSize: '11px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  animation: 'pulse 1.5s infinite'
+                }}>
+                  <Volume2 size={14} /> Listening... {transcript ? `"${transcript}"` : 'Speak now'}
+                </div>
+              )}
+
+              {isLoading && (
+                <div style={{ alignSelf: 'flex-start', padding: '8px 12px', color: '#a855f7', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px' }}>
+                  <Loader size={14} style={{ animation: 'spin 1s linear infinite' }} /> Kairos is analyzing tasks...
+                </div>
+              )}
+              <div ref={chatEndRef} />
+            </div>
+          )}
+
+          {/* TAB 2: Live Tasks & State Switcher */}
+          {activeTab === 'tasks' && (
+            <div style={{
+              flexGrow: 1,
+              padding: '12px',
+              overflowY: 'auto',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '10px'
+            }}>
+              {tasks.length === 0 ? (
+                <div style={{ textAlign: 'center', padding: '40px 16px', color: '#9ca3af', fontSize: '12px' }}>
+                  No tasks loaded yet for active session. Create tasks inside Coach or Task Board first!
+                </div>
+              ) : (
+                tasks.map(t => {
+                  const isDone = t.status === 'completed';
+                  return (
+                    <div
+                      key={t.id}
+                      style={{
+                        background: isDone ? 'rgba(255, 255, 255, 0.02)' : 'rgba(255, 255, 255, 0.05)',
+                        border: '1px solid rgba(255, 255, 255, 0.08)',
+                        borderLeft: `4px solid ${t.priority === 'high' ? '#f472b6' : t.priority === 'medium' ? '#bf85ff' : '#38bdf8'}`,
+                        borderRadius: '10px',
+                        padding: '10px 12px',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '8px'
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <button
+                            onClick={() => handleTaskStatusChange(t.id, isDone ? 'pending' : 'completed')}
+                            style={{
+                              width: '18px',
+                              height: '18px',
+                              borderRadius: '4px',
+                              background: isDone ? '#00FF66' : 'transparent',
+                              border: `1.5px solid ${isDone ? '#00FF66' : 'rgba(255,255,255,0.3)'}`,
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              cursor: 'pointer',
+                              padding: 0
+                            }}
+                          >
+                            {isDone && <Check size={12} style={{ color: '#000', strokeWidth: 4 }} />}
+                          </button>
+                          <span style={{
+                            fontSize: '12px',
+                            fontWeight: '600',
+                            color: '#fff',
+                            textDecoration: isDone ? 'line-through' : 'none'
+                          }}>
+                            {t.name}
+                          </span>
+                        </div>
+                        <span style={{ fontSize: '9px', fontWeight: 'bold', color: t.priority === 'high' ? '#f472b6' : '#bf85ff', textTransform: 'uppercase' }}>
+                          {t.priority}
+                        </span>
+                      </div>
+
+                      {/* Interactive Status Selector Dropdown */}
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '2px' }}>
+                        <span style={{ fontSize: '10px', color: '#6b7280' }}>Status:</span>
+                        <select
+                          value={t.status}
+                          onChange={(e) => handleTaskStatusChange(t.id, e.target.value)}
+                          style={{
+                            background: 'rgba(22, 19, 28, 0.9)',
+                            border: '1px solid rgba(255, 255, 255, 0.15)',
+                            borderRadius: '6px',
+                            color: t.status === 'completed' ? '#00FF66' : t.status === 'blocked' ? '#f87171' : '#bf85ff',
+                            fontSize: '10px',
+                            fontWeight: '700',
+                            padding: '3px 8px',
+                            outline: 'none',
+                            cursor: 'pointer'
+                          }}
+                        >
+                          <option value="pending" style={{ background: '#0e0919', color: '#fff' }}>Pending ⏳</option>
+                          <option value="in_progress" style={{ background: '#0e0919', color: '#fff' }}>In Progress 🚀</option>
+                          <option value="completed" style={{ background: '#0e0919', color: '#00FF66' }}>Completed ✅</option>
+                          <option value="blocked" style={{ background: '#0e0919', color: '#f87171' }}>Blocked ⚠️</option>
+                        </select>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          )}
 
           {/* Quick Action Chips */}
           <div style={{
@@ -413,7 +591,7 @@ export default function VoiceAssistantWidget({ sessionId = null, onCommand = nul
             background: 'rgba(0,0,0,0.2)'
           }}>
             <button
-              onClick={() => handleSend("Summarize our current blockers")}
+              onClick={() => { setActiveTab('chat'); handleSend("Summarize our current blockers"); }}
               style={{
                 background: 'rgba(255,255,255,0.06)',
                 border: '1px solid rgba(255,255,255,0.1)',
@@ -428,7 +606,7 @@ export default function VoiceAssistantWidget({ sessionId = null, onCommand = nul
               ⚡ Blockers summary
             </button>
             <button
-              onClick={() => handleSend("What should I work on next?")}
+              onClick={() => { setActiveTab('chat'); handleSend("What should I work on next?"); }}
               style={{
                 background: 'rgba(255,255,255,0.06)',
                 border: '1px solid rgba(255,255,255,0.1)',

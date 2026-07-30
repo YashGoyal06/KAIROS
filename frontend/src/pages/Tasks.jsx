@@ -88,8 +88,12 @@ export default function Tasks() {
     if (activeSessionId) {
       fetchSessionDetails();
       setAiSuggestions('');
-      setBlockerSuggestions({});
     }
+    const handleTaskUpdated = () => {
+      if (activeSessionId) fetchSessionDetails();
+    };
+    window.addEventListener('kairos:task_updated', handleTaskUpdated);
+    return () => window.removeEventListener('kairos:task_updated', handleTaskUpdated);
   }, [activeSessionId]);
 
   const handleStatusChange = async (taskId, nextStatus, blockerDescription = null) => {

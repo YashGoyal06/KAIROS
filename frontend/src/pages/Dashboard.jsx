@@ -76,6 +76,9 @@ export default function Dashboard() {
 
   useEffect(() => {
     fetchData();
+    const handleTaskUpdated = () => fetchData();
+    window.addEventListener('kairos:task_updated', handleTaskUpdated);
+    return () => window.removeEventListener('kairos:task_updated', handleTaskUpdated);
   }, [profile]);
 
   const handleStatusToggle = async (taskId, currentStatus) => {
