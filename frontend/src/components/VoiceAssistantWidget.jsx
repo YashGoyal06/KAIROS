@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Mic, MicOff, Send, X, Volume2, Loader } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import MarkdownRenderer from './MarkdownRenderer';
+import axios from 'axios';
 
 // 3D Animated Cybernetic Robot Avatar Component
 function Robot3DAvatar({ size = 48, isListening = false, isSpeaking = false }) {
