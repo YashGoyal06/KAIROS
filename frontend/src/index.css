@@ -1571,39 +1571,15 @@ select:focus {
   }
 }
 
-/* Neobrutalist Shape & Theme Override for Dashboard and Global Elements */
-.kairos-card,
-.glass-card,
-.profile-card-left,
-.profile-card-right,
-.form-input,
-.form-select,
-.form-textarea,
-.tag-input-container,
-.btn,
-.btn-primary,
-.btn-secondary,
-.btn-kairos-action,
-input,
-select,
-textarea,
-button {
-  border-radius: 0px !important;
-}
-
-/* Ensure nice dark-glass neobrutalist borders */
-/* Triggering HMR to apply sharp corners globally */
+/* Ensure nice dark-glass borders */
 .kairos-card,
 .glass-card {
-  border: 2px solid rgba(255, 255, 255, 0.15) !important;
-  box-shadow: 4px 4px 0px rgba(0, 0, 0, 0.3) !important;
-  border-radius: 0px !important;
+  border: 1px solid rgba(255, 255, 255, 0.15);
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .kairos-card:hover,
 .glass-card:hover {
-  transform: translate(-2px, -2px);
-  box-shadow: 6px 6px 0px rgba(0, 0, 0, 0.45) !important;
-  border-color: rgba(255, 255, 255, 0.3) !important;
+  transform: translateY(-2px);
+  border-color: rgba(255, 255, 255, 0.3);
 }
