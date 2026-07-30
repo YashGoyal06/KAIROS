@@ -3,7 +3,7 @@ import { NavLink } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { 
   LayoutDashboard, Users, MessageSquare, CheckSquare, 
-  Presentation, User, LogOut, Menu, X
+  Presentation, Layout, User, LogOut, Menu, X
 } from 'lucide-react';
 
 export default function Sidebar() {
@@ -54,6 +54,10 @@ export default function Sidebar() {
             <NavLink to="/pitch" onClick={closeMenu} className="mobile-link-item">
               <Presentation size={18} />
               <span>Pitch Deck</span>
+            </NavLink>
+            <NavLink to="/presentation" onClick={closeMenu} className="mobile-link-item">
+              <Layout size={18} />
+              <span>Presentation Studio</span>
             </NavLink>
             <NavLink to="/profile" onClick={closeMenu} className="mobile-link-item">
               <User size={18} />
@@ -118,6 +122,13 @@ export default function Sidebar() {
               <Presentation size={20} />
             </div>
             <span className="sidebar-label">Pitch Deck</span>
+          </NavLink>
+
+          <NavLink to="/presentation" className={({ isActive }) => `sidebar-link-kairos ${isActive ? 'active' : ''}`}>
+            <div className="icon-wrapper">
+              <Layout size={20} />
+            </div>
+            <span className="sidebar-label">Presentation Studio</span>
           </NavLink>
 
           <NavLink to="/profile" className={({ isActive }) => `sidebar-link-kairos ${isActive ? 'active' : ''}`}>
