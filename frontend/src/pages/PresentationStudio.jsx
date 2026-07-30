@@ -87,6 +87,8 @@ export default function PresentationStudio() {
     }
   };
 
+  const [sessionTasks, setSessionTasks] = useState([]);
+
   const fetchSessionDetails = async () => {
     if (!activeSessionId) return;
     try {
@@ -96,6 +98,14 @@ export default function PresentationStudio() {
         setPitchText(res.data.pitch_outline.full_raw);
       } else {
         setPitchText('');
+      }
+
+      // Fetch tasks for task metrics slide
+      try {
+        const tasksRes = await axios.get(`${API_BASE}/tasks/session/${activeSessionId}`);
+        setSessionTasks(tasksRes.data || []);
+      } catch (tErr) {
+        setSessionTasks([]);
       }
     } catch (e) {
       console.error("Error loading presentation details:", e);
@@ -196,9 +206,20 @@ export default function PresentationStudio() {
   };
 
   const getSlidePreviews = () => {
-    const title = activeSession?.name || 'Project Pitch Deck';
-    const problem = activeSession?.problem_statement || 'Streamlining hackathon planning & team execution.';
-    const idea = activeSession?.user_idea || 'AI-Powered Co-Founder Platform';
+    const title = activeSession?.name || 'Project Pitch';
+    const problem = activeSession?.problem_statement || 'Addressing hackathon project planning and execution challenges.';
+    const idea = activeSession?.user_idea || 'AI Hackathon Execution Platform';
+
+    const milestones = activeSession?.milestones || [];
+    const msBullets = milestones.map(m => `${m.title || 'Milestone'}: ${m.status || 'In Progress'}`);
+
+    const taskBullets = sessionTasks.slice(0, 6).map(t => `${t.name || 'Task'} [${t.priority || 'High'}]`);
+
+    const rawOutline = activeSession?.pitch_outline?.full_raw || '';
+
+    const userName = profile?.full_name || 'Innovator';
+    const userRole = profile?.tech_stack ? profile.tech_stack.split(',')[0] : 'Fullstack Engineer';
+    const userSkills = profile?.tech_stack || 'Python, React, FastAPI';
 
     return [
       {
@@ -206,68 +227,68 @@ export default function PresentationStudio() {
         title: title,
         subtitle: idea,
         category: 'Title & Vision',
-        bullets: ['AI-Driven Architecture', 'Fullstack Execution Pipeline', 'Instant Presentation Export']
+        bullets: ['AI-Driven Co-Founder Engine', 'Real-Time Task Syncing', 'Zero-Overflow Slide Generation']
       },
       {
         num: 2,
-        title: 'Problem Statement',
-        subtitle: 'Addressing Team Inefficiencies',
+        title: 'Problem Statement & Vision',
+        subtitle: problem,
         category: 'Problem & Value',
-        bullets: [problem, 'Time wasted on slide layout alignment', 'Unstructured milestone tracking']
+        bullets: ['Loss of project momentum during hackathons', 'Unstructured milestone management', 'Manual pitch slide design overhead']
       },
       {
         num: 3,
         title: 'Core Solution & Product Demo',
-        subtitle: 'Real-Time Co-Founder Engine',
+        subtitle: rawOutline ? rawOutline.slice(0, 100) + '...' : 'Real-time AI workflow engine for execution teams.',
         category: 'Product Demo',
-        bullets: ['Interactive AI Coach Room', 'Automated Task Board Syncing', 'Anti-Overflow Slide Layouts']
+        bullets: ['Interactive AI Coach Room', 'Task Board with AI Blocker Assistance', 'Instant PPTX & PDF Presentation Suite']
       },
       {
         num: 4,
-        title: 'System Architecture',
-        subtitle: 'High Performance Tech Stack',
+        title: 'System Architecture & Stack',
+        subtitle: 'FastAPI backend, Supabase DB, React 19 UI.',
         category: 'Architecture',
-        bullets: ['FastAPI Backend with Async SQLAlchemy', 'Supabase Database & Auth', 'React 19 & Tailwind Engine']
+        bullets: ['FastAPI Async Backend', 'Supabase Database & Auth', 'Claude LLM Broker & Agents']
       },
       {
         num: 5,
-        title: 'Roadmap & Execution Milestones',
+        title: 'Roadmap & Execution Plan',
         subtitle: 'Sprint Milestones',
         category: 'Roadmap',
-        bullets: ['Phase 1: Architecture & DB Setup', 'Phase 2: Coach Room & AI Broker', 'Phase 3: Presentation Studio Launch']
+        bullets: msBullets.length > 0 ? msBullets : ['Phase 1: Architecture & DB Setup', 'Phase 2: AI Coach & Task Sync', 'Phase 3: Presentation Studio Export']
       },
       {
         num: 6,
-        title: 'Sprint Tasks & Assignees',
-        subtitle: 'Real-Time Execution Tracker',
+        title: 'Sprint Tasks & Progress',
+        subtitle: 'Execution Metrics',
         category: 'Task Metrics',
-        bullets: ['[High] Supabase Client Setup - Done', '[High] Slide Overflow Auto-Scaler - Done', '[Medium] PDF Generator Stream - Done']
+        bullets: taskBullets.length > 0 ? taskBullets : ['Task 1: Supabase Setup', 'Task 2: AI Scope Review', 'Task 3: Slide Export Engine']
       },
       {
         num: 7,
-        title: 'Team & Technical Expertise',
-        subtitle: 'Hackathon Innovators',
+        title: 'Team & Technical Mastery',
+        subtitle: `Lead: ${userName} (${userRole})`,
         category: 'Team Profile',
-        bullets: [`Lead: ${profile?.full_name || 'Innovator'}`, 'Role: Fullstack Engineer & AI Architect', 'Stack: Python, FastAPI, React, Three.js']
+        bullets: [`Lead: ${userName}`, `Role: ${userRole}`, `Skills: ${userSkills}`]
       },
       {
         num: 8,
-        title: 'Pitch Showcase & Value Prop',
-        subtitle: 'Market Impact',
+        title: 'Pitch Showcase & Impact',
+        subtitle: rawOutline ? rawOutline.slice(0, 100) + '...' : 'KAIROS provides an end-to-end execution co-founder.',
         category: 'Value Showcase',
-        bullets: ['Reduces pitch creation time by 90%', 'Zero text overflow guarantee across slide bounds', 'Professional PPTX & PDF exports']
+        bullets: ['Reduces pitch compilation time by 90%', 'Guarantees zero text overflow across all templates', 'Professional PPTX and PDF output streams']
       },
       {
         num: 9,
-        title: 'Risk Mitigation & Resilience',
-        subtitle: 'Fault Tolerance',
+        title: 'Risk Mitigation & Support',
+        subtitle: 'Resilience Strategy',
         category: 'Risk Management',
-        bullets: ['Automated LLM Fallback Routing', 'Resilient DB Connections', 'Standardized PPTX Masters']
+        bullets: ['LLM rate-limit fallback routing', 'Resilient database connection pools', 'Validated slide placeholder mapping']
       },
       {
         num: 10,
         title: 'Conclusion & Next Steps',
-        subtitle: 'Ready for Live Demo',
+        subtitle: 'Ready for Live Execution',
         category: 'Call to Action',
         bullets: ['Launch local servers', 'Test live presentation decks', 'Submit project to judges']
       }
