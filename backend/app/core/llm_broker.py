@@ -19,6 +19,27 @@ class LLMOrchestrator:
         
         self.hf_client = AsyncInferenceClient(token=self.hf_key) if self.hf_key else AsyncInferenceClient()
 
+    async def generate_text(
+        self,
+        system_prompt: str,
+        prompt: str,
+        task_preference: str = "pitch",
+        max_tokens: int = 1500
+    ) -> str:
+        """
+        Non-streaming text generator using the orchestrated LLM fallback chain.
+        """
+        full_text = []
+        async for chunk in self.stream_orchestrated(system_prompt, prompt, task_preference, max_tokens):
+            if chunk.startswith("data:"):
+                try:
+                    payload = json.loads(chunk[5:].strip())
+                    if payload.get("type") == "text_delta":
+                        full_text.append(payload.get("content", ""))
+                except Exception:
+                    pass
+        return "".join(full_text).strip()
+
     async def stream_orchestrated(
         self, 
         system_prompt: str, 
