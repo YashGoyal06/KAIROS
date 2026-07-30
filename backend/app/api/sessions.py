@@ -268,14 +268,14 @@ async def chat_with_coach(
     # Check if user message is requesting a task status update & execute DB mutation
     msg_lower = data.message.lower()
     target_status = None
-    if any(k in msg_lower for k in ["done", "complete", "completed", "finish", "mark"]):
-        target_status = "completed"
-    elif any(k in msg_lower for k in ["in_progress", "progress", "start", "working"]):
+    if any(k in msg_lower for k in ["pending", "reset", "uncheck", "todo"]):
+        target_status = "pending"
+    elif any(k in msg_lower for k in ["in_progress", "progress", "working"]):
         target_status = "in_progress"
     elif any(k in msg_lower for k in ["block", "blocked", "stuck"]):
         target_status = "blocked"
-    elif any(k in msg_lower for k in ["pending", "reset"]):
-        target_status = "pending"
+    elif any(k in msg_lower for k in ["done", "complete", "completed", "finish"]):
+        target_status = "completed"
 
     updated_task_info = None
     if target_status:

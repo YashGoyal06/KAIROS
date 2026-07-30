@@ -235,14 +235,14 @@ export default function VoiceAssistantWidget({ sessionId = null, onCommand = nul
     // Direct Voice & Text Task Status Auto-Update Engine
     const lowerQuery = query.toLowerCase();
     let targetStatus = null;
-    if (lowerQuery.includes('done') || lowerQuery.includes('complete') || lowerQuery.includes('finish') || lowerQuery.includes('mark')) {
-      targetStatus = 'completed';
-    } else if (lowerQuery.includes('progress') || lowerQuery.includes('start') || lowerQuery.includes('working')) {
+    if (lowerQuery.includes('pending') || lowerQuery.includes('reset') || lowerQuery.includes('uncheck') || lowerQuery.includes('todo')) {
+      targetStatus = 'pending';
+    } else if (lowerQuery.includes('progress') || lowerQuery.includes('working')) {
       targetStatus = 'in_progress';
     } else if (lowerQuery.includes('block') || lowerQuery.includes('stuck')) {
       targetStatus = 'blocked';
-    } else if (lowerQuery.includes('pending') || lowerQuery.includes('reset')) {
-      targetStatus = 'pending';
+    } else if (lowerQuery.includes('done') || lowerQuery.includes('complete') || lowerQuery.includes('completed') || lowerQuery.includes('finish')) {
+      targetStatus = 'completed';
     }
 
     if (targetStatus && targetSessionId) {
