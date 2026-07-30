@@ -114,7 +114,7 @@ export default function PresentationStudio() {
       const res = await axios.post(
         `${API_BASE}/sessions/${activeSessionId}/pitch/preview-slides`,
         formData,
-        { headers: { 'Content-Type': 'multipart/form-data' }, timeout: 30000 }
+        { headers: { 'Content-Type': 'multipart/form-data' }, timeout: 120000 }
       );
 
       if (res.data && res.data.slides) {

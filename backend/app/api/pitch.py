@@ -230,7 +230,7 @@ async def preview_slides(
     )
 
     # Convert to slide images
-    slide_images = PPTEngine.render_slides_as_images(output_bytes, scale=1.5)
+    slide_images = PPTEngine.render_slides_as_images(output_bytes, scale=1.0)
 
     return {
         "status": "success",
