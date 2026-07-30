@@ -10,6 +10,7 @@ export default function Tasks() {
   
   const [view, setView] = useState('sessions'); // 'sessions' | 'board'
   const [sessions, setSessions] = useState([]);
+  const [myTeams, setMyTeams] = useState([]);
   const [activeSessionId, setActiveSessionId] = useState('');
   const [activeSession, setActiveSession] = useState(null);
   const [teamMembers, setTeamMembers] = useState([]);
