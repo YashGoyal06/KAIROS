@@ -102,8 +102,13 @@ class PPTEngine:
     @staticmethod
     def fit_text_to_frame(text_frame, text: str, max_font_size: int = 16, min_font_size: int = 9, is_title: bool = False):
         """
-        Preserves exact original font name, font bold/italic state, alignment, and color palette
-        while fitting new text safely inside existing template shape bounds.
+        PRESERVES PERFECT ALIGNMENT & TYPOGRAPHY:
+        Does NOT call text_frame.clear()! Direct run-level text replacement preserves:
+        - Frame Margins (Top, Bottom, Left, Right)
+        - Vertical Alignment Anchor (Top, Middle, Bottom)
+        - Paragraph Alignment (Left, Center, Right, Justify)
+        - Paragraph Spacing (space_before, space_after, line_spacing)
+        - Run Font Name, Color RGB, Bold, Italic
         """
         text_frame.word_wrap = True
         cleaned = text.strip()
@@ -131,55 +136,88 @@ class PPTEngine:
             else:
                 font_size = max_font_size
 
-        orig_color = None
-        orig_name = None
-        orig_bold = None
-        orig_italic = None
-        orig_alignment = None
-
-        if len(text_frame.paragraphs) > 0:
-            orig_alignment = text_frame.paragraphs[0].alignment
-            if len(text_frame.paragraphs[0].runs) > 0:
-                r = text_frame.paragraphs[0].runs[0]
-                if r.font and r.font.color and r.font.color.type == 1:
-                    orig_color = r.font.color.rgb
-                if r.font and r.font.name:
-                    orig_name = r.font.name
-                if r.font and r.font.bold is not None:
-                    orig_bold = r.font.bold
-                if r.font and r.font.italic is not None:
-                    orig_italic = r.font.italic
-
-        text_frame.clear()
-        
         lines = [line.strip() for line in cleaned.split("\n") if line.strip()]
         if not lines:
             lines = [cleaned]
 
+        existing_paras = list(text_frame.paragraphs)
+        if len(existing_paras) == 0:
+            p0 = text_frame.add_paragraph()
+            existing_paras = [p0]
+
+        ref_p = existing_paras[0]
+        ref_alignment = ref_p.alignment
+        ref_space_before = ref_p.space_before
+        ref_space_after = ref_p.space_after
+        ref_line_spacing = ref_p.line_spacing
+
+        ref_color = None
+        ref_name = None
+        ref_bold = None
+        ref_italic = None
+
+        if len(ref_p.runs) > 0:
+            r0 = ref_p.runs[0]
+            if r0.font and r0.font.color and r0.font.color.type == 1:
+                ref_color = r0.font.color.rgb
+            if r0.font and r0.font.name:
+                ref_name = r0.font.name
+            if r0.font and r0.font.bold is not None:
+                ref_bold = r0.font.bold
+            if r0.font and r0.font.italic is not None:
+                ref_italic = r0.font.italic
+
+        # Update existing paragraphs or add new ones without clearing frame
         for i, line in enumerate(lines):
-            if i == 0:
-                p = text_frame.paragraphs[0]
+            line_txt = line[2:].strip() if line.startswith(("- ", "* ", "• ")) else line
+
+            if i < len(existing_paras):
+                p = existing_paras[i]
             else:
                 p = text_frame.add_paragraph()
-            
-            if orig_alignment is not None:
-                p.alignment = orig_alignment
+                if ref_alignment is not None:
+                    p.alignment = ref_alignment
+                if ref_space_before is not None:
+                    p.space_before = ref_space_before
+                if ref_space_after is not None:
+                    p.space_after = ref_space_after
+                if ref_line_spacing is not None:
+                    p.line_spacing = ref_line_spacing
 
-            if line.startswith(("- ", "* ", "• ")):
-                p.text = line[2:].strip()
-                p.level = 0
+            # Update runs directly inside paragraph
+            if len(p.runs) > 0:
+                p.runs[0].text = line_txt
+                p.runs[0].font.size = Pt(font_size)
+                if ref_color:
+                    p.runs[0].font.color.rgb = ref_color
+                if ref_name:
+                    p.runs[0].font.name = ref_name
+                if ref_bold is not None:
+                    p.runs[0].font.bold = ref_bold
+                if ref_italic is not None:
+                    p.runs[0].font.italic = ref_italic
+
+                # Blank out any extra runs in paragraph
+                for extra_r in p.runs[1:]:
+                    extra_r.text = ""
             else:
-                p.text = line
+                r = p.add_run()
+                r.text = line_txt
+                r.font.size = Pt(font_size)
+                if ref_color:
+                    r.font.color.rgb = ref_color
+                if ref_name:
+                    r.font.name = ref_name
+                if ref_bold is not None:
+                    r.font.bold = ref_bold
+                if ref_italic is not None:
+                    r.font.italic = ref_italic
 
-            p.font.size = Pt(font_size)
-            if orig_color:
-                p.font.color.rgb = orig_color
-            if orig_name:
-                p.font.name = orig_name
-            if orig_bold is not None:
-                p.font.bold = orig_bold
-            if orig_italic is not None:
-                p.font.italic = orig_italic
+        # Empty out any unused extra paragraphs in the template shape
+        for extra_i in range(len(lines), len(existing_paras)):
+            p_extra = existing_paras[extra_i]
+            for r_extra in p_extra.runs:
+                r_extra.text = ""
 
     @staticmethod
     def fill_presentation(
