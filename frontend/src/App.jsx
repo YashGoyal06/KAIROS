@@ -9,6 +9,7 @@ import Teams from './pages/Teams';
 import Coach from './pages/Coach';
 import Tasks from './pages/Tasks';
 import Pitch from './pages/Pitch';
+import PresentationStudio from './pages/PresentationStudio';
 import Profile from './pages/Profile';
 
 const Loader = () => (
@@ -76,6 +77,9 @@ function AppContent() {
         } />
         <Route path="/pitch" element={
           <ProtectedRoute><MainLayout><Pitch /></MainLayout></ProtectedRoute>
+        } />
+        <Route path="/presentation" element={
+          <ProtectedRoute><MainLayout><PresentationStudio /></MainLayout></ProtectedRoute>
         } />
         <Route path="/profile" element={
           <ProtectedRoute><MainLayout><Profile /></MainLayout></ProtectedRoute>
