@@ -3,6 +3,7 @@ import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import { Presentation, Loader, Play, Send, RefreshCw, Layers, Download } from 'lucide-react';
 import MarkdownRenderer from '../components/MarkdownRenderer';
+import SessionCard from '../components/SessionCard';
 
 export default function Pitch() {
   const { profile, API_BASE } = useAuth();
@@ -251,23 +252,19 @@ export default function Pitch() {
               </div>
             ) : (
               sessions.map(s => (
-                <div key={s.id} className="glass-card" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', minHeight: '180px' }}>
-                  <div>
-                    <h3 style={{ color: '#fff', fontSize: '18px', marginBottom: '8px' }}>{s.name}</h3>
-                    <p style={{ fontSize: '12px', color: '#a1a1aa', textTransform: 'uppercase', fontWeight: 'bold' }}>
-                      Status: <span style={{ color: s.status === 'planning' ? '#fbbf24' : '#34d399' }}>{s.status}</span>
-                    </p>
-                  </div>
-                  <button onClick={() => setActiveSessionId(s.id)} className="btn btn-secondary" style={{ marginTop: '24px', width: '100%' }}>
-                    Open Pitch Studio
-                  </button>
-                </div>
+                <SessionCard 
+                  key={s.id} 
+                  session={s} 
+                  onClick={() => setActiveSessionId(s.id)} 
+                  actionLabel="Open Pitch Studio"
+                  teams={myTeams} 
+                />
               ))
             )}
           </div>
         </>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', flexGrow: 1 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', flexGrow: 1 }}>
           <div className="dashboard-header" style={{ marginBottom: '8px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
               <button onClick={() => { setActiveSessionId(''); setPitchText(''); }} className="btn btn-secondary" style={{ padding: '8px 16px', fontSize: '13px' }}>
@@ -308,7 +305,7 @@ export default function Pitch() {
               </button>
             </div>
           ) : (
-            <div style={{ display: 'grid', gridTemplateColumns: '3fr 2.2fr', gap: '24px', flexGrow: 1 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '3fr 2.2fr', gap: '12px', flexGrow: 1 }}>
               
               {/* Left Pane - Presentation Viewer */}
               <div className="glass-card" style={{ display: 'flex', flexDirection: 'column', minHeight: '500px' }}>
@@ -317,21 +314,21 @@ export default function Pitch() {
                   <button
                     onClick={() => setActiveTab('demo')}
                     className={`btn ${activeTab === 'demo' ? 'btn-primary' : 'btn-secondary'}`}
-                    style={{ padding: '6px 14px', fontSize: '12px', borderRadius: '4px' }}
+                    style={{ padding: '6px 14px', fontSize: '12px', borderRadius: '0px' }}
                   >
                     Demo Flow sequence
                   </button>
                   <button
                     onClick={() => setActiveTab('slides')}
                     className={`btn ${activeTab === 'slides' ? 'btn-primary' : 'btn-secondary'}`}
-                    style={{ padding: '6px 14px', fontSize: '12px', borderRadius: '4px' }}
+                    style={{ padding: '6px 14px', fontSize: '12px', borderRadius: '0px' }}
                   >
                     Slide structures
                   </button>
                   <button
                     onClick={() => setActiveTab('showcase')}
                     className={`btn ${activeTab === 'showcase' ? 'btn-primary' : 'btn-secondary'}`}
-                    style={{ padding: '6px 14px', fontSize: '12px', borderRadius: '4px' }}
+                    style={{ padding: '6px 14px', fontSize: '12px', borderRadius: '0px' }}
                   >
                     Final Showcase Script
                   </button>
@@ -343,7 +340,7 @@ export default function Pitch() {
                     <span style={{ color: '#9ca3af', fontSize: '13px' }}>Compiling project assets and skills profiles...</span>
                   </div>
                 ) : (
-                  <div style={{ flexGrow: 1, overflowY: 'auto', background: 'rgba(0,0,0,0.15)', border: '1px solid rgba(255,255,255,0.03)', padding: '24px', borderRadius: '8px', maxHeight: '550px' }}>
+                  <div style={{ flexGrow: 1, overflowY: 'auto', background: 'rgba(0,0,0,0.15)', border: '1px solid rgba(255,255,255,0.03)', padding: '24px', borderRadius: '0px', maxHeight: '550px' }}>
                     <MarkdownRenderer content={activeContent} />
                   </div>
                 )}
@@ -358,7 +355,7 @@ export default function Pitch() {
                   Instruct the AI Pitch Architect to modify specific slides, add technical depth, re-structure demo features, or edit speaking bullet points.
                 </p>
 
-                <div style={{ flexGrow: 1, display: 'flex', justifyContent: 'center', alignItems: 'center', color: '#6b7280', border: '1px dashed rgba(255,255,255,0.05)', borderRadius: '8px', padding: '20px', textAlign: 'center', fontSize: '12px', marginBottom: '16px' }}>
+                <div style={{ flexGrow: 1, display: 'flex', justifyContent: 'center', alignItems: 'center', color: '#6b7280', border: '1px dashed rgba(255,255,255,0.05)', borderRadius: '0px', padding: '20px', textAlign: 'center', fontSize: '12px', marginBottom: '16px' }}>
                   {isGenerating ? (
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                       <Loader size={16} className="spin" style={{ animation: 'spinSlow 2s linear infinite' }} />

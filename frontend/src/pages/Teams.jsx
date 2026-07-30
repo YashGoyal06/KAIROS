@@ -115,7 +115,7 @@ export default function Teams() {
 
       <div className="dashboard-grid" style={{ gridTemplateColumns: '1fr 2fr' }}>
         {/* Create / Join Column */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
           <div className="glass-card">
             <h3 style={{ fontSize: '18px', display: 'flex', alignItems: 'center', gap: '8px', color: '#fff', marginBottom: '16px' }}>
               <Plus size={18} style={{ color: '#10b981' }} /> Create Team
@@ -180,7 +180,7 @@ export default function Teams() {
                       background: activeTeamId === t.id ? 'rgba(59,130,246,0.15)' : 'rgba(255,255,255,0.02)',
                       border: activeTeamId === t.id ? '1px solid rgba(59,130,246,0.3)' : '1px solid var(--border-color)',
                       color: activeTeamId === t.id ? '#60a5fa' : '#fff',
-                      borderRadius: '8px',
+                      borderRadius: '0px',
                       cursor: 'pointer',
                       textAlign: 'left'
                     }}
@@ -197,14 +197,14 @@ export default function Teams() {
         </div>
 
         {/* Team Details & Master JSON */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
           {activeTeam ? (
             <div className="glass-card">
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '16px' }}>
                 <div>
                   <h2 style={{ fontSize: '24px', color: '#fff' }}>{activeTeam.name}</h2>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '6px' }}>
-                    <span style={{ fontSize: '12px', color: '#8b5cf6', background: 'rgba(139,92,246,0.1)', padding: '2px 8px', borderRadius: '4px', fontFamily: 'monospace', fontWeight: 'bold' }}>
+                    <span style={{ fontSize: '12px', color: '#8b5cf6', background: 'rgba(139,92,246,0.1)', padding: '2px 8px', borderRadius: '0px', fontFamily: 'monospace', fontWeight: 'bold' }}>
                       CODE: {activeTeam.code}
                     </span>
                     {activeTeam.leader_id === profile.id && (
@@ -222,19 +222,40 @@ export default function Teams() {
                 )}
               </div>
 
-              <h3 style={{ fontSize: '16px', color: '#fff', marginBottom: '12px' }}>Team Members</h3>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px', marginBottom: '24px' }}>
+              <h3 style={{ fontSize: '16px', color: '#fff', marginBottom: '16px', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '8px', display: 'flex', justifyContent: 'space-between' }}>
+                Team Members
+                <span style={{ fontSize: '12px', background: 'rgba(255,255,255,0.05)', padding: '2px 8px', borderRadius: '0px' }}>{activeTeam.members.length}</span>
+              </h3>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '16px', marginBottom: '32px' }}>
                 {activeTeam.members.map(m => (
-                  <div key={m.id} style={{ padding: '16px', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '8px' }}>
-                    <strong style={{ color: '#fff', fontSize: '14px' }}>{m.full_name}</strong>
-                    <div style={{ fontSize: '12px', color: '#9ca3af', marginTop: '4px' }}>{m.primary_role}</div>
-                    <div style={{ fontSize: '11px', color: '#6b7280', marginTop: '2px' }}>{m.experience_level}</div>
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginTop: '10px' }}>
-                      {m.tech_stack.map(tech => (
-                        <span key={tech} style={{ fontSize: '9px', background: 'rgba(59,130,246,0.1)', color: '#60a5fa', padding: '2px 6px', borderRadius: '4px' }}>
-                          {tech}
-                        </span>
-                      ))}
+                  <div key={m.id} style={{ padding: '20px', background: 'linear-gradient(145deg, rgba(22, 19, 28, 0.8), rgba(12, 10, 15, 0.9))', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '0px', position: 'relative', overflow: 'hidden' }} className="team-hover-glow">
+                    <div style={{ position: 'absolute', top: 0, left: 0, width: '4px', height: '100%', background: m.primary_role.includes('Leader') ? '#10b981' : '#8b5cf6' }}></div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <div style={{ width: '36px', height: '36px', borderRadius: '0px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', fontSize: '14px', color: '#fff' }}>
+                          {m.full_name.slice(0,2).toUpperCase()}
+                        </div>
+                        <div>
+                          <strong style={{ color: '#fff', fontSize: '15px', display: 'block', lineHeight: '1.2' }}>{m.full_name}</strong>
+                          <span style={{ fontSize: '11px', color: '#9ca3af', fontFamily: 'monospace' }}>{m.primary_role}</span>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px', background: 'rgba(0,0,0,0.2)', padding: '8px', border: '1px dashed rgba(255,255,255,0.05)' }}>
+                      <span style={{ fontSize: '11px', color: '#d1d5db' }}>Experience Level</span>
+                      <span style={{ fontSize: '11px', color: '#34d399', fontWeight: 'bold' }}>{m.experience_level}</span>
+                    </div>
+
+                    <div>
+                      <span style={{ fontSize: '10px', color: '#6b7280', textTransform: 'uppercase', marginBottom: '6px', display: 'block', fontWeight: 'bold' }}>Core Skills</span>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                        {m.tech_stack.map(tech => (
+                          <span key={tech} style={{ fontSize: '10px', background: 'rgba(59,130,246,0.1)', border: '1px solid rgba(59,130,246,0.2)', color: '#60a5fa', padding: '4px 8px', borderRadius: '0px' }}>
+                            {tech}
+                          </span>
+                        ))}
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -243,8 +264,8 @@ export default function Teams() {
               <h3 style={{ fontSize: '16px', display: 'flex', alignItems: 'center', gap: '8px', color: '#fff', marginBottom: '12px' }}>
                 <Layers size={16} style={{ color: '#8b5cf6' }} /> Synchronized Skills Master JSON
               </h3>
-              <div style={{ background: '#0a0d14', border: '1px solid rgba(255,255,255,0.05)', padding: '16px', borderRadius: '8px', overflowX: 'auto' }}>
-                <pre style={{ margin: 0, fontFamily: 'monospace', fontSize: '12px', color: '#34d399' }}>
+              <div style={{ background: '#0a0d14', border: '1px solid rgba(255,255,255,0.05)', padding: '20px', borderRadius: '0px', overflowX: 'auto' }}>
+                <pre style={{ margin: 0, fontFamily: 'monospace', fontSize: '13px', color: '#34d399', lineHeight: '1.5' }}>
                   {JSON.stringify(activeTeam.master_json, null, 2)}
                 </pre>
               </div>

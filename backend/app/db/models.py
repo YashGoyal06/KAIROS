@@ -1,7 +1,10 @@
 import datetime
-from sqlalchemy import Column, String, Integer, DateTime, Boolean, ForeignKey, Table
-from sqlalchemy.dialects.postgresql import JSONB, ARRAY, UUID
+from sqlalchemy import Column, String, Integer, DateTime, Boolean, ForeignKey, Table, JSON
+from sqlalchemy.dialects.postgresql import UUID, JSONB
 from sqlalchemy.orm import declarative_base, relationship
+
+# Use JSONB for PostgreSQL (Supabase) while falling back to JSON for SQLite tests
+JSONType = JSON().with_variant(JSONB, 'postgresql')
 
 Base = declarative_base()
 
@@ -12,7 +15,7 @@ class Profile(Base):
     full_name = Column(String, nullable=False)
     primary_role = Column(String, nullable=False)
     experience_level = Column(String, nullable=False)
-    tech_stack = Column(JSONB, nullable=False, default=list) # List of skills
+    tech_stack = Column(JSONType, nullable=False, default=list) # List of skills
     updated_at = Column(DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow)
 
     # Relationships
@@ -27,7 +30,7 @@ class Team(Base):
     name = Column(String, nullable=False)
     code = Column(String, unique=True, nullable=False)
     leader_id = Column(UUID(as_uuid=True), ForeignKey("profiles.id", ondelete="CASCADE"), nullable=False)
-    master_json = Column(JSONB, nullable=True, default=dict)
+    master_json = Column(JSONType, nullable=True, default=dict)
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
 
     # Relationships
@@ -53,8 +56,8 @@ class Session(Base):
     team_id = Column(UUID(as_uuid=True), ForeignKey("teams.id", ondelete="SET NULL"), nullable=True)
     problem_statement = Column(String, nullable=True)
     user_idea = Column(String, nullable=True)
-    milestones = Column(JSONB, nullable=True, default=list) # Array of milestones
-    pitch_outline = Column(JSONB, nullable=True, default=dict) # Contains demo_flow, pitch_outline, final_pitch
+    milestones = Column(JSONType, nullable=True, default=list) # Array of milestones
+    pitch_outline = Column(JSONType, nullable=True, default=dict) # Contains demo_flow, pitch_outline, final_pitch
     status = Column(String, default="planning") # planning, execution, completed
     scope_critique = Column(String, nullable=True)
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
@@ -75,7 +78,7 @@ class Task(Base):
     deadline = Column(DateTime, nullable=True)
     milestone_id = Column(String, nullable=False) # e.g. "phase_1"
     priority = Column(String, default="medium") # low, medium, high
-    dependencies = Column(ARRAY(UUID(as_uuid=True)), nullable=True, default=list)
+    dependencies = Column(JSONType, nullable=True, default=list)
     status = Column(String, default="pending") # pending, in_progress, completed, blocked
 
     # Relationships

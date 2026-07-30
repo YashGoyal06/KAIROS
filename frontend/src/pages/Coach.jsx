@@ -5,7 +5,7 @@ import { MessageSquare, Plus, Send, Check, Trash2, Calendar, FileText, Download,
 import RoadmapFlowchart from '../components/RoadmapFlowchart';
 import MarkdownRenderer from '../components/MarkdownRenderer';
 import VoiceAssistantWidget from '../components/VoiceAssistantWidget';
-
+import SessionCard from '../components/SessionCard';
 export default function Coach() {
   const { profile, API_BASE } = useAuth();
   
@@ -471,29 +471,13 @@ export default function Coach() {
               </div>
             ) : (
               sessions.map(s => (
-                <div key={s.id} className="glass-card" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', minHeight: '180px' }}>
-                  <div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                      <h3 style={{ color: '#fff', fontSize: '18px', marginBottom: '8px' }}>{s.name}</h3>
-                      <button 
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDeleteSession(s.id);
-                        }} 
-                        style={{ background: 'transparent', border: 'none', color: '#f87171', cursor: 'pointer', padding: '4px', transition: 'color 0.2s' }}
-                        title="Delete Session"
-                      >
-                        <Trash2 size={16} />
-                      </button>
-                    </div>
-                    <p style={{ fontSize: '12px', color: '#6b7280', textTransform: 'uppercase', fontWeight: 'bold' }}>
-                      Status: <span style={{ color: s.status === 'planning' ? '#f59e0b' : '#10b981' }}>{s.status}</span>
-                    </p>
-                  </div>
-                  <button onClick={() => selectSession(s)} className="btn btn-secondary" style={{ marginTop: '24px', width: '100%' }}>
-                    Open Coach Room
-                  </button>
-                </div>
+                <SessionCard 
+                  key={s.id} 
+                  session={s} 
+                  onDelete={handleDeleteSession} 
+                  onClick={selectSession} 
+                  teams={myTeams} 
+                />
               ))
             )}
           </div>
@@ -612,7 +596,7 @@ export default function Coach() {
           </div>
 
           {/* Left-Right Split Layout: Timeline on Left, Critique & Chat stacked on Right */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1.3fr 1fr', gap: '24px', flexGrow: 1, minHeight: 'calc(100vh - 180px)', height: 'calc(100vh - 180px)' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1.3fr 1fr', gap: '12px', flexGrow: 1, minHeight: 'calc(100vh - 180px)', height: 'calc(100vh - 180px)' }}>
             
             {/* Left Column: Vertical Timeline / Loader */}
             <div className="glass-card" style={{ display: 'flex', flexDirection: 'column', padding: '20px', height: '100%', overflow: 'hidden' }}>
@@ -648,13 +632,13 @@ export default function Coach() {
             </div>
 
             {/* Right Column: Critique & Chat Stacked */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', height: '100%', minHeight: '0' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', height: '100%', minHeight: '0' }}>
               
               {/* Critique panel (Top) */}
               <div className="glass-card" style={{ display: 'flex', flexDirection: 'column', height: '45%', minHeight: '0' }}>
                 <div className="kairos-card-header" style={{ marginBottom: '12px' }}>/// SCOPE_CRITIQUE</div>
                 {critique ? (
-                  <div style={{ padding: '16px', background: 'rgba(59,130,246,0.05)', border: '1px solid rgba(59,130,246,0.15)', borderRadius: '10px', flexGrow: 1, overflowY: 'auto' }}>
+                  <div style={{ padding: '16px', background: 'rgba(59,130,246,0.05)', border: '1px solid rgba(59,130,246,0.15)', borderRadius: '0px', flexGrow: 1, overflowY: 'auto' }}>
                     <MarkdownRenderer content={critique} />
                   </div>
                 ) : (
@@ -674,7 +658,7 @@ export default function Coach() {
                       background: m.role === 'user' ? 'rgba(139,92,246,0.15)' : 'rgba(255,255,255,0.03)',
                       border: m.role === 'user' ? '1px solid rgba(139,92,246,0.3)' : '1px solid var(--border-color)',
                       padding: '12px 16px',
-                      borderRadius: '12px',
+                      borderRadius: '0px',
                       fontSize: '13px',
                       lineHeight: '1.5'
                     }}>
@@ -717,7 +701,7 @@ export default function Coach() {
           background: 'rgba(15, 13, 20, 0.9)',
           backdropFilter: 'blur(12px)',
           border: '1px solid rgba(255, 255, 255, 0.1)',
-          borderRadius: '12px',
+          borderRadius: '0px',
           padding: '16px 20px',
           color: '#fff',
           boxShadow: '0 20px 40px rgba(0,0,0,0.5)',

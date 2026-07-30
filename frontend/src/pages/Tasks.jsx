@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { ShieldAlert, Users, Award, Brain, RefreshCw, Plus, Check, ArrowLeft } from 'lucide-react';
 import MarkdownRenderer from '../components/MarkdownRenderer';
 import VoiceAssistantWidget from '../components/VoiceAssistantWidget';
-
+import SessionCard from '../components/SessionCard';
 export default function Tasks() {
   const { profile, API_BASE } = useAuth();
   
@@ -213,39 +213,15 @@ export default function Tasks() {
               </p>
             </div>
           ) : (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '20px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '12px' }}>
               {sessions.map(s => (
-                <div key={s.id} className="glass-card" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', padding: '24px', position: 'relative', overflow: 'hidden' }}>
-                  {/* Glowing visual effect top border */}
-                  <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '4px', background: s.status === 'completed' ? 'var(--success)' : 'linear-gradient(90deg, var(--accent-primary), var(--accent-tertiary))' }} />
-                  
-                  <div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-                      <span style={{ fontSize: '11px', background: 'rgba(255,255,255,0.05)', padding: '4px 10px', borderRadius: '12px', color: '#9ca3af', fontWeight: '500' }}>
-                        {s.team_id ? 'Team Project' : 'Solo Project'}
-                      </span>
-                      <span style={{ fontSize: '11px', color: s.status === 'completed' ? 'var(--success)' : 'var(--accent-primary)', textTransform: 'uppercase', fontWeight: 'bold', letterSpacing: '0.05em' }}>
-                        {s.status}
-                      </span>
-                    </div>
-
-                    <h3 style={{ fontSize: '22px', color: '#fff', fontWeight: '600', marginBottom: '8px' }}>{s.name}</h3>
-                    
-                    <p style={{ color: '#9ca3af', fontSize: '13px', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', textOverflow: 'ellipsis', marginBottom: '20px', lineHeight: '1.5' }}>
-                      {s.problem_statement || "No problem statement defined."}
-                    </p>
-                  </div>
-
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '16px', marginTop: '8px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#6b7280', fontSize: '12px' }}>
-                      <Calendar size={14} style={{ color: 'var(--accent-primary)' }} />
-                      <span>{new Date(s.created_at).toLocaleDateString()}</span>
-                    </div>
-                    <button onClick={() => handleOpenBoard(s.id)} className="btn btn-primary" style={{ padding: '8px 16px', fontSize: '13px' }}>
-                      Open Task Board
-                    </button>
-                  </div>
-                </div>
+                <SessionCard 
+                  key={s.id} 
+                  session={s} 
+                  onClick={() => handleOpenBoard(s.id)} 
+                  actionLabel="Open Task Board"
+                  teams={myTeams} 
+                />
               ))}
             </div>
           )}
@@ -260,7 +236,7 @@ export default function Tasks() {
               </button>
               <div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <span style={{ fontSize: '11px', background: 'rgba(191,133,255,0.1)', border: '1px solid rgba(191,133,255,0.2)', padding: '2px 8px', borderRadius: '8px', color: 'var(--accent-primary)' }}>
+                  <span style={{ fontSize: '11px', background: 'rgba(191,133,255,0.1)', border: '1px solid rgba(191,133,255,0.2)', padding: '2px 8px', borderRadius: '0px', color: 'var(--accent-primary)' }}>
                     {activeSession?.team_id ? 'Team Execution' : 'Solo Execution'}
                   </span>
                 </div>
@@ -275,7 +251,7 @@ export default function Tasks() {
             </div>
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', marginTop: '24px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '24px' }}>
             
             {/* AI Advisor Panel */}
             <div className="glass-card" style={{ background: 'rgba(59, 130, 246, 0.03)', borderColor: 'rgba(59, 130, 246, 0.2)' }}>
@@ -289,13 +265,13 @@ export default function Tasks() {
                 </button>
               </div>
               {aiSuggestions && (
-                <div style={{ marginTop: '16px', padding: '16px', background: 'rgba(0,0,0,0.2)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)', fontSize: '13px', color: '#e5e7eb', lineHeight: '1.6' }}>
+                <div style={{ marginTop: '16px', padding: '16px', background: 'rgba(0,0,0,0.2)', borderRadius: '0px', border: '1px solid rgba(255,255,255,0.05)', fontSize: '13px', color: '#e5e7eb', lineHeight: '1.6' }}>
                   <MarkdownRenderer content={aiSuggestions} />
                 </div>
               )}
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '24px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '12px' }}>
               {/* Blocker Reminders with AI Fix Resolutions */}
               <div className="glass-card" style={{ background: 'rgba(239, 68, 68, 0.02)', borderColor: 'rgba(239, 68, 68, 0.15)' }}>
                 <h3 style={{ fontSize: '16px', display: 'flex', alignItems: 'center', gap: '8px', color: '#fff', marginBottom: '12px' }}>
@@ -306,17 +282,17 @@ export default function Tasks() {
                 ) : (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                     {blockers.map(b => (
-                      <div key={b.id} style={{ display: 'flex', flexDirection: 'column', background: 'rgba(239, 68, 68, 0.06)', border: '1px solid rgba(239, 68, 68, 0.15)', padding: '14px', borderRadius: '8px', gap: '10px' }}>
+                      <div key={b.id} style={{ display: 'flex', flexDirection: 'column', background: 'rgba(239, 68, 68, 0.06)', border: '1px solid rgba(239, 68, 68, 0.15)', padding: '14px', borderRadius: '0px', gap: '10px' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                           <span style={{ fontSize: '13px', color: '#f3f4f6', fontWeight: '500' }}>{b.description}</span>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <span style={{ fontSize: '9px', color: '#ef4444', border: '1px solid rgba(239,68,68,0.3)', background: 'rgba(239,68,68,0.1)', padding: '2px 6px', borderRadius: '4px', textTransform: 'uppercase', fontWeight: 'bold' }}>
+                            <span style={{ fontSize: '9px', color: '#ef4444', border: '1px solid rgba(239,68,68,0.3)', background: 'rgba(239,68,68,0.1)', padding: '2px 6px', borderRadius: '0px', textTransform: 'uppercase', fontWeight: 'bold' }}>
                               {b.severity}
                             </span>
                             <button 
                               onClick={() => handleGetBlockerFix(b.id)} 
                               className="btn btn-primary" 
-                              style={{ padding: '4px 10px', fontSize: '11px', borderRadius: '4px' }}
+                              style={{ padding: '4px 10px', fontSize: '11px', borderRadius: '0px' }}
                               disabled={loadingFixId === b.id}
                             >
                               {loadingFixId === b.id ? 'Thinking...' : '💡 Ask KAIROS for Fix'}
@@ -326,7 +302,7 @@ export default function Tasks() {
 
                         {/* Collapsible AI suggestion */}
                         {blockerSuggestions[b.id] && (
-                          <div style={{ marginTop: '4px', padding: '14px', background: 'rgba(0,0,0,0.25)', borderRadius: '6px', fontSize: '12px', borderLeft: '3px solid var(--accent-primary)', color: '#d1d5db', lineHeight: '1.6' }}>
+                          <div style={{ marginTop: '4px', padding: '14px', background: 'rgba(0,0,0,0.25)', borderRadius: '0px', fontSize: '12px', borderLeft: '3px solid var(--accent-primary)', color: '#d1d5db', lineHeight: '1.6' }}>
                             <MarkdownRenderer content={blockerSuggestions[b.id]} />
                           </div>
                         )}
@@ -421,14 +397,14 @@ export default function Tasks() {
                       <span style={{ textTransform: 'capitalize' }}>
                         {statusName === 'in_progress' ? 'In Progress' : statusName}
                       </span>
-                      <span style={{ fontSize: '12px', background: 'rgba(255,255,255,0.05)', padding: '2px 8px', borderRadius: '10px' }}>
+                      <span style={{ fontSize: '12px', background: 'rgba(255,255,255,0.05)', padding: '2px 8px', borderRadius: '0px' }}>
                         {columnTasks.length}
                       </span>
                     </div>
 
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '10px', minHeight: '200px' }}>
                       {columnTasks.length === 0 ? (
-                        <div style={{ border: '2px dashed rgba(255,255,255,0.02)', borderRadius: '8px', height: '100px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#4b5563', fontSize: '12px' }}>
+                        <div style={{ border: '2px dashed rgba(255,255,255,0.02)', borderRadius: '0px', height: '100px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#4b5563', fontSize: '12px' }}>
                           Drag tasks here
                         </div>
                       ) : (
@@ -524,7 +500,7 @@ export default function Tasks() {
               placeholder="e.g. Supabase client connection is failing with invalid credentials error..."
               value={blockReasonInput}
               onChange={(e) => setBlockReasonInput(e.target.value)}
-              style={{ width: '100%', marginBottom: '24px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', borderRadius: '8px', padding: '12px' }}
+              style={{ width: '100%', marginBottom: '24px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', borderRadius: '0px', padding: '12px' }}
               autoFocus
             />
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>

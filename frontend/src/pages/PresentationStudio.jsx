@@ -231,7 +231,7 @@ export default function PresentationStudio() {
   const activeT = builtInTemplates.find(t => t.id === selectedTemplate) || builtInTemplates[0];
 
   return (
-    <div className="main-content" style={{ display: 'flex', flexDirection: 'column', gap: '24px', flexGrow: 1, overflowY: 'auto', paddingBottom: '60px' }}>
+    <div className="main-content" style={{ display: 'flex', flexDirection: 'column', gap: '12px', flexGrow: 1, overflowY: 'auto', paddingBottom: '60px' }}>
       {/* Top Header */}
       <div className="dashboard-header" style={{ marginBottom: '4px' }}>
         <div>
@@ -313,7 +313,7 @@ export default function PresentationStudio() {
               onClick={() => setSelectedTemplate(t.id)}
               style={{
                 padding: '14px',
-                borderRadius: '10px',
+                borderRadius: '0px',
                 border: selectedTemplate === t.id ? `2px solid ${t.accentColor}` : '1px solid rgba(255,255,255,0.06)',
                 background: selectedTemplate === t.id ? 'rgba(168,85,247,0.15)' : 'rgba(0,0,0,0.25)',
                 cursor: 'pointer',
@@ -326,7 +326,7 @@ export default function PresentationStudio() {
                 {selectedTemplate === t.id && <CheckCircle2 size={16} style={{ color: t.accentColor }} />}
               </div>
               <p style={{ fontSize: '11px', color: '#9ca3af', margin: '0 0 8px 0', lineHeight: '1.4' }}>{t.desc}</p>
-              <span style={{ fontSize: '10px', color: t.accentColor, background: `${t.accentColor}20`, padding: '3px 8px', borderRadius: '4px', fontWeight: 600 }}>
+              <span style={{ fontSize: '10px', color: t.accentColor, background: `${t.accentColor}20`, padding: '3px 8px', borderRadius: '0px', fontWeight: 600 }}>
                 {t.slides} Slides
               </span>
             </div>
@@ -337,7 +337,7 @@ export default function PresentationStudio() {
               onClick={() => setSelectedTemplate('custom')}
               style={{
                 padding: '14px',
-                borderRadius: '10px',
+                borderRadius: '0px',
                 border: selectedTemplate === 'custom' ? '2px solid #34d399' : '1px solid rgba(255,255,255,0.06)',
                 background: selectedTemplate === 'custom' ? 'rgba(52,211,153,0.15)' : 'rgba(0,0,0,0.25)',
                 cursor: 'pointer'
@@ -351,7 +351,7 @@ export default function PresentationStudio() {
               </div>
               <p style={{ fontSize: '11px', color: '#9ca3af', margin: '0 0 8px 0' }}>Uploaded PPTX Template</p>
               {customAnalysis && (
-                <span style={{ fontSize: '10px', color: '#34d399', background: 'rgba(52,211,153,0.2)', padding: '3px 8px', borderRadius: '4px', fontWeight: 600 }}>
+                <span style={{ fontSize: '10px', color: '#34d399', background: 'rgba(52,211,153,0.2)', padding: '3px 8px', borderRadius: '0px', fontWeight: 600 }}>
                   Mapped {customAnalysis.slide_count} Slides
                 </span>
               )}
@@ -361,7 +361,7 @@ export default function PresentationStudio() {
       </div>
 
       {/* Main Slide Preview Workspace */}
-      <div style={{ display: 'grid', gridTemplateColumns: '220px 1fr', gap: '24px', flexGrow: 1 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '220px 1fr', gap: '12px', flexGrow: 1 }}>
         
         {/* Left Pane - Slide Thumbnails */}
         <div className="glass-card" style={{ padding: '12px', display: 'flex', flexDirection: 'column', gap: '6px', maxHeight: '620px', overflowY: 'auto' }}>
@@ -383,7 +383,7 @@ export default function PresentationStudio() {
               onClick={() => setActiveSlideIndex(idx)}
               style={{
                 padding: '3px',
-                borderRadius: '6px',
+                borderRadius: '0px',
                 border: activeSlideIndex === idx ? '2px solid #a855f7' : '1px solid rgba(255,255,255,0.08)',
                 background: activeSlideIndex === idx ? 'rgba(168,85,247,0.12)' : 'rgba(0,0,0,0.15)',
                 cursor: 'pointer',
@@ -395,7 +395,7 @@ export default function PresentationStudio() {
                 alt={`Slide ${idx + 1}`}
                 style={{
                   width: '100%',
-                  borderRadius: '4px',
+                  borderRadius: '0px',
                   objectFit: 'contain',
                   display: 'block'
                 }}
@@ -456,7 +456,7 @@ export default function PresentationStudio() {
               width: '100%',
               flexGrow: 1,
               background: '#0a0a0f',
-              borderRadius: '12px',
+              borderRadius: '0px',
               border: `1px solid ${activeT.borderColor}`,
               boxShadow: '0 12px 36px rgba(0,0,0,0.6)',
               display: 'flex',
@@ -492,7 +492,7 @@ export default function PresentationStudio() {
                   maxWidth: '100%',
                   maxHeight: '100%',
                   objectFit: 'contain',
-                  borderRadius: '8px'
+                  borderRadius: '0px'
                 }}
               />
             )}
