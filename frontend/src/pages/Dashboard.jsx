@@ -556,7 +556,7 @@ export default function Dashboard() {
 
               {allTasks.filter(t => t.status !== 'completed' && t.priority === 'high').length === 0 && (
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '30px 20px', background: 'rgba(255,255,255,0.01)', border: '1px dashed rgba(255,255,255,0.1)' }}>
-                  <CheckCircle size={24} style={{ color: '#34d399', marginBottom: '8px' }} />
+                  <CheckCircle2 size={24} style={{ color: '#34d399', marginBottom: '8px' }} />
                   <p style={{ fontSize: '12px', color: '#a1a1aa', fontStyle: 'italic', textAlign: 'center', margin: 0 }}>
                     No urgent high-priority tasks pending.<br/>You're all caught up!
                   </p>
